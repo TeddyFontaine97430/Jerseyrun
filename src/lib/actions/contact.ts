@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { notifyAdmin } from "@/lib/email";
 
 const contactSchema = z.object({
   name: z.string().min(2, "Merci d'indiquer votre nom."),
@@ -32,6 +33,19 @@ export async function submitContactMessage(
   }
 
   await prisma.contactMessage.create({ data: parsed.data });
+
+  await notifyAdmin({
+    subject: `Nouveau message de contact de ${parsed.data.name}`,
+    html: `
+      <p>Nouveau message reçu via le formulaire de contact du site.</p>
+      <ul>
+        <li><strong>Nom :</strong> ${parsed.data.name}</li>
+        <li><strong>Email :</strong> ${parsed.data.email}</li>
+      </ul>
+      <p><strong>Message :</strong></p>
+      <p>${parsed.data.message.replace(/\n/g, "<br />")}</p>
+    `,
+  });
 
   return { status: "success", message: "Votre message a bien été envoyé, merci !" };
 }

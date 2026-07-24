@@ -27,3 +27,12 @@ export async function sendEmail({
     console.error(`[email] Échec de l'envoi à ${to}:`, error);
   }
 }
+
+export async function notifyAdmin({ subject, html }: { subject: string; html: string }): Promise<void> {
+  const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL;
+  if (!adminEmail) {
+    console.warn(`[email] ADMIN_NOTIFICATION_EMAIL non configurée — notification "${subject}" non envoyée.`);
+    return;
+  }
+  await sendEmail({ to: adminEmail, subject: `[Jersey Run] ${subject}`, html });
+}

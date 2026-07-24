@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
+import { notifyAdmin } from "@/lib/email";
+import { formatPrice } from "@/lib/money";
 
 export async function POST(request: Request) {
   const signature = request.headers.get("stripe-signature");
@@ -33,13 +35,14 @@ export async function POST(request: Request) {
       if (order && order.status === "PENDING") {
         const shipping = checkoutSession.collected_information?.shipping_details;
         const customerDetails = checkoutSession.customer_details;
+        const customerName = shipping?.name ?? customerDetails?.name ?? undefined;
 
         await prisma.$transaction([
           prisma.order.update({
             where: { id: orderId },
             data: {
               status: "PAID",
-              customerName: shipping?.name ?? customerDetails?.name ?? undefined,
+              customerName,
               customerPhone: customerDetails?.phone ?? undefined,
               shippingLine1: shipping?.address?.line1 ?? customerDetails?.address?.line1 ?? undefined,
               shippingLine2: shipping?.address?.line2 ?? customerDetails?.address?.line2 ?? undefined,
@@ -56,6 +59,23 @@ export async function POST(request: Request) {
             }),
           ),
         ]);
+
+        const itemsList = order.items
+          .map((item) => `<li>${item.quantity} × ${item.productName} — ${formatPrice(item.unitPriceCents * item.quantity)}</li>`)
+          .join("");
+
+        await notifyAdmin({
+          subject: `Nouvelle vente — ${formatPrice(order.totalCents)}`,
+          html: `
+            <p>Une nouvelle commande vient d'être payée sur Jersey Run.</p>
+            <ul>
+              <li><strong>Client :</strong> ${customerName ?? "N/A"}</li>
+              <li><strong>Total :</strong> ${formatPrice(order.totalCents)}</li>
+            </ul>
+            <p><strong>Articles :</strong></p>
+            <ul>${itemsList}</ul>
+          `,
+        });
       }
     }
   }

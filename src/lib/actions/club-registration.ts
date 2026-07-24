@@ -3,6 +3,7 @@
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { notifyAdmin } from "@/lib/email";
 
 const clubSchema = z.object({
   name: z.string().min(2, "Merci d'indiquer le nom du club."),
@@ -77,6 +78,19 @@ export async function registerClub(
         },
       },
     },
+  });
+
+  await notifyAdmin({
+    subject: `Nouvelle demande d'inscription de club : ${name}`,
+    html: `
+      <p>Un nouveau club souhaite rejoindre Jersey Run.</p>
+      <ul>
+        <li><strong>Nom :</strong> ${name}</li>
+        <li><strong>Email :</strong> ${normalizedEmail}</li>
+        <li><strong>Téléphone :</strong> ${phone}</li>
+      </ul>
+      <p>Rendez-vous dans l'administration pour valider ou refuser cette demande.</p>
+    `,
   });
 
   return {
