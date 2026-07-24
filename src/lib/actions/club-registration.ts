@@ -1,0 +1,87 @@
+"use server";
+
+import { z } from "zod";
+import bcrypt from "bcryptjs";
+import { prisma } from "@/lib/prisma";
+
+const clubSchema = z.object({
+  name: z.string().min(2, "Merci d'indiquer le nom du club."),
+  phone: z.string().min(6, "Numéro de téléphone invalide."),
+  email: z.string().email("Adresse email invalide."),
+  password: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères."),
+});
+
+export type ClubRegistrationState = {
+  status: "idle" | "success" | "error";
+  message?: string;
+};
+
+function slugify(name: string) {
+  const diacritics = /[̀-ͯ]/g;
+  return name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(diacritics, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
+export async function registerClub(
+  _prevState: ClubRegistrationState,
+  formData: FormData,
+): Promise<ClubRegistrationState> {
+  const parsed = clubSchema.safeParse({
+    name: formData.get("name"),
+    phone: formData.get("phone"),
+    email: formData.get("email"),
+    password: formData.get("password"),
+  });
+
+  if (!parsed.success) {
+    return {
+      status: "error",
+      message: parsed.error.issues[0]?.message ?? "Formulaire invalide.",
+    };
+  }
+
+  const { name, phone, email, password } = parsed.data;
+  const normalizedEmail = email.toLowerCase().trim();
+
+  const existingUser = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+  if (existingUser) {
+    return { status: "error", message: "Un compte existe déjà avec cet email." };
+  }
+
+  const baseSlug = slugify(name) || "club";
+  let slug = baseSlug;
+  let suffix = 1;
+  while (await prisma.club.findUnique({ where: { slug } })) {
+    slug = `${baseSlug}-${suffix++}`;
+  }
+
+  const passwordHash = await bcrypt.hash(password, 10);
+
+  await prisma.user.create({
+    data: {
+      email: normalizedEmail,
+      password: passwordHash,
+      name,
+      role: "CLUB",
+      club: {
+        create: {
+          name,
+          slug,
+          phone,
+          email: normalizedEmail,
+          status: "PENDING",
+        },
+      },
+    },
+  });
+
+  return {
+    status: "success",
+    message:
+      "Votre demande d'inscription a bien été envoyée. L'administrateur du site va l'examiner et vous serez averti par email dès sa validation.",
+  };
+}

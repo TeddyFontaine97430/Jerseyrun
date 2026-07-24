@@ -1,0 +1,14 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "jersey-run-dev",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "-c",
+        "cd \"/Users/fontaineteddy/Documents/SITE INTERNET\" && PATH=\"/Users/fontaineteddy/Documents/SITE INTERNET/.node-local/bin:$PATH\" npm run dev"
+      ],
+      "port": 3000
+    }
+  ]
+}
