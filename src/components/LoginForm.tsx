@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 
@@ -10,6 +11,7 @@ export function LoginForm() {
   const callbackUrl = searchParams.get("callbackUrl") ?? "/";
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -50,17 +52,31 @@ export function LoginForm() {
         />
       </div>
       <div>
-        <label htmlFor="password" className="mb-1 block text-sm font-medium text-white">
-          Mot de passe
-        </label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          required
-          className="w-full rounded-lg border border-white/10 bg-neutral-800 px-3 py-2.5 text-white placeholder:text-neutral-500 focus:border-accent focus:outline-none"
-          placeholder="••••••••"
-        />
+        <div className="mb-1 flex items-center justify-between">
+          <label htmlFor="password" className="block text-sm font-medium text-white">
+            Mot de passe
+          </label>
+          <Link href="/mot-de-passe-oublie" className="text-xs font-semibold text-accent hover:underline">
+            Mot de passe oublié ?
+          </Link>
+        </div>
+        <div className="relative">
+          <input
+            id="password"
+            name="password"
+            type={showPassword ? "text" : "password"}
+            required
+            className="w-full rounded-lg border border-white/10 bg-neutral-800 px-3 py-2.5 pr-16 text-white placeholder:text-neutral-500 focus:border-accent focus:outline-none"
+            placeholder="••••••••"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((v) => !v)}
+            className="absolute inset-y-0 right-0 px-3 text-xs font-semibold text-neutral-400 hover:text-accent"
+          >
+            {showPassword ? "Masquer" : "Afficher"}
+          </button>
+        </div>
       </div>
       <button
         type="submit"
