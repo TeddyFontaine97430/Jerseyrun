@@ -4,7 +4,7 @@ import { ClubLogoCard } from "@/components/ClubLogoCard";
 
 export default async function Home() {
   const clubs = await prisma.club.findMany({
-    where: { status: "APPROVED" },
+    where: { status: "APPROVED", active: true },
     orderBy: { name: "asc" },
   });
 

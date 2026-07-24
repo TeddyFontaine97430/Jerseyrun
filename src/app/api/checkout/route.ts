@@ -33,6 +33,12 @@ export async function POST() {
         { status: 400 },
       );
     }
+    if (!item.product.club.active) {
+      return NextResponse.json(
+        { error: `La boutique "${item.product.club.name}" est actuellement fermée.` },
+        { status: 400 },
+      );
+    }
   }
 
   const totalCents = cartItems.reduce(

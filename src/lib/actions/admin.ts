@@ -29,6 +29,24 @@ export async function rejectClub(clubId: string) {
   revalidatePath("/");
 }
 
+export async function closeClub(clubId: string) {
+  await requireAdmin();
+  const club = await prisma.club.update({ where: { id: clubId }, data: { active: false } });
+  revalidatePath("/admin/clubs");
+  revalidatePath(`/admin/clubs/${clubId}`);
+  revalidatePath("/");
+  revalidatePath(`/clubs/${club.slug}`);
+}
+
+export async function reopenClub(clubId: string) {
+  await requireAdmin();
+  const club = await prisma.club.update({ where: { id: clubId }, data: { active: true } });
+  revalidatePath("/admin/clubs");
+  revalidatePath(`/admin/clubs/${clubId}`);
+  revalidatePath("/");
+  revalidatePath(`/clubs/${club.slug}`);
+}
+
 function generateTempPassword() {
   return randomBytes(9).toString("base64url");
 }

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/money";
 import { ORDER_STATUS_LABELS, ORDER_STATUS_STYLES } from "@/lib/orderStatus";
 import { formatSelectedOptions } from "@/lib/productOptions";
+import { ProfileForm } from "@/components/account/ProfileForm";
 
 export const metadata: Metadata = { title: "Mon compte — Jersey Run" };
 
@@ -23,6 +24,11 @@ export default async function ComptePage() {
       <p className="mt-1 text-neutral-400">
         Connecté en tant que <span className="font-medium text-white">{session.user.email}</span>
       </p>
+
+      <h2 className="mt-10 text-xl font-semibold text-white">Mon profil</h2>
+      <div className="mt-4">
+        <ProfileForm name={session.user.name ?? ""} email={session.user.email ?? ""} />
+      </div>
 
       <h2 className="mt-10 text-xl font-semibold text-white">Mes commandes</h2>
 

@@ -5,6 +5,7 @@ const links = [
   { href: "/admin/clubs", label: "Clubs" },
   { href: "/admin/ventes", label: "Ventes" },
   { href: "/admin/clients", label: "Clients" },
+  { href: "/admin/parametres", label: "Mon profil" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

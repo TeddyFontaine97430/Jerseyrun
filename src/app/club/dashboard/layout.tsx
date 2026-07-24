@@ -60,6 +60,12 @@ export default async function ClubDashboardLayout({ children }: { children: Reac
           >
             Mes articles
           </Link>
+          <Link
+            href="/club/dashboard/parametres"
+            className="rounded-full px-4 py-2 text-sm font-semibold text-neutral-300 hover:text-white"
+          >
+            Paramètres
+          </Link>
         </nav>
       </div>
       {children}

@@ -49,7 +49,11 @@ export default async function ClubShopPage({ params }: Props) {
       </section>
 
       <section className="container-page py-14">
-        {club.products.length === 0 ? (
+        {!club.active ? (
+          <p className="text-center text-neutral-400">
+            Cette boutique est actuellement fermée. Revenez plus tard !
+          </p>
+        ) : club.products.length === 0 ? (
           <p className="text-center text-neutral-400">
             Ce club n&apos;a pas encore ajouté d&apos;articles à sa boutique.
           </p>

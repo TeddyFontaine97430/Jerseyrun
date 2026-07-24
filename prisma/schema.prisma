@@ -52,6 +52,7 @@ model Club {
   description String?
   logoUrl     String?
   status      ClubStatus  @default(PENDING)
+  active      Boolean     @default(true)
   owner       User        @relation(fields: [ownerId], references: [id])
   ownerId     String      @unique
   products    Product[]

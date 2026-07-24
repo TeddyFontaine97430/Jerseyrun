@@ -9,6 +9,7 @@ import { formatSelectedOptions } from "@/lib/productOptions";
 import { resetClubPassword, approveClub, rejectClub } from "@/lib/actions/admin";
 import { ResetPasswordButton } from "@/components/admin/ResetPasswordButton";
 import { ClubApprovalRow } from "@/components/admin/ClubApprovalRow";
+import { ClubStatusToggle } from "@/components/admin/ClubStatusToggle";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -33,7 +34,18 @@ export default async function AdminClubDetailPage({ params }: Props) {
 
       <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-extrabold text-white">{club.name}</h2>
+          <div className="flex flex-wrap items-center gap-3">
+            <h2 className="text-2xl font-extrabold text-white">{club.name}</h2>
+            {club.status === "APPROVED" && (
+              <span
+                className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                  club.active ? "bg-emerald-500/15 text-emerald-300" : "bg-red-500/15 text-red-300"
+                }`}
+              >
+                {club.active ? "Boutique ouverte" : "Boutique fermée"}
+              </span>
+            )}
+          </div>
           <p className="mt-1 text-sm text-neutral-400">
             {club.email} · {club.phone}
           </p>
@@ -46,6 +58,7 @@ export default async function AdminClubDetailPage({ params }: Props) {
           >
             Gérer les articles
           </Link>
+          {club.status === "APPROVED" && <ClubStatusToggle clubId={club.id} active={club.active} />}
           <ResetPasswordButton
             action={resetClubPassword.bind(null, club.id)}
             label="Réinitialiser le mot de passe du club"

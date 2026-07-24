@@ -48,6 +48,11 @@ export default async function AdminClubsPage() {
                   <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_STYLES[club.status]}`}>
                     {STATUS_LABELS[club.status]}
                   </span>
+                  {club.status === "APPROVED" && !club.active && (
+                    <span className="ml-1.5 rounded-full bg-red-500/15 px-2.5 py-1 text-xs font-semibold text-red-300">
+                      Fermée
+                    </span>
+                  )}
                 </td>
                 <td className="px-5 py-3">
                   <Link href={`/admin/clubs/${club.id}`} className="font-semibold text-accent hover:underline">
