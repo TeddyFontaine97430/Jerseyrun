@@ -38,7 +38,7 @@ export function ProductCard({
           )}
         </div>
         <div className="mt-auto pt-3">
-          <AddToCartButton productId={id} disabled={stock <= 0} options={options} />
+          <AddToCartButton productId={id} disabled={stock <= 0} options={options} stock={stock} />
         </div>
       </div>
     </div>

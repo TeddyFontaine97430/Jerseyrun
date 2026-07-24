@@ -34,6 +34,14 @@ export async function addToCart(
     return { status: "error", message: "La boutique de ce club est actuellement fermée." };
   }
 
+  const quantity = Math.trunc(Number(formData.get("quantity")));
+  if (!Number.isFinite(quantity) || quantity < 1) {
+    return { status: "error", message: "Quantité invalide." };
+  }
+  if (quantity > product.stock) {
+    return { status: "error", message: `Seulement ${product.stock} article(s) disponible(s).` };
+  }
+
   const selections: { name: string; value: string }[] = [];
   for (const option of product.options) {
     const value = formData.get(`option_${option.id}`);
@@ -49,13 +57,17 @@ export async function addToCart(
   });
 
   if (existing) {
+    const newQuantity = existing.quantity + quantity;
+    if (newQuantity > product.stock) {
+      return { status: "error", message: `Seulement ${product.stock} article(s) disponible(s) (dont ${existing.quantity} déjà dans votre panier).` };
+    }
     await prisma.cartItem.update({
       where: { id: existing.id },
-      data: { quantity: { increment: 1 } },
+      data: { quantity: newQuantity },
     });
   } else {
     await prisma.cartItem.create({
-      data: { userId: session.user.id, productId, quantity: 1, selectedOptions },
+      data: { userId: session.user.id, productId, quantity, selectedOptions },
     });
   }
 

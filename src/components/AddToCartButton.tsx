@@ -10,10 +10,12 @@ export function AddToCartButton({
   productId,
   disabled,
   options = [],
+  stock,
 }: {
   productId: string;
   disabled?: boolean;
   options?: { id: string; name: string; values: string }[];
+  stock?: number;
 }) {
   const [state, formAction, pending] = useActionState(addToCart, initialState);
 
@@ -40,6 +42,18 @@ export function AddToCartButton({
           </select>
         </div>
       ))}
+      <div>
+        <label className="mb-1 block text-xs font-medium text-neutral-400">Quantité</label>
+        <input
+          type="number"
+          name="quantity"
+          min={1}
+          max={stock && stock > 0 ? stock : undefined}
+          defaultValue={1}
+          required
+          className="w-full rounded-lg border border-white/10 bg-neutral-800 px-3 py-2 text-sm text-white focus:border-accent focus:outline-none"
+        />
+      </div>
       <button
         type="submit"
         disabled={disabled || pending}
