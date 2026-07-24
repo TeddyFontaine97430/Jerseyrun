@@ -6,14 +6,25 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getClubForUser } from "@/lib/clubStats";
 import { parseOptionValues } from "@/lib/productOptions";
+import { uploadImage, UploadError } from "@/lib/upload";
 
 const productSchema = z.object({
   name: z.string().min(2, "Le nom est requis."),
   description: z.string().optional(),
   price: z.coerce.number().min(0.01, "Le prix doit être supérieur à 0."),
   stock: z.coerce.number().int().min(0, "Le stock ne peut pas être négatif."),
-  imageUrl: z.string().optional(),
 });
+
+async function resolveProductImage(
+  formData: FormData,
+  currentImageUrl: string | null,
+): Promise<string | null> {
+  const file = formData.get("imageFile");
+  if (file instanceof File && file.size > 0) {
+    return uploadImage(file, "products");
+  }
+  return currentImageUrl;
+}
 
 function optionGroupsFromFormData(formData: FormData): { name: string; values: string }[] {
   const groups: { name: string; values: string }[] = [];
@@ -86,13 +97,19 @@ export async function createProduct(
     description: formData.get("description"),
     price: formData.get("price"),
     stock: formData.get("stock"),
-    imageUrl: formData.get("imageUrl"),
   });
   if (!parsed.success) {
     return { status: "error", message: parsed.error.issues[0]?.message ?? "Formulaire invalide." };
   }
 
-  const { name, description, price, stock, imageUrl } = parsed.data;
+  let imageUrl: string | null;
+  try {
+    imageUrl = await resolveProductImage(formData, null);
+  } catch (error) {
+    return { status: "error", message: error instanceof UploadError ? error.message : "Échec de l'envoi de l'image." };
+  }
+
+  const { name, description, price, stock } = parsed.data;
   const optionGroups = optionGroupsFromFormData(formData);
   await prisma.product.create({
     data: {
@@ -101,7 +118,7 @@ export async function createProduct(
       description: description || null,
       priceCents: Math.round(price * 100),
       stock,
-      imageUrl: imageUrl || null,
+      imageUrl,
       options: { create: optionGroups },
     },
   });
@@ -128,13 +145,19 @@ export async function updateProduct(
     description: formData.get("description"),
     price: formData.get("price"),
     stock: formData.get("stock"),
-    imageUrl: formData.get("imageUrl"),
   });
   if (!parsed.success) {
     return { status: "error", message: parsed.error.issues[0]?.message ?? "Formulaire invalide." };
   }
 
-  const { name, description, price, stock, imageUrl } = parsed.data;
+  let imageUrl: string | null;
+  try {
+    imageUrl = await resolveProductImage(formData, product.imageUrl);
+  } catch (error) {
+    return { status: "error", message: error instanceof UploadError ? error.message : "Échec de l'envoi de l'image." };
+  }
+
+  const { name, description, price, stock } = parsed.data;
   const optionGroups = optionGroupsFromFormData(formData);
   await prisma.$transaction([
     prisma.productOption.deleteMany({ where: { productId } }),
@@ -145,7 +168,7 @@ export async function updateProduct(
         description: description || null,
         priceCents: Math.round(price * 100),
         stock,
-        imageUrl: imageUrl || null,
+        imageUrl,
         options: { create: optionGroups },
       },
     }),

@@ -74,13 +74,26 @@ export function ProductForm({
         />
       </div>
       <div>
-        <label className="mb-1 block text-sm font-medium text-white">Image (URL, optionnel)</label>
-        <input
-          name="imageUrl"
-          defaultValue={product?.imageUrl ?? ""}
-          placeholder="https://..."
-          className="w-full rounded-lg border border-white/10 bg-neutral-800 px-3 py-2 text-white placeholder:text-neutral-500 focus:border-accent focus:outline-none"
-        />
+        <label className="mb-1 block text-sm font-medium text-white">Image de l&apos;article (optionnel)</label>
+        <div className="flex items-center gap-3">
+          {product?.imageUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={product.imageUrl}
+              alt=""
+              className="h-12 w-12 shrink-0 rounded-lg border border-white/10 object-cover"
+            />
+          )}
+          <input
+            name="imageFile"
+            type="file"
+            accept="image/png,image/jpeg,image/webp,image/gif"
+            className="w-full text-sm text-neutral-300 file:mr-3 file:rounded-full file:border-0 file:bg-accent file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-accent-dark"
+          />
+        </div>
+        {product?.imageUrl && (
+          <p className="mt-1 text-xs text-neutral-500">Laissez vide pour conserver l&apos;image actuelle.</p>
+        )}
       </div>
       <div className="sm:col-span-2">
         <label className="mb-1 block text-sm font-medium text-white">Description</label>
