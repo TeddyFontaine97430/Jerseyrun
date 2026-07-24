@@ -1,19 +1,12 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { ClubLogoCard } from "@/components/ClubLogoCard";
-import { Gallery } from "@/components/Gallery";
 
 export default async function Home() {
-  const [clubs, images] = await Promise.all([
-    prisma.club.findMany({
-      where: { status: "APPROVED" },
-      orderBy: { name: "asc" },
-    }),
-    prisma.galleryImage.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 6,
-    }),
-  ]);
+  const clubs = await prisma.club.findMany({
+    where: { status: "APPROVED" },
+    orderBy: { name: "asc" },
+  });
 
   return (
     <div>
@@ -92,8 +85,6 @@ export default async function Home() {
           </div>
         )}
       </section>
-
-      <Gallery images={images} />
     </div>
   );
 }

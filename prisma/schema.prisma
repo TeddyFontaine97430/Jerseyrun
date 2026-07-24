@@ -128,13 +128,6 @@ model OrderItem {
   selectedOptions String?
 }
 
-model GalleryImage {
-  id        String   @id @default(cuid())
-  url       String
-  caption   String?
-  createdAt DateTime @default(now())
-}
-
 model ContactMessage {
   id        String   @id @default(cuid())
   name      String

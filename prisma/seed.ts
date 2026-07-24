@@ -139,20 +139,6 @@ async function main() {
     },
   });
 
-  const galleryCount = await prisma.galleryImage.count();
-  if (galleryCount === 0) {
-    await prisma.galleryImage.createMany({
-      data: [
-        { url: "https://images.unsplash.com/photo-1521412644187-c49fa049e84d?w=1200", caption: "Entraînement collectif" },
-        { url: "https://images.unsplash.com/photo-1517649763962-0c623066013b?w=1200", caption: "Jour de match" },
-        { url: "https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=1200", caption: "Esprit d'équipe" },
-        { url: "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=1200", caption: "Célébration après victoire" },
-        { url: "https://images.unsplash.com/photo-1518604666860-9ed391f76460?w=1200", caption: "Échauffement" },
-        { url: "https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?w=1200", caption: "Supporters au stade" },
-      ],
-    });
-  }
-
   console.log("Seed terminé.");
   console.log(`Admin: ${adminEmail} / ${adminPassword}`);
   console.log("Clubs de démo (mot de passe: Club1234!) :");

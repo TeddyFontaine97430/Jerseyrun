@@ -5,7 +5,6 @@ import { getCartForUser } from "@/lib/cart";
 const navLinks = [
   { href: "/", label: "Accueil" },
   { href: "/concept", label: "Concept" },
-  { href: "/#galerie", label: "Galerie" },
 ];
 
 export async function Navbar() {
