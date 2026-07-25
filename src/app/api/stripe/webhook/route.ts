@@ -83,12 +83,18 @@ export async function POST(request: Request) {
           .map((item) => `<li>${item.quantity} × ${item.productName} — ${formatPrice(item.unitPriceCents * item.quantity)}</li>`)
           .join("");
 
+        const deliveryLabel =
+          order.deliveryMethod === "PICKUP"
+            ? "Retrait au club"
+            : `Livraison à domicile${order.deliveryFeeCents > 0 ? ` (${formatPrice(order.deliveryFeeCents)})` : ""}`;
+
         await notifyAdmin({
           subject: `Nouvelle vente — ${formatPrice(order.totalCents)}`,
           html: `
             <p>Une nouvelle commande vient d'être payée sur Jersey Run.</p>
             <ul>
               <li><strong>Client :</strong> ${customerName ?? "N/A"}</li>
+              <li><strong>Livraison :</strong> ${deliveryLabel}</li>
               <li><strong>Total :</strong> ${formatPrice(order.totalCents)}</li>
             </ul>
             <p><strong>Articles :</strong></p>

@@ -76,8 +76,13 @@ export default async function ComptePage() {
                   </li>
                 ))}
               </ul>
-              <div className="mt-3 flex justify-end border-t border-white/10 pt-3 text-sm font-bold text-white">
-                Total : {formatPrice(order.totalCents)}
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-3 text-sm">
+                <span className="text-neutral-400">
+                  {order.deliveryMethod === "PICKUP"
+                    ? "Retrait au club"
+                    : `Livraison à domicile${order.deliveryFeeCents > 0 ? ` (${formatPrice(order.deliveryFeeCents)})` : ""}`}
+                </span>
+                <span className="font-bold text-white">Total : {formatPrice(order.totalCents)}</span>
               </div>
             </div>
           ))}

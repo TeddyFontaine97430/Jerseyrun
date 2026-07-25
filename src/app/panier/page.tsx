@@ -2,10 +2,9 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { auth } from "@/auth";
 import { getCartForUser } from "@/lib/cart";
-import { formatPrice } from "@/lib/money";
 import { decodeSelectedOptions } from "@/lib/productOptions";
 import { CartItemRow } from "@/components/CartItemRow";
-import { CheckoutButton } from "@/components/CheckoutButton";
+import { OrderSummary } from "@/components/OrderSummary";
 
 function availableStockFor(item: Awaited<ReturnType<typeof getCartForUser>>["items"][number]) {
   const selections = decodeSelectedOptions(item.selectedOptions);
@@ -71,18 +70,11 @@ export default async function PanierPage() {
           </div>
 
           <div className="h-fit rounded-2xl border border-white/10 bg-neutral-900 p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-white">Récapitulatif</h2>
-            <div className="mt-4 flex justify-between text-sm text-neutral-300">
-              <span>Sous-total</span>
-              <span>{formatPrice(cart.total)}</span>
-            </div>
-            <div className="mt-2 flex justify-between text-base font-bold text-white">
-              <span>Total</span>
-              <span>{formatPrice(cart.total)}</span>
-            </div>
-            <div className="mt-6">
-              <CheckoutButton />
-            </div>
+            <OrderSummary
+              subtotalCents={cart.total}
+              itemCount={cart.count}
+              singleClub={new Set(cart.items.map((item) => item.product.club.id)).size <= 1}
+            />
           </div>
         </div>
       )}

@@ -31,6 +31,11 @@ enum OrderStatus {
   CANCELLED
 }
 
+enum DeliveryMethod {
+  DELIVERY
+  PICKUP
+}
+
 model User {
   id                  String               @id @default(cuid())
   email               String               @unique
@@ -122,9 +127,11 @@ model Order {
   id                 String      @id @default(cuid())
   user               User        @relation(fields: [userId], references: [id])
   userId             String
-  status             OrderStatus @default(PENDING)
+  status             OrderStatus    @default(PENDING)
   totalCents         Int
-  stripeSessionId    String?     @unique
+  deliveryMethod     DeliveryMethod @default(DELIVERY)
+  deliveryFeeCents   Int            @default(0)
+  stripeSessionId    String?        @unique
   customerName       String?
   customerPhone      String?
   shippingLine1      String?

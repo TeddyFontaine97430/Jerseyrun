@@ -3,8 +3,9 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { stripe, stripeConfigured } from "@/lib/stripe";
 import { formatSelectedOptions, decodeSelectedOptions } from "@/lib/productOptions";
+import { computeDeliveryFeeCents, type DeliveryMethod } from "@/lib/delivery";
 
-export async function POST() {
+export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user || session.user.role !== "CUSTOMER") {
     return NextResponse.json({ error: "Non autorisé." }, { status: 401 });
@@ -17,6 +18,9 @@ export async function POST() {
     );
   }
 
+  const body = await request.json().catch(() => ({}));
+  const deliveryMethod: DeliveryMethod = body?.deliveryMethod === "PICKUP" ? "PICKUP" : "DELIVERY";
+
   const cartItems = await prisma.cartItem.findMany({
     where: { userId: session.user.id },
     include: { product: { include: { club: true, options: { include: { values: true } } } } },
@@ -24,6 +28,14 @@ export async function POST() {
 
   if (cartItems.length === 0) {
     return NextResponse.json({ error: "Votre panier est vide." }, { status: 400 });
+  }
+
+  const distinctClubIds = new Set(cartItems.map((item) => item.product.clubId));
+  if (deliveryMethod === "PICKUP" && distinctClubIds.size > 1) {
+    return NextResponse.json(
+      { error: "Le retrait au club n'est pas disponible pour une commande contenant plusieurs clubs." },
+      { status: 400 },
+    );
   }
 
   for (const item of cartItems) {
@@ -58,16 +70,21 @@ export async function POST() {
     }
   }
 
-  const totalCents = cartItems.reduce(
+  const itemsTotalCents = cartItems.reduce(
     (sum, item) => sum + item.product.priceCents * item.quantity,
     0,
   );
+  const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const deliveryFeeCents = computeDeliveryFeeCents(deliveryMethod, itemCount);
+  const totalCents = itemsTotalCents + deliveryFeeCents;
 
   const order = await prisma.order.create({
     data: {
       userId: session.user.id,
       status: "PENDING",
       totalCents,
+      deliveryMethod,
+      deliveryFeeCents,
       items: {
         create: cartItems.map((item) => ({
           productId: item.productId,
@@ -83,27 +100,44 @@ export async function POST() {
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
 
+  const lineItems = cartItems.map((item) => {
+    const optionsLabel = formatSelectedOptions(item.selectedOptions);
+    return {
+      quantity: item.quantity,
+      price_data: {
+        currency: "eur",
+        unit_amount: item.product.priceCents,
+        product_data: {
+          name: `${item.product.name}${optionsLabel ? ` (${optionsLabel})` : ""} — ${item.product.club.name}`,
+        },
+      },
+    };
+  });
+
+  if (deliveryFeeCents > 0) {
+    lineItems.push({
+      quantity: 1,
+      price_data: {
+        currency: "eur",
+        unit_amount: deliveryFeeCents,
+        product_data: { name: "Livraison à domicile (Île de la Réunion)" },
+      },
+    });
+  }
+
   const checkoutSession = await stripe.checkout.sessions.create({
     mode: "payment",
     customer_email: session.user.email ?? undefined,
-    line_items: cartItems.map((item) => {
-      const optionsLabel = formatSelectedOptions(item.selectedOptions);
-      return {
-        quantity: item.quantity,
-        price_data: {
-          currency: "eur",
-          unit_amount: item.product.priceCents,
-          product_data: {
-            name: `${item.product.name}${optionsLabel ? ` (${optionsLabel})` : ""} — ${item.product.club.name}`,
-          },
-        },
-      };
-    }),
+    line_items: lineItems,
     phone_number_collection: { enabled: true },
-    shipping_address_collection: {
-      allowed_countries: ["FR", "BE", "CH", "LU", "MC", "DE", "ES", "IT"],
-    },
-    metadata: { orderId: order.id },
+    ...(deliveryMethod === "DELIVERY"
+      ? {
+          shipping_address_collection: {
+            allowed_countries: ["FR", "BE", "CH", "LU", "MC", "DE", "ES", "IT"],
+          },
+        }
+      : {}),
+    metadata: { orderId: order.id, deliveryMethod },
     success_url: `${baseUrl}/commande/succes?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${baseUrl}/panier`,
   });
