@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
+import type { Prisma } from "@prisma/client";
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 import { notifyAdmin } from "@/lib/email";
 import { formatPrice } from "@/lib/money";
+import { decodeSelectedOptions } from "@/lib/productOptions";
 
 export async function POST(request: Request) {
   const signature = request.headers.get("stripe-signature");
@@ -37,6 +39,28 @@ export async function POST(request: Request) {
         const customerDetails = checkoutSession.customer_details;
         const customerName = shipping?.name ?? customerDetails?.name ?? undefined;
 
+        const stockUpdates: Prisma.PrismaPromise<unknown>[] = [];
+        for (const item of order.items) {
+          const selections = decodeSelectedOptions(item.selectedOptions);
+          if (selections.length === 0) {
+            stockUpdates.push(
+              prisma.product.update({
+                where: { id: item.productId },
+                data: { stock: { decrement: item.quantity } },
+              }),
+            );
+            continue;
+          }
+          for (const sel of selections) {
+            stockUpdates.push(
+              prisma.productOptionValue.updateMany({
+                where: { value: sel.value, option: { name: sel.name, productId: item.productId } },
+                data: { stock: { decrement: item.quantity } },
+              }),
+            );
+          }
+        }
+
         await prisma.$transaction([
           prisma.order.update({
             where: { id: orderId },
@@ -52,12 +76,7 @@ export async function POST(request: Request) {
               shippingCountry: shipping?.address?.country ?? customerDetails?.address?.country ?? undefined,
             },
           }),
-          ...order.items.map((item) =>
-            prisma.product.update({
-              where: { id: item.productId },
-              data: { stock: { decrement: item.quantity } },
-            }),
-          ),
+          ...stockUpdates,
         ]);
 
         const itemsList = order.items

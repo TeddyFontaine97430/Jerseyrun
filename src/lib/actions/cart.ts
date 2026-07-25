@@ -25,7 +25,7 @@ export async function addToCart(
   const productId = formData.get("productId") as string;
   const product = await prisma.product.findUnique({
     where: { id: productId },
-    include: { options: true, club: true },
+    include: { options: { include: { values: true } }, club: true },
   });
   if (!product || !product.active) {
     return { status: "error", message: "Cet article n'est plus disponible." };
@@ -38,18 +38,29 @@ export async function addToCart(
   if (!Number.isFinite(quantity) || quantity < 1) {
     return { status: "error", message: "Quantité invalide." };
   }
-  if (quantity > product.stock) {
-    return { status: "error", message: `Seulement ${product.stock} article(s) disponible(s).` };
-  }
 
   const selections: { name: string; value: string }[] = [];
-  for (const option of product.options) {
-    const value = formData.get(`option_${option.id}`);
-    if (typeof value !== "string" || value.trim() === "") {
-      return { status: "error", message: `Merci de choisir une valeur pour "${option.name}".` };
+  let availableStock = product.stock;
+  if (product.options.length > 0) {
+    availableStock = Infinity;
+    for (const option of product.options) {
+      const value = formData.get(`option_${option.id}`);
+      if (typeof value !== "string" || value.trim() === "") {
+        return { status: "error", message: `Merci de choisir une valeur pour "${option.name}".` };
+      }
+      const optionValue = option.values.find((v) => v.value === value);
+      if (!optionValue) {
+        return { status: "error", message: `Valeur invalide pour "${option.name}".` };
+      }
+      selections.push({ name: option.name, value });
+      availableStock = Math.min(availableStock, optionValue.stock);
     }
-    selections.push({ name: option.name, value });
   }
+
+  if (quantity > availableStock) {
+    return { status: "error", message: `Seulement ${availableStock} article(s) disponible(s).` };
+  }
+
   const selectedOptions = encodeSelectedOptions(selections);
 
   const existing = await prisma.cartItem.findFirst({
@@ -58,8 +69,8 @@ export async function addToCart(
 
   if (existing) {
     const newQuantity = existing.quantity + quantity;
-    if (newQuantity > product.stock) {
-      return { status: "error", message: `Seulement ${product.stock} article(s) disponible(s) (dont ${existing.quantity} déjà dans votre panier).` };
+    if (newQuantity > availableStock) {
+      return { status: "error", message: `Seulement ${availableStock} article(s) disponible(s) (dont ${existing.quantity} déjà dans votre panier).` };
     }
     await prisma.cartItem.update({
       where: { id: existing.id },

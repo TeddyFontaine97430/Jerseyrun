@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { stripe, stripeConfigured } from "@/lib/stripe";
-import { formatSelectedOptions } from "@/lib/productOptions";
+import { formatSelectedOptions, decodeSelectedOptions } from "@/lib/productOptions";
 
 export async function POST() {
   const session = await auth();
@@ -19,7 +19,7 @@ export async function POST() {
 
   const cartItems = await prisma.cartItem.findMany({
     where: { userId: session.user.id },
-    include: { product: { include: { club: true } } },
+    include: { product: { include: { club: true, options: { include: { values: true } } } } },
   });
 
   if (cartItems.length === 0) {
@@ -27,15 +27,32 @@ export async function POST() {
   }
 
   for (const item of cartItems) {
-    if (!item.product.active || item.product.stock < item.quantity) {
+    if (!item.product.active) {
       return NextResponse.json(
-        { error: `Stock insuffisant pour "${item.product.name}".` },
+        { error: `"${item.product.name}" n'est plus disponible.` },
         { status: 400 },
       );
     }
     if (!item.product.club.active) {
       return NextResponse.json(
         { error: `La boutique "${item.product.club.name}" est actuellement fermée.` },
+        { status: 400 },
+      );
+    }
+
+    let available = item.product.stock;
+    const selections = decodeSelectedOptions(item.selectedOptions);
+    if (selections.length > 0) {
+      available = Infinity;
+      for (const sel of selections) {
+        const option = item.product.options.find((o) => o.name === sel.name);
+        const optionValue = option?.values.find((v) => v.value === sel.value);
+        available = Math.min(available, optionValue?.stock ?? 0);
+      }
+    }
+    if (available < item.quantity) {
+      return NextResponse.json(
+        { error: `Stock insuffisant pour "${item.product.name}".` },
         { status: 400 },
       );
     }

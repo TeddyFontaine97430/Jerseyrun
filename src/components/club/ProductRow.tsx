@@ -18,7 +18,7 @@ export function ProductRow({
     stock: number;
     imageUrl: string | null;
     active: boolean;
-    options?: { name: string; values: string }[];
+    options?: { name: string; values: { value: string; stock: number }[] }[];
   };
   clubId?: string;
 }) {
@@ -45,12 +45,20 @@ export function ProductRow({
       <div className="flex-1">
         <p className="font-semibold text-white">{product.name}</p>
         <p className="text-sm text-neutral-400">
-          {formatPrice(product.priceCents)} · Stock : {product.stock}
+          {formatPrice(product.priceCents)}
+          {(!product.options || product.options.length === 0) && ` · Stock : ${product.stock}`}
         </p>
         {product.options && product.options.length > 0 && (
-          <p className="mt-0.5 text-xs text-neutral-500">
-            {product.options.map((o) => o.name).join(" · ")}
-          </p>
+          <div className="mt-0.5 space-y-0.5">
+            {product.options.map((option) => (
+              <p key={option.name} className="text-xs text-neutral-500">
+                <span className="font-medium text-neutral-400">{option.name} :</span>{" "}
+                {option.values
+                  .map((v) => `${v.value} (${v.stock}${v.stock <= 0 ? " — rupture" : ""})`)
+                  .join(" · ")}
+              </p>
+            ))}
+          </div>
         )}
       </div>
       {!product.active && (

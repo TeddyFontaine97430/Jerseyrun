@@ -1,10 +1,3 @@
-export function parseOptionValues(raw: string): string[] {
-  return raw
-    .split(",")
-    .map((v) => v.trim())
-    .filter((v) => v.length > 0);
-}
-
 export function encodeSelectedOptions(
   selections: { name: string; value: string }[],
 ): string | null {

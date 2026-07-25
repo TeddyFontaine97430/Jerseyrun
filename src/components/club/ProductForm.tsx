@@ -1,13 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import { useActionState } from "react";
 import { createProduct, updateProduct, type ProductFormState } from "@/lib/actions/products";
+import { OptionValuesEditor, type OptionValueRow } from "@/components/club/OptionValuesEditor";
 
 const initialState: ProductFormState = { status: "idle" };
 
 type ProductOptionInitial = {
   name: string;
-  values: string;
+  values: { value: string; stock: number }[];
 };
 
 type ProductInitial = {
@@ -36,10 +38,18 @@ export function ProductForm({
   const shoeSizeGroup = product?.options?.find((o) => o.name === "Pointure");
   const customGroup = product?.options?.find((o) => o.name !== "Taille" && o.name !== "Pointure");
 
+  const [sizeRows, setSizeRows] = useState<OptionValueRow[]>(sizeGroup?.values ?? []);
+  const [shoeSizeRows, setShoeSizeRows] = useState<OptionValueRow[]>(shoeSizeGroup?.values ?? []);
+  const [customOptionName, setCustomOptionName] = useState(customGroup?.name ?? "");
+  const [customRows, setCustomRows] = useState<OptionValueRow[]>(customGroup?.values ?? []);
+
   return (
     <form action={formAction} className="grid gap-4 sm:grid-cols-2">
       {product && <input type="hidden" name="productId" value={product.id} />}
       {clubId && <input type="hidden" name="clubId" value={clubId} />}
+      <input type="hidden" name="sizeValuesJson" value={JSON.stringify(sizeRows)} />
+      <input type="hidden" name="shoeSizeValuesJson" value={JSON.stringify(shoeSizeRows)} />
+      <input type="hidden" name="customOptionValuesJson" value={JSON.stringify(customRows)} />
       <div>
         <label className="mb-1 block text-sm font-medium text-white">Nom de l&apos;article</label>
         <input
@@ -72,6 +82,9 @@ export function ProductForm({
           defaultValue={product?.stock ?? 0}
           className="w-full rounded-lg border border-white/10 bg-neutral-800 px-3 py-2 text-white placeholder:text-neutral-500 focus:border-accent focus:outline-none"
         />
+        <p className="mt-1 text-xs text-neutral-500">
+          Utilisé uniquement si aucune option (taille, pointure...) n&apos;est définie ci-dessous.
+        </p>
       </div>
       <div>
         <label className="mb-1 block text-sm font-medium text-white">Image de l&apos;article (optionnel)</label>
@@ -108,52 +121,31 @@ export function ProductForm({
       <div className="sm:col-span-2 rounded-lg border border-white/10 bg-black/30 p-4">
         <p className="mb-1 text-sm font-semibold text-white">Options de l&apos;article (facultatif)</p>
         <p className="mb-3 text-xs text-neutral-500">
-          Si vous renseignez une option, le client devra choisir une valeur avant d&apos;ajouter l&apos;article à son panier.
+          Si vous renseignez une option, le client devra choisir une valeur avant d&apos;ajouter l&apos;article à
+          son panier. Indiquez le stock disponible pour chaque valeur pour un meilleur suivi de l&apos;inventaire.
         </p>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-5 sm:grid-cols-2">
           <div>
-            <label className="mb-1 block text-sm font-medium text-neutral-200">
-              Tailles disponibles
-            </label>
-            <input
-              name="sizeValues"
-              defaultValue={sizeGroup?.values ?? ""}
-              placeholder="S, M, L, XL"
-              className="w-full rounded-lg border border-white/10 bg-neutral-800 px-3 py-2 text-white placeholder:text-neutral-500 focus:border-accent focus:outline-none"
-            />
+            <label className="mb-1 block text-sm font-medium text-neutral-200">Tailles disponibles</label>
+            <OptionValuesEditor rows={sizeRows} onChange={setSizeRows} valuePlaceholder="ex: M" />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-neutral-200">
-              Pointures disponibles
-            </label>
-            <input
-              name="shoeSizeValues"
-              defaultValue={shoeSizeGroup?.values ?? ""}
-              placeholder="38, 39, 40, 41, 42"
-              className="w-full rounded-lg border border-white/10 bg-neutral-800 px-3 py-2 text-white placeholder:text-neutral-500 focus:border-accent focus:outline-none"
-            />
+            <label className="mb-1 block text-sm font-medium text-neutral-200">Pointures disponibles</label>
+            <OptionValuesEditor rows={shoeSizeRows} onChange={setShoeSizeRows} valuePlaceholder="ex: 42" />
           </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-neutral-200">
-              Autre option — nom
-            </label>
+          <div className="sm:col-span-2">
+            <label className="mb-1 block text-sm font-medium text-neutral-200">Autre option — nom</label>
             <input
               name="customOptionName"
-              defaultValue={customGroup?.name ?? ""}
+              value={customOptionName}
+              onChange={(e) => setCustomOptionName(e.target.value)}
               placeholder="ex: Couleur"
-              className="w-full rounded-lg border border-white/10 bg-neutral-800 px-3 py-2 text-white placeholder:text-neutral-500 focus:border-accent focus:outline-none"
+              className="w-full rounded-lg border border-white/10 bg-neutral-800 px-3 py-2 text-white placeholder:text-neutral-500 focus:border-accent focus:outline-none sm:max-w-xs"
             />
           </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-neutral-200">
-              Autre option — valeurs
-            </label>
-            <input
-              name="customOptionValues"
-              defaultValue={customGroup?.values ?? ""}
-              placeholder="Bleu, Rouge, Noir"
-              className="w-full rounded-lg border border-white/10 bg-neutral-800 px-3 py-2 text-white placeholder:text-neutral-500 focus:border-accent focus:outline-none"
-            />
+          <div className="sm:col-span-2">
+            <label className="mb-1 block text-sm font-medium text-neutral-200">Autre option — valeurs</label>
+            <OptionValuesEditor rows={customRows} onChange={setCustomRows} valuePlaceholder="ex: Rouge" />
           </div>
         </div>
       </div>

@@ -13,7 +13,7 @@ async function getClub(slug: string) {
       products: {
         where: { active: true },
         orderBy: { createdAt: "asc" },
-        include: { options: true },
+        include: { options: { include: { values: true } } },
       },
     },
   });

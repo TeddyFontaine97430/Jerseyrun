@@ -3,8 +3,22 @@ import type { Metadata } from "next";
 import { auth } from "@/auth";
 import { getCartForUser } from "@/lib/cart";
 import { formatPrice } from "@/lib/money";
+import { decodeSelectedOptions } from "@/lib/productOptions";
 import { CartItemRow } from "@/components/CartItemRow";
 import { CheckoutButton } from "@/components/CheckoutButton";
+
+function availableStockFor(item: Awaited<ReturnType<typeof getCartForUser>>["items"][number]) {
+  const selections = decodeSelectedOptions(item.selectedOptions);
+  if (selections.length === 0) return item.product.stock;
+
+  let available = Infinity;
+  for (const sel of selections) {
+    const option = item.product.options.find((o) => o.name === sel.name);
+    const optionValue = option?.values.find((v) => v.value === sel.value);
+    available = Math.min(available, optionValue?.stock ?? 0);
+  }
+  return available;
+}
 
 export const metadata: Metadata = { title: "Mon panier — Jersey Run" };
 
@@ -50,7 +64,7 @@ export default async function PanierPage() {
                 imageUrl={item.product.imageUrl}
                 priceCents={item.product.priceCents}
                 quantity={item.quantity}
-                stock={item.product.stock}
+                stock={availableStockFor(item)}
                 selectedOptions={item.selectedOptions}
               />
             ))}

@@ -5,7 +5,6 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getClubForUser } from "@/lib/clubStats";
-import { parseOptionValues } from "@/lib/productOptions";
 import { uploadImage, UploadError } from "@/lib/upload";
 
 const productSchema = z.object({
@@ -26,19 +25,45 @@ async function resolveProductImage(
   return currentImageUrl;
 }
 
-function optionGroupsFromFormData(formData: FormData): { name: string; values: string }[] {
-  const groups: { name: string; values: string }[] = [];
+type OptionValueRow = { value: string; stock: number };
 
-  const sizeValues = parseOptionValues((formData.get("sizeValues") as string) ?? "");
-  if (sizeValues.length > 0) groups.push({ name: "Taille", values: sizeValues.join(",") });
+function parseOptionRowsJson(raw: FormDataEntryValue | null): OptionValueRow[] {
+  if (typeof raw !== "string" || !raw) return [];
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return [];
+  }
+  if (!Array.isArray(parsed)) return [];
 
-  const shoeSizeValues = parseOptionValues((formData.get("shoeSizeValues") as string) ?? "");
-  if (shoeSizeValues.length > 0) groups.push({ name: "Pointure", values: shoeSizeValues.join(",") });
+  const seen = new Set<string>();
+  const rows: OptionValueRow[] = [];
+  for (const entry of parsed) {
+    if (typeof entry !== "object" || entry === null) continue;
+    const value = typeof (entry as { value?: unknown }).value === "string" ? (entry as { value: string }).value.trim() : "";
+    if (!value || seen.has(value)) continue;
+    seen.add(value);
+    const stockNumber = Number((entry as { stock?: unknown }).stock);
+    const stock = Number.isFinite(stockNumber) ? Math.max(0, Math.trunc(stockNumber)) : 0;
+    rows.push({ value, stock });
+  }
+  return rows;
+}
+
+function optionGroupsFromFormData(formData: FormData): { name: string; values: OptionValueRow[] }[] {
+  const groups: { name: string; values: OptionValueRow[] }[] = [];
+
+  const sizeValues = parseOptionRowsJson(formData.get("sizeValuesJson"));
+  if (sizeValues.length > 0) groups.push({ name: "Taille", values: sizeValues });
+
+  const shoeSizeValues = parseOptionRowsJson(formData.get("shoeSizeValuesJson"));
+  if (shoeSizeValues.length > 0) groups.push({ name: "Pointure", values: shoeSizeValues });
 
   const customName = ((formData.get("customOptionName") as string) ?? "").trim();
-  const customValues = parseOptionValues((formData.get("customOptionValues") as string) ?? "");
+  const customValues = parseOptionRowsJson(formData.get("customOptionValuesJson"));
   if (customName && customValues.length > 0) {
-    groups.push({ name: customName, values: customValues.join(",") });
+    groups.push({ name: customName, values: customValues });
   }
 
   return groups;
@@ -119,7 +144,12 @@ export async function createProduct(
       priceCents: Math.round(price * 100),
       stock,
       imageUrl,
-      options: { create: optionGroups },
+      options: {
+        create: optionGroups.map((group) => ({
+          name: group.name,
+          values: { create: group.values },
+        })),
+      },
     },
   });
 
@@ -169,7 +199,12 @@ export async function updateProduct(
         priceCents: Math.round(price * 100),
         stock,
         imageUrl,
-        options: { create: optionGroups },
+        options: {
+          create: optionGroups.map((group) => ({
+            name: group.name,
+            values: { create: group.values },
+          })),
+        },
       },
     }),
   ]);
