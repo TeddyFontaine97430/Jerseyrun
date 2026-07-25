@@ -30,6 +30,7 @@ export default async function AdminClubsPage() {
           <thead className="border-b border-white/10 text-neutral-400">
             <tr>
               <th className="px-5 py-3 font-medium">Club</th>
+              <th className="px-5 py-3 font-medium">Sport</th>
               <th className="px-5 py-3 font-medium">Email</th>
               <th className="px-5 py-3 font-medium">Téléphone</th>
               <th className="px-5 py-3 font-medium">Articles</th>
@@ -41,6 +42,7 @@ export default async function AdminClubsPage() {
             {clubs.map((club) => (
               <tr key={club.id} className="border-b border-white/5 last:border-0">
                 <td className="px-5 py-3 font-medium text-white">{club.name}</td>
+                <td className="px-5 py-3 text-neutral-300">{club.sport ?? "—"}</td>
                 <td className="px-5 py-3 text-neutral-300">{club.email}</td>
                 <td className="px-5 py-3 text-neutral-300">{club.phone}</td>
                 <td className="px-5 py-3 text-neutral-300">{club._count.products}</td>

@@ -70,6 +70,7 @@ model Club {
   slug        String      @unique
   phone       String
   email       String
+  sport       String?
   description String?
   logoUrl     String?
   status      ClubStatus  @default(PENDING)

@@ -50,6 +50,7 @@ export default async function AdminClubDetailPage({ params }: Props) {
           </div>
           <p className="mt-1 text-sm text-neutral-400">
             {club.email} · {club.phone}
+            {club.sport && <> · {club.sport}</>}
           </p>
           {club.description && <p className="mt-2 max-w-xl text-sm text-neutral-400">{club.description}</p>}
         </div>

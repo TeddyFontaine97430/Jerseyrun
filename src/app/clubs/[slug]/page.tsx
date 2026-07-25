@@ -43,6 +43,11 @@ export default async function ClubShopPage({ params }: Props) {
           </div>
           <div>
             <h1 className="text-3xl font-extrabold text-white">{club.name}</h1>
+            {club.sport && (
+              <span className="mt-2 inline-block rounded-full bg-accent/15 px-3 py-1 text-xs font-semibold text-accent">
+                {club.sport}
+              </span>
+            )}
             {club.description && <p className="mt-2 max-w-2xl text-neutral-300">{club.description}</p>}
           </div>
         </div>

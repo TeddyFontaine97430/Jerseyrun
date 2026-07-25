@@ -7,6 +7,7 @@ import { notifyAdmin } from "@/lib/email";
 
 const clubSchema = z.object({
   name: z.string().min(2, "Merci d'indiquer le nom du club."),
+  sport: z.string().min(1, "Merci de sélectionner un sport."),
   phone: z.string().min(6, "Numéro de téléphone invalide."),
   email: z.string().email("Adresse email invalide."),
   password: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères."),
@@ -33,6 +34,7 @@ export async function registerClub(
 ): Promise<ClubRegistrationState> {
   const parsed = clubSchema.safeParse({
     name: formData.get("name"),
+    sport: formData.get("sport"),
     phone: formData.get("phone"),
     email: formData.get("email"),
     password: formData.get("password"),
@@ -45,7 +47,7 @@ export async function registerClub(
     };
   }
 
-  const { name, phone, email, password } = parsed.data;
+  const { name, sport, phone, email, password } = parsed.data;
   const normalizedEmail = email.toLowerCase().trim();
 
   const existingUser = await prisma.user.findUnique({ where: { email: normalizedEmail } });
@@ -72,6 +74,7 @@ export async function registerClub(
         create: {
           name,
           slug,
+          sport,
           phone,
           email: normalizedEmail,
           status: "PENDING",
@@ -86,6 +89,7 @@ export async function registerClub(
       <p>Un nouveau club souhaite rejoindre Jersey Run.</p>
       <ul>
         <li><strong>Nom :</strong> ${name}</li>
+        <li><strong>Sport :</strong> ${sport}</li>
         <li><strong>Email :</strong> ${normalizedEmail}</li>
         <li><strong>Téléphone :</strong> ${phone}</li>
       </ul>

@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { registerClub, type ClubRegistrationState } from "@/lib/actions/club-registration";
+import { SPORTS } from "@/lib/sports";
 
 const initialState: ClubRegistrationState = { status: "idle" };
 
@@ -83,6 +84,27 @@ export function ConceptTabs({ defaultTab }: { defaultTab: "concept" | "inscripti
                 className="w-full rounded-lg border border-white/10 bg-neutral-800 px-3 py-2.5 text-white placeholder:text-neutral-500 focus:border-accent focus:outline-none"
                 placeholder="ex: AS Rugby Club"
               />
+            </div>
+            <div>
+              <label htmlFor="sport" className="mb-1 block text-sm font-medium text-white">
+                Sport du club
+              </label>
+              <select
+                id="sport"
+                name="sport"
+                required
+                defaultValue=""
+                className="w-full rounded-lg border border-white/10 bg-neutral-800 px-3 py-2.5 text-white focus:border-accent focus:outline-none"
+              >
+                <option value="" disabled>
+                  Sélectionnez un sport
+                </option>
+                {SPORTS.map((sport) => (
+                  <option key={sport} value={sport}>
+                    {sport}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label htmlFor="phone" className="mb-1 block text-sm font-medium text-white">
