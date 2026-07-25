@@ -11,6 +11,7 @@ import { ResetPasswordButton } from "@/components/admin/ResetPasswordButton";
 import { ClubApprovalRow } from "@/components/admin/ClubApprovalRow";
 import { ClubStatusToggle } from "@/components/admin/ClubStatusToggle";
 import { DeleteClubButton } from "@/components/admin/DeleteClubButton";
+import { DeliveryStatusToggle } from "@/components/DeliveryStatusToggle";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -102,6 +103,7 @@ export default async function AdminClubDetailPage({ params }: Props) {
                 <th className="px-5 py-3 font-medium">Quantité</th>
                 <th className="px-5 py-3 font-medium">Montant</th>
                 <th className="px-5 py-3 font-medium">Statut</th>
+                <th className="px-5 py-3 font-medium">Livraison</th>
                 <th className="px-5 py-3 font-medium">Date</th>
               </tr>
             </thead>
@@ -127,6 +129,9 @@ export default async function AdminClubDetailPage({ params }: Props) {
                     >
                       {ORDER_STATUS_LABELS[item.order.status] ?? item.order.status}
                     </span>
+                  </td>
+                  <td className="px-5 py-3">
+                    <DeliveryStatusToggle orderItemId={item.id} delivered={item.delivered} />
                   </td>
                   <td className="px-5 py-3 text-neutral-400">{item.order.createdAt.toLocaleDateString("fr-FR")}</td>
                 </tr>

@@ -166,6 +166,7 @@ model OrderItem {
   productName         String
   selectedOptions     String?
   personalizationText String?
+  delivered           Boolean @default(false)
 }
 
 model ContactMessage {

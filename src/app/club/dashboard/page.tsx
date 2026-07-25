@@ -4,6 +4,7 @@ import { getClubForUser, getClubStats, getClubSales } from "@/lib/clubStats";
 import { formatPrice } from "@/lib/money";
 import { ORDER_STATUS_LABELS, ORDER_STATUS_STYLES } from "@/lib/orderStatus";
 import { formatItemDetails } from "@/lib/productOptions";
+import { DeliveryStatusToggle } from "@/components/DeliveryStatusToggle";
 
 export const metadata: Metadata = { title: "Espace club — Jersey Run" };
 
@@ -45,6 +46,7 @@ export default async function ClubDashboardPage() {
                 <th className="px-5 py-3 font-medium">Quantité</th>
                 <th className="px-5 py-3 font-medium">Montant</th>
                 <th className="px-5 py-3 font-medium">Statut</th>
+                <th className="px-5 py-3 font-medium">Livraison</th>
                 <th className="px-5 py-3 font-medium">Date</th>
               </tr>
             </thead>
@@ -70,6 +72,9 @@ export default async function ClubDashboardPage() {
                     >
                       {ORDER_STATUS_LABELS[item.order.status] ?? item.order.status}
                     </span>
+                  </td>
+                  <td className="px-5 py-3">
+                    <DeliveryStatusToggle orderItemId={item.id} delivered={item.delivered} />
                   </td>
                   <td className="px-5 py-3 text-neutral-400">
                     {item.order.createdAt.toLocaleDateString("fr-FR")}
