@@ -22,8 +22,8 @@ export default async function Home() {
         />
         <div className="absolute inset-0 bg-gradient-to-r from-black via-black/85 to-black/50" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black" />
-        <div className="container-page relative grid gap-10 py-20 lg:grid-cols-2 lg:items-center lg:py-28">
-          <div>
+        <div className="container-page relative py-20 lg:py-28">
+          <div className="max-w-2xl">
             <p className="inline-flex items-center rounded-full bg-gold/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-gold">
               La boutique officielle des clubs sportifs
             </p>
@@ -48,20 +48,6 @@ export default async function Home() {
               >
                 Inscrire mon club
               </Link>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="col-span-2 h-40 rounded-2xl bg-navy/95 p-6 text-white shadow-lg">
-              <p className="text-3xl font-extrabold">{clubs.length}+</p>
-              <p className="mt-1 text-sm text-slate-300">clubs partenaires actifs</p>
-            </div>
-            <div className="h-32 rounded-2xl bg-accent p-6 text-white shadow-lg">
-              <p className="text-2xl font-extrabold">100%</p>
-              <p className="mt-1 text-sm">reversé aux clubs</p>
-            </div>
-            <div className="h-32 rounded-2xl border border-white/10 bg-neutral-900 p-6 shadow-sm">
-              <p className="text-2xl font-extrabold text-white">1 site</p>
-              <p className="mt-1 text-sm text-neutral-400">pour tout gérer</p>
             </div>
           </div>
         </div>
