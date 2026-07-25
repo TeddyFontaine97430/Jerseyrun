@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { ClubLogoCard } from "@/components/ClubLogoCard";
 
@@ -10,8 +11,18 @@ export default async function Home() {
 
   return (
     <div>
-      <section className="relative overflow-hidden bg-gradient-to-b from-neutral-900 to-black">
-        <div className="container-page grid gap-10 py-20 lg:grid-cols-2 lg:items-center lg:py-28">
+      <section className="relative overflow-hidden bg-black">
+        <Image
+          src="/hero-banner.png"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-center opacity-70"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/85 to-black/50" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black" />
+        <div className="container-page relative grid gap-10 py-20 lg:grid-cols-2 lg:items-center lg:py-28">
           <div>
             <p className="inline-flex items-center rounded-full bg-gold/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-gold">
               La boutique officielle des clubs sportifs
