@@ -31,9 +31,8 @@ export default async function Home() {
               La boutique 100% clubs péi.
             </h1>
             <p className="mt-5 max-w-lg text-lg text-neutral-300">
-              Jersey Run réunit les boutiques officielles de plusieurs clubs
-              sportifs : maillots, équipements et goodies, commandés en ligne
-              et gérés directement par chaque club.
+              Soutenez votre club péi en un clic : maillots, équipements et
+              goodies officiels, livrés chez vous ou à récupérer sur place.
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
               <a
