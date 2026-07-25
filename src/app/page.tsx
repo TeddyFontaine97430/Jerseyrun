@@ -28,7 +28,7 @@ export default async function Home() {
               La boutique officielle des clubs sportifs
             </p>
             <h1 className="mt-5 text-4xl font-extrabold leading-tight text-white sm:text-5xl">
-              Tous les clubs. Une seule boutique.
+              La boutique 100% clubs péi.
             </h1>
             <p className="mt-5 max-w-lg text-lg text-neutral-300">
               Jersey Run réunit les boutiques officielles de plusieurs clubs
