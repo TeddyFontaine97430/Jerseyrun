@@ -3,6 +3,7 @@
 import { randomBytes } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -45,6 +46,43 @@ export async function reopenClub(clubId: string) {
   revalidatePath(`/admin/clubs/${clubId}`);
   revalidatePath("/");
   revalidatePath(`/clubs/${club.slug}`);
+}
+
+export type DeleteClubResult = { status: "success" } | { status: "error"; message: string };
+
+export async function deleteClub(clubId: string): Promise<DeleteClubResult> {
+  await requireAdmin();
+
+  const club = await prisma.club.findUnique({
+    where: { id: clubId },
+    include: { products: { select: { id: true } } },
+  });
+  if (!club) {
+    return { status: "error", message: "Club introuvable." };
+  }
+
+  const hasOrderHistory = await prisma.orderItem.findFirst({ where: { clubId } });
+  if (hasOrderHistory) {
+    return {
+      status: "error",
+      message:
+        "Impossible de supprimer : ce club a déjà des ventes enregistrées. Fermez la boutique à la place pour la rendre indisponible sans perdre l'historique.",
+    };
+  }
+
+  const productIds = club.products.map((p) => p.id);
+
+  await prisma.$transaction([
+    prisma.cartItem.deleteMany({ where: { productId: { in: productIds } } }),
+    prisma.product.deleteMany({ where: { id: { in: productIds } } }),
+    prisma.club.delete({ where: { id: clubId } }),
+    prisma.user.delete({ where: { id: club.ownerId } }),
+  ]);
+
+  revalidatePath("/admin/clubs");
+  revalidatePath("/");
+
+  redirect("/admin/clubs");
 }
 
 function generateTempPassword() {

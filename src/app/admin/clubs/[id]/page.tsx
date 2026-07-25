@@ -10,6 +10,7 @@ import { resetClubPassword, approveClub, rejectClub } from "@/lib/actions/admin"
 import { ResetPasswordButton } from "@/components/admin/ResetPasswordButton";
 import { ClubApprovalRow } from "@/components/admin/ClubApprovalRow";
 import { ClubStatusToggle } from "@/components/admin/ClubStatusToggle";
+import { DeleteClubButton } from "@/components/admin/DeleteClubButton";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -63,6 +64,7 @@ export default async function AdminClubDetailPage({ params }: Props) {
             action={resetClubPassword.bind(null, club.id)}
             label="Réinitialiser le mot de passe du club"
           />
+          <DeleteClubButton clubId={club.id} clubName={club.name} />
         </div>
       </div>
 
