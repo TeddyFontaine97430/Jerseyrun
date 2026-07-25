@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { getClubForUser, getClubStats, getClubSales } from "@/lib/clubStats";
 import { formatPrice } from "@/lib/money";
 import { ORDER_STATUS_LABELS, ORDER_STATUS_STYLES } from "@/lib/orderStatus";
-import { formatSelectedOptions } from "@/lib/productOptions";
+import { formatItemDetails } from "@/lib/productOptions";
 
 export const metadata: Metadata = { title: "Espace club — Jersey Run" };
 
@@ -53,9 +53,9 @@ export default async function ClubDashboardPage() {
                 <tr key={item.id} className="border-b border-white/5 last:border-0">
                   <td className="px-5 py-3 font-medium text-white">
                     {item.productName}
-                    {formatSelectedOptions(item.selectedOptions) && (
+                    {formatItemDetails(item.selectedOptions, item.personalizationText) && (
                       <span className="ml-1.5 font-normal text-neutral-500">
-                        ({formatSelectedOptions(item.selectedOptions)})
+                        ({formatItemDetails(item.selectedOptions, item.personalizationText)})
                       </span>
                     )}
                   </td>

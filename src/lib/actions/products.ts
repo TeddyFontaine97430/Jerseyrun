@@ -11,7 +11,8 @@ const productSchema = z.object({
   name: z.string().min(2, "Le nom est requis."),
   description: z.string().optional(),
   price: z.coerce.number().min(0.01, "Le prix doit être supérieur à 0."),
-  stock: z.coerce.number().int().min(0, "Le stock ne peut pas être négatif."),
+  personalizationEnabled: z.coerce.boolean(),
+  personalizationFee: z.coerce.number().min(0, "Le coût ne peut pas être négatif.").optional(),
 });
 
 async function resolveProductImage(
@@ -121,7 +122,8 @@ export async function createProduct(
     name: formData.get("name"),
     description: formData.get("description"),
     price: formData.get("price"),
-    stock: formData.get("stock"),
+    personalizationEnabled: formData.get("personalizationEnabled") === "on",
+    personalizationFee: formData.get("personalizationFee") || 0,
   });
   if (!parsed.success) {
     return { status: "error", message: parsed.error.issues[0]?.message ?? "Formulaire invalide." };
@@ -134,7 +136,7 @@ export async function createProduct(
     return { status: "error", message: error instanceof UploadError ? error.message : "Échec de l'envoi de l'image." };
   }
 
-  const { name, description, price, stock } = parsed.data;
+  const { name, description, price, personalizationEnabled, personalizationFee } = parsed.data;
   const optionGroups = optionGroupsFromFormData(formData);
   await prisma.product.create({
     data: {
@@ -142,8 +144,9 @@ export async function createProduct(
       name,
       description: description || null,
       priceCents: Math.round(price * 100),
-      stock,
       imageUrl,
+      personalizationEnabled,
+      personalizationFeeCents: personalizationEnabled ? Math.round((personalizationFee ?? 0) * 100) : 0,
       options: {
         create: optionGroups.map((group) => ({
           name: group.name,
@@ -174,7 +177,8 @@ export async function updateProduct(
     name: formData.get("name"),
     description: formData.get("description"),
     price: formData.get("price"),
-    stock: formData.get("stock"),
+    personalizationEnabled: formData.get("personalizationEnabled") === "on",
+    personalizationFee: formData.get("personalizationFee") || 0,
   });
   if (!parsed.success) {
     return { status: "error", message: parsed.error.issues[0]?.message ?? "Formulaire invalide." };
@@ -187,7 +191,7 @@ export async function updateProduct(
     return { status: "error", message: error instanceof UploadError ? error.message : "Échec de l'envoi de l'image." };
   }
 
-  const { name, description, price, stock } = parsed.data;
+  const { name, description, price, personalizationEnabled, personalizationFee } = parsed.data;
   const optionGroups = optionGroupsFromFormData(formData);
   await prisma.$transaction([
     prisma.productOption.deleteMany({ where: { productId } }),
@@ -197,8 +201,9 @@ export async function updateProduct(
         name,
         description: description || null,
         priceCents: Math.round(price * 100),
-        stock,
         imageUrl,
+        personalizationEnabled,
+        personalizationFeeCents: personalizationEnabled ? Math.round((personalizationFee ?? 0) * 100) : 0,
         options: {
           create: optionGroups.map((group) => ({
             name: group.name,

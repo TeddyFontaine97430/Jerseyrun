@@ -17,8 +17,9 @@ type ProductInitial = {
   name: string;
   description: string | null;
   priceCents: number;
-  stock: number;
   imageUrl: string | null;
+  personalizationEnabled?: boolean;
+  personalizationFeeCents?: number;
   options?: ProductOptionInitial[];
 };
 
@@ -42,6 +43,7 @@ export function ProductForm({
   const [shoeSizeRows, setShoeSizeRows] = useState<OptionValueRow[]>(shoeSizeGroup?.values ?? []);
   const [customOptionName, setCustomOptionName] = useState(customGroup?.name ?? "");
   const [customRows, setCustomRows] = useState<OptionValueRow[]>(customGroup?.values ?? []);
+  const [personalizationEnabled, setPersonalizationEnabled] = useState(product?.personalizationEnabled ?? false);
 
   return (
     <form action={formAction} className="grid gap-4 sm:grid-cols-2">
@@ -70,21 +72,6 @@ export function ProductForm({
           defaultValue={product ? (product.priceCents / 100).toFixed(2) : undefined}
           className="w-full rounded-lg border border-white/10 bg-neutral-800 px-3 py-2 text-white placeholder:text-neutral-500 focus:border-accent focus:outline-none"
         />
-      </div>
-      <div>
-        <label className="mb-1 block text-sm font-medium text-white">Stock</label>
-        <input
-          name="stock"
-          type="number"
-          step="1"
-          min="0"
-          required
-          defaultValue={product?.stock ?? 0}
-          className="w-full rounded-lg border border-white/10 bg-neutral-800 px-3 py-2 text-white placeholder:text-neutral-500 focus:border-accent focus:outline-none"
-        />
-        <p className="mt-1 text-xs text-neutral-500">
-          Utilisé uniquement si aucune option (taille, pointure...) n&apos;est définie ci-dessous.
-        </p>
       </div>
       <div>
         <label className="mb-1 block text-sm font-medium text-white">Image de l&apos;article (optionnel)</label>
@@ -148,6 +135,37 @@ export function ProductForm({
             <OptionValuesEditor rows={customRows} onChange={setCustomRows} valuePlaceholder="ex: Rouge" />
           </div>
         </div>
+      </div>
+
+      <div className="sm:col-span-2 rounded-lg border border-white/10 bg-black/30 p-4">
+        <label className="flex items-center gap-2 text-sm font-semibold text-white">
+          <input
+            type="checkbox"
+            name="personalizationEnabled"
+            checked={personalizationEnabled}
+            onChange={(e) => setPersonalizationEnabled(e.target.checked)}
+            className="h-4 w-4 rounded border-white/20 bg-neutral-800 text-accent focus:ring-accent"
+          />
+          Proposer une option de personnalisation (facultatif)
+        </label>
+        <p className="mt-1 text-xs text-neutral-500">
+          Le client pourra cocher cette option et préciser lui-même ce qu&apos;il souhaite (ex : nom, numéro).
+        </p>
+        {personalizationEnabled && (
+          <div className="mt-3 max-w-xs">
+            <label className="mb-1 block text-sm font-medium text-neutral-200">Coût supplémentaire (€)</label>
+            <input
+              name="personalizationFee"
+              type="number"
+              step="0.01"
+              min="0"
+              defaultValue={
+                product?.personalizationFeeCents ? (product.personalizationFeeCents / 100).toFixed(2) : "0"
+              }
+              className="w-full rounded-lg border border-white/10 bg-neutral-800 px-3 py-2 text-white placeholder:text-neutral-500 focus:border-accent focus:outline-none"
+            />
+          </div>
+        )}
       </div>
 
       <div className="sm:col-span-2 flex items-center gap-4">

@@ -15,9 +15,10 @@ export function ProductRow({
     name: string;
     description: string | null;
     priceCents: number;
-    stock: number;
     imageUrl: string | null;
     active: boolean;
+    personalizationEnabled: boolean;
+    personalizationFeeCents: number;
     options?: { name: string; values: { value: string; stock: number }[] }[];
   };
   clubId?: string;
@@ -44,11 +45,8 @@ export function ProductRow({
       </div>
       <div className="flex-1">
         <p className="font-semibold text-white">{product.name}</p>
-        <p className="text-sm text-neutral-400">
-          {formatPrice(product.priceCents)}
-          {(!product.options || product.options.length === 0) && ` · Stock : ${product.stock}`}
-        </p>
-        {product.options && product.options.length > 0 && (
+        <p className="text-sm text-neutral-400">{formatPrice(product.priceCents)}</p>
+        {product.options && product.options.length > 0 ? (
           <div className="mt-0.5 space-y-0.5">
             {product.options.map((option) => (
               <p key={option.name} className="text-xs text-neutral-500">
@@ -59,6 +57,14 @@ export function ProductRow({
               </p>
             ))}
           </div>
+        ) : (
+          <p className="mt-0.5 text-xs text-neutral-500">Stock illimité</p>
+        )}
+        {product.personalizationEnabled && (
+          <p className="mt-0.5 text-xs text-gold">
+            Personnalisable
+            {product.personalizationFeeCents > 0 && ` (+${formatPrice(product.personalizationFeeCents)})`}
+          </p>
         )}
       </div>
       {!product.active && (

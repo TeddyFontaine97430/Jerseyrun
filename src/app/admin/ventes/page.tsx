@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/money";
 import { ORDER_STATUS_LABELS, ORDER_STATUS_STYLES } from "@/lib/orderStatus";
-import { formatSelectedOptions } from "@/lib/productOptions";
+import { formatItemDetails } from "@/lib/productOptions";
 
 export const metadata: Metadata = { title: "Ventes — Administration Jersey Run" };
 
@@ -72,9 +72,9 @@ export default async function AdminVentesPage() {
                     <td className="px-5 py-3 font-medium text-white">{item.club.name}</td>
                     <td className="px-5 py-3 text-neutral-200">
                       {item.productName}
-                      {formatSelectedOptions(item.selectedOptions) && (
+                      {formatItemDetails(item.selectedOptions, item.personalizationText) && (
                         <span className="ml-1.5 text-xs text-neutral-500">
-                          ({formatSelectedOptions(item.selectedOptions)})
+                          ({formatItemDetails(item.selectedOptions, item.personalizationText)})
                         </span>
                       )}
                     </td>

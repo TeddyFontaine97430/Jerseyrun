@@ -8,19 +8,21 @@ export function ProductCard({
   description,
   priceCents,
   imageUrl,
-  stock,
   options,
+  personalizationEnabled,
+  personalizationFeeCents,
 }: {
   id: string;
   name: string;
   description: string | null;
   priceCents: number;
   imageUrl: string | null;
-  stock: number;
   options?: { id: string; name: string; values: { value: string; stock: number }[] }[];
+  personalizationEnabled?: boolean;
+  personalizationFeeCents?: number;
 }) {
   const hasOptions = Boolean(options && options.length > 0);
-  const inStock = hasOptions ? options!.every((o) => o.values.some((v) => v.stock > 0)) : stock > 0;
+  const inStock = hasOptions ? options!.every((o) => o.values.some((v) => v.stock > 0)) : true;
 
   return (
     <div className="flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-neutral-900 shadow-sm">
@@ -34,14 +36,17 @@ export function ProductCard({
       <div className="flex flex-1 flex-col p-5">
         <h3 className="font-semibold text-white">{name}</h3>
         {description && <p className="mt-1 line-clamp-2 text-sm text-neutral-400">{description}</p>}
-        <div className="mt-3 flex items-center justify-between">
+        <div className="mt-3">
           <span className="text-lg font-bold text-white">{formatPrice(priceCents)}</span>
-          {!hasOptions && stock <= 5 && stock > 0 && (
-            <span className="text-xs font-medium text-red-400">Plus que {stock} en stock</span>
-          )}
         </div>
         <div className="mt-auto pt-3">
-          <AddToCartButton productId={id} disabled={!inStock} options={options} stock={stock} />
+          <AddToCartButton
+            productId={id}
+            disabled={!inStock}
+            options={options}
+            personalizationEnabled={personalizationEnabled}
+            personalizationFeeCents={personalizationFeeCents}
+          />
         </div>
       </div>
     </div>

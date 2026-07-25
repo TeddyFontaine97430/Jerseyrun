@@ -77,19 +77,21 @@ model Club {
 }
 
 model Product {
-  id          String          @id @default(cuid())
-  club        Club            @relation(fields: [clubId], references: [id])
-  clubId      String
-  name        String
-  description String?
-  priceCents  Int
-  imageUrl    String?
-  stock       Int             @default(0)
-  active      Boolean         @default(true)
-  options     ProductOption[]
-  cartItems   CartItem[]
-  orderItems  OrderItem[]
-  createdAt   DateTime        @default(now())
+  id                      String          @id @default(cuid())
+  club                    Club            @relation(fields: [clubId], references: [id])
+  clubId                  String
+  name                    String
+  description             String?
+  priceCents              Int
+  imageUrl                String?
+  stock                   Int             @default(0)
+  active                  Boolean         @default(true)
+  personalizationEnabled  Boolean         @default(false)
+  personalizationFeeCents Int             @default(0)
+  options                 ProductOption[]
+  cartItems               CartItem[]
+  orderItems              OrderItem[]
+  createdAt               DateTime        @default(now())
 }
 
 model ProductOption {
@@ -113,14 +115,15 @@ model ProductOptionValue {
 }
 
 model CartItem {
-  id              String   @id @default(cuid())
-  user            User     @relation(fields: [userId], references: [id])
-  userId          String
-  product         Product  @relation(fields: [productId], references: [id])
-  productId       String
-  quantity        Int      @default(1)
-  selectedOptions String?
-  createdAt       DateTime @default(now())
+  id                  String   @id @default(cuid())
+  user                User     @relation(fields: [userId], references: [id])
+  userId              String
+  product             Product  @relation(fields: [productId], references: [id])
+  productId           String
+  quantity            Int      @default(1)
+  selectedOptions     String?
+  personalizationText String?
+  createdAt           DateTime @default(now())
 }
 
 model Order {
@@ -145,17 +148,18 @@ model Order {
 }
 
 model OrderItem {
-  id              String  @id @default(cuid())
-  order           Order   @relation(fields: [orderId], references: [id])
-  orderId         String
-  product         Product @relation(fields: [productId], references: [id])
-  productId       String
-  club            Club    @relation(fields: [clubId], references: [id])
-  clubId          String
-  quantity        Int
-  unitPriceCents  Int
-  productName     String
-  selectedOptions String?
+  id                  String  @id @default(cuid())
+  order               Order   @relation(fields: [orderId], references: [id])
+  orderId             String
+  product             Product @relation(fields: [productId], references: [id])
+  productId           String
+  club                Club    @relation(fields: [clubId], references: [id])
+  clubId              String
+  quantity            Int
+  unitPriceCents      Int
+  productName         String
+  selectedOptions     String?
+  personalizationText String?
 }
 
 model ContactMessage {

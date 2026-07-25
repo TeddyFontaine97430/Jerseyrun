@@ -8,7 +8,7 @@ import { OrderSummary } from "@/components/OrderSummary";
 
 function availableStockFor(item: Awaited<ReturnType<typeof getCartForUser>>["items"][number]) {
   const selections = decodeSelectedOptions(item.selectedOptions);
-  if (selections.length === 0) return item.product.stock;
+  if (selections.length === 0) return Infinity;
 
   let available = Infinity;
   for (const sel of selections) {
@@ -61,10 +61,14 @@ export default async function PanierPage() {
                 name={item.product.name}
                 clubName={item.product.club.name}
                 imageUrl={item.product.imageUrl}
-                priceCents={item.product.priceCents}
+                priceCents={
+                  item.product.priceCents +
+                  (item.personalizationText ? item.product.personalizationFeeCents : 0)
+                }
                 quantity={item.quantity}
                 stock={availableStockFor(item)}
                 selectedOptions={item.selectedOptions}
+                personalizationText={item.personalizationText}
               />
             ))}
           </div>

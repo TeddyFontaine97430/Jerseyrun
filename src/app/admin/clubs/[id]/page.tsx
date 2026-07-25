@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getClubStats, getClubSales } from "@/lib/clubStats";
 import { formatPrice } from "@/lib/money";
 import { ORDER_STATUS_LABELS, ORDER_STATUS_STYLES } from "@/lib/orderStatus";
-import { formatSelectedOptions } from "@/lib/productOptions";
+import { formatItemDetails } from "@/lib/productOptions";
 import { resetClubPassword, approveClub, rejectClub } from "@/lib/actions/admin";
 import { ResetPasswordButton } from "@/components/admin/ResetPasswordButton";
 import { ClubApprovalRow } from "@/components/admin/ClubApprovalRow";
@@ -110,9 +110,9 @@ export default async function AdminClubDetailPage({ params }: Props) {
                 <tr key={item.id} className="border-b border-white/5 last:border-0">
                   <td className="px-5 py-3 font-medium text-white">
                     {item.productName}
-                    {formatSelectedOptions(item.selectedOptions) && (
+                    {formatItemDetails(item.selectedOptions, item.personalizationText) && (
                       <span className="ml-1.5 font-normal text-neutral-500">
-                        ({formatSelectedOptions(item.selectedOptions)})
+                        ({formatItemDetails(item.selectedOptions, item.personalizationText)})
                       </span>
                     )}
                   </td>

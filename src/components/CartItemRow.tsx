@@ -15,6 +15,7 @@ export function CartItemRow({
   quantity,
   stock,
   selectedOptions,
+  personalizationText,
 }: {
   id: string;
   name: string;
@@ -24,6 +25,7 @@ export function CartItemRow({
   quantity: number;
   stock: number;
   selectedOptions?: string | null;
+  personalizationText?: string | null;
 }) {
   const [isPending, startTransition] = useTransition();
   const optionsLabel = formatSelectedOptions(selectedOptions);
@@ -41,6 +43,9 @@ export function CartItemRow({
         <p className="font-semibold text-white">{name}</p>
         <p className="text-xs text-neutral-400">{clubName}</p>
         {optionsLabel && <p className="mt-0.5 text-xs text-neutral-300">{optionsLabel}</p>}
+        {personalizationText && (
+          <p className="mt-0.5 text-xs text-neutral-300">Personnalisation : « {personalizationText} »</p>
+        )}
         <p className="mt-1 text-sm font-medium text-white">{formatPrice(priceCents)}</p>
       </div>
       <div className="flex items-center gap-2">

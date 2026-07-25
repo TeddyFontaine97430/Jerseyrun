@@ -24,3 +24,14 @@ export function formatSelectedOptions(selectedOptions: string | null | undefined
   if (pairs.length === 0) return null;
   return pairs.map((p) => `${p.name} : ${p.value}`).join(", ");
 }
+
+export function formatItemDetails(
+  selectedOptions: string | null | undefined,
+  personalizationText?: string | null,
+): string | null {
+  const parts: string[] = [];
+  const optionsLabel = formatSelectedOptions(selectedOptions);
+  if (optionsLabel) parts.push(optionsLabel);
+  if (personalizationText) parts.push(`Personnalisé : ${personalizationText}`);
+  return parts.length > 0 ? parts.join(" · ") : null;
+}

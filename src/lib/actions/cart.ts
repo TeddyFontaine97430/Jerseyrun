@@ -40,31 +40,37 @@ export async function addToCart(
   }
 
   const selections: { name: string; value: string }[] = [];
-  let availableStock = product.stock;
-  if (product.options.length > 0) {
-    availableStock = Infinity;
-    for (const option of product.options) {
-      const value = formData.get(`option_${option.id}`);
-      if (typeof value !== "string" || value.trim() === "") {
-        return { status: "error", message: `Merci de choisir une valeur pour "${option.name}".` };
-      }
-      const optionValue = option.values.find((v) => v.value === value);
-      if (!optionValue) {
-        return { status: "error", message: `Valeur invalide pour "${option.name}".` };
-      }
-      selections.push({ name: option.name, value });
-      availableStock = Math.min(availableStock, optionValue.stock);
+  let availableStock = Infinity;
+  for (const option of product.options) {
+    const value = formData.get(`option_${option.id}`);
+    if (typeof value !== "string" || value.trim() === "") {
+      return { status: "error", message: `Merci de choisir une valeur pour "${option.name}".` };
     }
+    const optionValue = option.values.find((v) => v.value === value);
+    if (!optionValue) {
+      return { status: "error", message: `Valeur invalide pour "${option.name}".` };
+    }
+    selections.push({ name: option.name, value });
+    availableStock = Math.min(availableStock, optionValue.stock);
   }
 
   if (quantity > availableStock) {
     return { status: "error", message: `Seulement ${availableStock} article(s) disponible(s).` };
   }
 
+  let personalizationText: string | null = null;
+  if (product.personalizationEnabled && formData.get("personalize") === "on") {
+    const text = ((formData.get("personalizationText") as string) ?? "").trim();
+    if (!text) {
+      return { status: "error", message: "Merci de préciser votre personnalisation." };
+    }
+    personalizationText = text;
+  }
+
   const selectedOptions = encodeSelectedOptions(selections);
 
   const existing = await prisma.cartItem.findFirst({
-    where: { userId: session.user.id, productId, selectedOptions },
+    where: { userId: session.user.id, productId, selectedOptions, personalizationText },
   });
 
   if (existing) {
@@ -78,7 +84,7 @@ export async function addToCart(
     });
   } else {
     await prisma.cartItem.create({
-      data: { userId: session.user.id, productId, quantity, selectedOptions },
+      data: { userId: session.user.id, productId, quantity, selectedOptions, personalizationText },
     });
   }
 

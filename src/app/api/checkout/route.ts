@@ -52,28 +52,27 @@ export async function POST(request: Request) {
       );
     }
 
-    let available = item.product.stock;
     const selections = decodeSelectedOptions(item.selectedOptions);
     if (selections.length > 0) {
-      available = Infinity;
+      let available = Infinity;
       for (const sel of selections) {
         const option = item.product.options.find((o) => o.name === sel.name);
         const optionValue = option?.values.find((v) => v.value === sel.value);
         available = Math.min(available, optionValue?.stock ?? 0);
       }
-    }
-    if (available < item.quantity) {
-      return NextResponse.json(
-        { error: `Stock insuffisant pour "${item.product.name}".` },
-        { status: 400 },
-      );
+      if (available < item.quantity) {
+        return NextResponse.json(
+          { error: `Stock insuffisant pour "${item.product.name}".` },
+          { status: 400 },
+        );
+      }
     }
   }
 
-  const itemsTotalCents = cartItems.reduce(
-    (sum, item) => sum + item.product.priceCents * item.quantity,
-    0,
-  );
+  const unitPriceFor = (item: (typeof cartItems)[number]) =>
+    item.product.priceCents + (item.personalizationText ? item.product.personalizationFeeCents : 0);
+
+  const itemsTotalCents = cartItems.reduce((sum, item) => sum + unitPriceFor(item) * item.quantity, 0);
   const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
   const deliveryFeeCents = computeDeliveryFeeCents(deliveryMethod, itemCount);
   const totalCents = itemsTotalCents + deliveryFeeCents;
@@ -90,9 +89,10 @@ export async function POST(request: Request) {
           productId: item.productId,
           clubId: item.product.clubId,
           quantity: item.quantity,
-          unitPriceCents: item.product.priceCents,
+          unitPriceCents: unitPriceFor(item),
           productName: item.product.name,
           selectedOptions: item.selectedOptions,
+          personalizationText: item.personalizationText,
         })),
       },
     },
@@ -102,13 +102,15 @@ export async function POST(request: Request) {
 
   const lineItems = cartItems.map((item) => {
     const optionsLabel = formatSelectedOptions(item.selectedOptions);
+    const personalizationLabel = item.personalizationText ? `Personnalisé : ${item.personalizationText}` : null;
+    const details = [optionsLabel, personalizationLabel].filter(Boolean).join(", ");
     return {
       quantity: item.quantity,
       price_data: {
         currency: "eur",
-        unit_amount: item.product.priceCents,
+        unit_amount: unitPriceFor(item),
         product_data: {
-          name: `${item.product.name}${optionsLabel ? ` (${optionsLabel})` : ""} — ${item.product.club.name}`,
+          name: `${item.product.name}${details ? ` (${details})` : ""} — ${item.product.club.name}`,
         },
       },
     };

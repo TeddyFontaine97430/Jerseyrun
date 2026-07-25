@@ -42,15 +42,6 @@ export async function POST(request: Request) {
         const stockUpdates: Prisma.PrismaPromise<unknown>[] = [];
         for (const item of order.items) {
           const selections = decodeSelectedOptions(item.selectedOptions);
-          if (selections.length === 0) {
-            stockUpdates.push(
-              prisma.product.update({
-                where: { id: item.productId },
-                data: { stock: { decrement: item.quantity } },
-              }),
-            );
-            continue;
-          }
           for (const sel of selections) {
             stockUpdates.push(
               prisma.productOptionValue.updateMany({
@@ -80,7 +71,12 @@ export async function POST(request: Request) {
         ]);
 
         const itemsList = order.items
-          .map((item) => `<li>${item.quantity} × ${item.productName} — ${formatPrice(item.unitPriceCents * item.quantity)}</li>`)
+          .map(
+            (item) =>
+              `<li>${item.quantity} × ${item.productName}${
+                item.personalizationText ? ` (Personnalisé : ${item.personalizationText})` : ""
+              } — ${formatPrice(item.unitPriceCents * item.quantity)}</li>`,
+          )
           .join("");
 
         const deliveryLabel =

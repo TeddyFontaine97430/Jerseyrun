@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/money";
 import { ORDER_STATUS_LABELS, ORDER_STATUS_STYLES } from "@/lib/orderStatus";
-import { formatSelectedOptions } from "@/lib/productOptions";
+import { formatItemDetails } from "@/lib/productOptions";
 import { ProfileForm } from "@/components/account/ProfileForm";
 
 export const metadata: Metadata = { title: "Mon compte — Jersey Run" };
@@ -64,9 +64,9 @@ export default async function ComptePage() {
                     <span className="text-neutral-200">
                       {item.quantity} × {item.productName}
                       <span className="ml-2 text-xs text-neutral-500">({item.club.name})</span>
-                      {formatSelectedOptions(item.selectedOptions) && (
+                      {formatItemDetails(item.selectedOptions, item.personalizationText) && (
                         <span className="ml-2 text-xs text-neutral-500">
-                          — {formatSelectedOptions(item.selectedOptions)}
+                          — {formatItemDetails(item.selectedOptions, item.personalizationText)}
                         </span>
                       )}
                     </span>
