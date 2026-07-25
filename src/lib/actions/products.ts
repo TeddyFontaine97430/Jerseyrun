@@ -11,6 +11,7 @@ const productSchema = z.object({
   name: z.string().min(2, "Le nom est requis."),
   description: z.string().optional(),
   price: z.coerce.number().min(0.01, "Le prix doit être supérieur à 0."),
+  availability: z.enum(["IN_STOCK", "PREORDER"]),
   personalizationEnabled: z.coerce.boolean(),
   personalizationFee: z.coerce.number().min(0, "Le coût ne peut pas être négatif.").optional(),
 });
@@ -122,6 +123,7 @@ export async function createProduct(
     name: formData.get("name"),
     description: formData.get("description"),
     price: formData.get("price"),
+    availability: formData.get("availability") || "IN_STOCK",
     personalizationEnabled: formData.get("personalizationEnabled") === "on",
     personalizationFee: formData.get("personalizationFee") || 0,
   });
@@ -136,7 +138,7 @@ export async function createProduct(
     return { status: "error", message: error instanceof UploadError ? error.message : "Échec de l'envoi de l'image." };
   }
 
-  const { name, description, price, personalizationEnabled, personalizationFee } = parsed.data;
+  const { name, description, price, availability, personalizationEnabled, personalizationFee } = parsed.data;
   const optionGroups = optionGroupsFromFormData(formData);
   await prisma.product.create({
     data: {
@@ -145,6 +147,7 @@ export async function createProduct(
       description: description || null,
       priceCents: Math.round(price * 100),
       imageUrl,
+      availability,
       personalizationEnabled,
       personalizationFeeCents: personalizationEnabled ? Math.round((personalizationFee ?? 0) * 100) : 0,
       options: {
@@ -177,6 +180,7 @@ export async function updateProduct(
     name: formData.get("name"),
     description: formData.get("description"),
     price: formData.get("price"),
+    availability: formData.get("availability") || "IN_STOCK",
     personalizationEnabled: formData.get("personalizationEnabled") === "on",
     personalizationFee: formData.get("personalizationFee") || 0,
   });
@@ -191,7 +195,7 @@ export async function updateProduct(
     return { status: "error", message: error instanceof UploadError ? error.message : "Échec de l'envoi de l'image." };
   }
 
-  const { name, description, price, personalizationEnabled, personalizationFee } = parsed.data;
+  const { name, description, price, availability, personalizationEnabled, personalizationFee } = parsed.data;
   const optionGroups = optionGroupsFromFormData(formData);
   await prisma.$transaction([
     prisma.productOption.deleteMany({ where: { productId } }),
@@ -202,6 +206,7 @@ export async function updateProduct(
         description: description || null,
         priceCents: Math.round(price * 100),
         imageUrl,
+        availability,
         personalizationEnabled,
         personalizationFeeCents: personalizationEnabled ? Math.round((personalizationFee ?? 0) * 100) : 0,
         options: {

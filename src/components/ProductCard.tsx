@@ -9,6 +9,7 @@ export function ProductCard({
   priceCents,
   imageUrl,
   options,
+  availability,
   personalizationEnabled,
   personalizationFeeCents,
 }: {
@@ -18,6 +19,7 @@ export function ProductCard({
   priceCents: number;
   imageUrl: string | null;
   options?: { id: string; name: string; values: { value: string; stock: number }[] }[];
+  availability?: "IN_STOCK" | "PREORDER";
   personalizationEnabled?: boolean;
   personalizationFeeCents?: number;
 }) {
@@ -34,7 +36,14 @@ export function ProductCard({
         )}
       </div>
       <div className="flex flex-1 flex-col p-5">
-        <h3 className="font-semibold text-white">{name}</h3>
+        <div className="flex items-center gap-2">
+          <h3 className="font-semibold text-white">{name}</h3>
+          {availability === "PREORDER" && (
+            <span className="rounded-full bg-gold/15 px-2 py-0.5 text-xs font-semibold text-gold">
+              Précommande
+            </span>
+          )}
+        </div>
         {description && <p className="mt-1 line-clamp-2 text-sm text-neutral-400">{description}</p>}
         <div className="mt-3">
           <span className="text-lg font-bold text-white">{formatPrice(priceCents)}</span>

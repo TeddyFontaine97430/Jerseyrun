@@ -68,6 +68,7 @@ export default async function ClubShopPage({ params }: Props) {
                 priceCents={product.priceCents}
                 imageUrl={product.imageUrl}
                 options={product.options}
+                availability={product.availability}
                 personalizationEnabled={product.personalizationEnabled}
                 personalizationFeeCents={product.personalizationFeeCents}
               />

@@ -17,6 +17,7 @@ export function ProductRow({
     priceCents: number;
     imageUrl: string | null;
     active: boolean;
+    availability: "IN_STOCK" | "PREORDER";
     personalizationEnabled: boolean;
     personalizationFeeCents: number;
     options?: { name: string; values: { value: string; stock: number }[] }[];
@@ -44,7 +45,14 @@ export function ProductRow({
         )}
       </div>
       <div className="flex-1">
-        <p className="font-semibold text-white">{product.name}</p>
+        <div className="flex items-center gap-2">
+          <p className="font-semibold text-white">{product.name}</p>
+          {product.availability === "PREORDER" && (
+            <span className="rounded-full bg-gold/15 px-2 py-0.5 text-xs font-semibold text-gold">
+              Précommande
+            </span>
+          )}
+        </div>
         <p className="text-sm text-neutral-400">{formatPrice(product.priceCents)}</p>
         {product.options && product.options.length > 0 ? (
           <div className="mt-0.5 space-y-0.5">

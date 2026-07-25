@@ -18,6 +18,7 @@ type ProductInitial = {
   description: string | null;
   priceCents: number;
   imageUrl: string | null;
+  availability?: "IN_STOCK" | "PREORDER";
   personalizationEnabled?: boolean;
   personalizationFeeCents?: number;
   options?: ProductOptionInitial[];
@@ -44,6 +45,7 @@ export function ProductForm({
   const [customOptionName, setCustomOptionName] = useState(customGroup?.name ?? "");
   const [customRows, setCustomRows] = useState<OptionValueRow[]>(customGroup?.values ?? []);
   const [personalizationEnabled, setPersonalizationEnabled] = useState(product?.personalizationEnabled ?? false);
+  const [availability, setAvailability] = useState<"IN_STOCK" | "PREORDER">(product?.availability ?? "IN_STOCK");
 
   return (
     <form action={formAction} className="grid gap-4 sm:grid-cols-2">
@@ -94,6 +96,36 @@ export function ProductForm({
         {product?.imageUrl && (
           <p className="mt-1 text-xs text-neutral-500">Laissez vide pour conserver l&apos;image actuelle.</p>
         )}
+      </div>
+      <div className="sm:col-span-2">
+        <label className="mb-1 block text-sm font-medium text-white">Disponibilité</label>
+        <div className="flex flex-wrap gap-4">
+          <label className="flex items-center gap-2 text-sm text-neutral-200">
+            <input
+              type="radio"
+              name="availability"
+              value="IN_STOCK"
+              checked={availability === "IN_STOCK"}
+              onChange={() => setAvailability("IN_STOCK")}
+              className="h-4 w-4 border-white/20 bg-neutral-800 text-accent focus:ring-accent"
+            />
+            Article en stock
+          </label>
+          <label className="flex items-center gap-2 text-sm text-neutral-200">
+            <input
+              type="radio"
+              name="availability"
+              value="PREORDER"
+              checked={availability === "PREORDER"}
+              onChange={() => setAvailability("PREORDER")}
+              className="h-4 w-4 border-white/20 bg-neutral-800 text-accent focus:ring-accent"
+            />
+            Précommande
+          </label>
+        </div>
+        <p className="mt-1 text-xs text-neutral-500">
+          Indiquez au client si l&apos;article est disponible immédiatement ou en précommande.
+        </p>
       </div>
       <div className="sm:col-span-2">
         <label className="mb-1 block text-sm font-medium text-white">Description</label>
