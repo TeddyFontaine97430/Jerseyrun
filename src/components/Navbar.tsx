@@ -22,7 +22,14 @@ export async function Navbar() {
     <header className="sticky top-0 z-50 border-b border-white/10 bg-neutral-900/90 backdrop-blur">
       <div className="container-page flex h-16 items-center justify-between">
         <Link href="/" className="flex items-center">
-          <Image src="/logo.png" alt="Jersey Run" width={975} height={863} priority className="h-12 w-auto" />
+          <Image
+            src="/logo-wordmark.png"
+            alt="Jersey Run"
+            width={3376}
+            height={830}
+            priority
+            className="h-11 w-auto"
+          />
         </Link>
 
         <input id="nav-toggle" type="checkbox" className="peer hidden" />
