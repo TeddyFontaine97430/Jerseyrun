@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { auth, signOut } from "@/auth";
 import { getCartForUser } from "@/lib/cart";
 
@@ -20,11 +21,8 @@ export async function Navbar() {
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-neutral-900/90 backdrop-blur">
       <div className="container-page flex h-16 items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 text-xl font-extrabold tracking-tight text-white">
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-white">
-            JR
-          </span>
-          Jersey Run
+        <Link href="/" className="flex items-center">
+          <Image src="/logo.png" alt="Jersey Run" width={975} height={863} priority className="h-12 w-auto" />
         </Link>
 
         <input id="nav-toggle" type="checkbox" className="peer hidden" />
