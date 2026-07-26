@@ -17,14 +17,14 @@ export function ClubLogoCard({
       href={`/clubs/${slug}`}
       className="group flex flex-col items-center rounded-2xl border border-white/10 bg-neutral-900 p-6 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
     >
-      <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-neutral-800">
+      <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-neutral-800">
         {logoUrl ? (
           <Image
             src={logoUrl}
             alt={`Logo ${name}`}
             width={96}
             height={96}
-            className="h-full w-full object-cover"
+            className="h-full w-full object-contain"
           />
         ) : (
           <span className="text-2xl font-bold text-slate-300">{name.slice(0, 2).toUpperCase()}</span>

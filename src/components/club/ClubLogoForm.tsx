@@ -11,10 +11,10 @@ export function ClubLogoForm({ logoUrl }: { logoUrl: string | null }) {
   return (
     <form action={formAction} className="grid gap-4 rounded-2xl border border-white/10 bg-neutral-900 p-6 shadow-sm sm:max-w-md">
       <div className="flex items-center gap-4">
-        <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-neutral-800">
+        <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-neutral-800">
           {logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={logoUrl} alt="Logo du club" className="h-full w-full object-cover" />
+            <img src={logoUrl} alt="Logo du club" className="h-full w-full object-contain" />
           ) : (
             <span className="text-xs text-neutral-500">Aucun</span>
           )}

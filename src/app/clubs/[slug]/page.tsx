@@ -34,9 +34,9 @@ export default async function ClubShopPage({ params }: Props) {
     <div>
       <section className="border-b border-white/10 bg-gradient-to-b from-neutral-900 to-black">
         <div className="container-page flex flex-col items-center gap-6 py-14 text-center sm:flex-row sm:text-left">
-          <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-neutral-900">
+          <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-neutral-900">
             {club.logoUrl ? (
-              <Image src={club.logoUrl} alt={club.name} width={96} height={96} className="h-full w-full object-cover" />
+              <Image src={club.logoUrl} alt={club.name} width={96} height={96} className="h-full w-full object-contain" />
             ) : (
               <span className="text-2xl font-bold text-slate-300">{club.name.slice(0, 2).toUpperCase()}</span>
             )}
