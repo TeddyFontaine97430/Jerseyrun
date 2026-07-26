@@ -4,6 +4,7 @@ const links = [
   { href: "/admin", label: "Vue d'ensemble" },
   { href: "/admin/clubs", label: "Clubs" },
   { href: "/admin/ventes", label: "Ventes" },
+  { href: "/admin/boutique-clubs", label: "Boutique clubs" },
   { href: "/admin/clients", label: "Clients" },
   { href: "/admin/parametres", label: "Mon profil" },
 ];

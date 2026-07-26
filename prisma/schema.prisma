@@ -41,6 +41,13 @@ enum ProductAvailability {
   PREORDER
 }
 
+enum SupplyOrderStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  CANCELLED
+}
+
 model User {
   id                  String               @id @default(cuid())
   email               String               @unique
@@ -79,6 +86,7 @@ model Club {
   ownerId     String      @unique
   products    Product[]
   orderItems  OrderItem[]
+  supplyOrders SupplyOrder[]
   createdAt   DateTime    @default(now())
 }
 
@@ -176,4 +184,37 @@ model ContactMessage {
   email     String
   message   String
   createdAt DateTime @default(now())
+}
+
+model SupplyProduct {
+  id          String            @id @default(cuid())
+  name        String
+  description String?
+  imageUrl    String?
+  priceCents  Int
+  active      Boolean           @default(true)
+  orderItems  SupplyOrderItem[]
+  createdAt   DateTime          @default(now())
+}
+
+model SupplyOrder {
+  id        String            @id @default(cuid())
+  club      Club              @relation(fields: [clubId], references: [id])
+  clubId    String
+  status    SupplyOrderStatus @default(PENDING)
+  note      String?
+  items     SupplyOrderItem[]
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+}
+
+model SupplyOrderItem {
+  id             String        @id @default(cuid())
+  order          SupplyOrder   @relation(fields: [orderId], references: [id])
+  orderId        String
+  product        SupplyProduct @relation(fields: [productId], references: [id])
+  productId      String
+  productName    String
+  quantity       Int
+  unitPriceCents Int
 }
