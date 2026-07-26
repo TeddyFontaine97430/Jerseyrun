@@ -3,7 +3,7 @@ import type Stripe from "stripe";
 import type { Prisma } from "@prisma/client";
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
-import { notifyAdmin } from "@/lib/email";
+import { notifyAdmin, sendEmail } from "@/lib/email";
 import { formatPrice } from "@/lib/money";
 import { decodeSelectedOptions } from "@/lib/productOptions";
 
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     if (orderId) {
       const order = await prisma.order.findUnique({
         where: { id: orderId },
-        include: { items: true },
+        include: { items: { include: { club: true } } },
       });
 
       if (order && order.status === "PENDING") {
@@ -97,6 +97,45 @@ export async function POST(request: Request) {
             <ul>${itemsList}</ul>
           `,
         });
+
+        const itemsByClub = new Map<string, { email: string; name: string; items: typeof order.items }>();
+        for (const item of order.items) {
+          const existing = itemsByClub.get(item.clubId);
+          if (existing) {
+            existing.items.push(item);
+          } else {
+            itemsByClub.set(item.clubId, { email: item.club.email, name: item.club.name, items: [item] });
+          }
+        }
+
+        for (const { email, items } of itemsByClub.values()) {
+          const clubItemsList = items
+            .map(
+              (item) =>
+                `<li>${item.quantity} × ${item.productName}${
+                  item.personalizationText ? ` (Personnalisé : ${item.personalizationText})` : ""
+                } — ${formatPrice(item.unitPriceCents * item.quantity)}</li>`,
+            )
+            .join("");
+          const clubTotal = items.reduce((sum, item) => sum + item.unitPriceCents * item.quantity, 0);
+
+          await sendEmail({
+            to: email,
+            subject: `Nouvelle vente sur votre boutique — ${formatPrice(clubTotal)}`,
+            html: `
+              <p>Bonjour,</p>
+              <p>Vous venez de réaliser une nouvelle vente sur votre boutique Jersey Run !</p>
+              <ul>
+                <li><strong>Client :</strong> ${customerName ?? "N/A"}</li>
+                <li><strong>Livraison :</strong> ${deliveryLabel}</li>
+                <li><strong>Total pour votre boutique :</strong> ${formatPrice(clubTotal)}</li>
+              </ul>
+              <p><strong>Articles :</strong></p>
+              <ul>${clubItemsList}</ul>
+              <p>Connectez-vous à votre espace club pour suivre cette commande.</p>
+            `,
+          });
+        }
       }
     }
   }
