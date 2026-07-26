@@ -2,18 +2,22 @@ import Link from "next/link";
 import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { ClubLogoCard } from "@/components/ClubLogoCard";
+import { getSiteContentMap } from "@/lib/siteContent";
 
 export default async function Home() {
-  const clubs = await prisma.club.findMany({
-    where: { status: "APPROVED", active: true },
-    orderBy: { name: "asc" },
-  });
+  const [clubs, content] = await Promise.all([
+    prisma.club.findMany({
+      where: { status: "APPROVED", active: true },
+      orderBy: { name: "asc" },
+    }),
+    getSiteContentMap(),
+  ]);
 
   return (
     <div>
       <section className="relative overflow-hidden bg-black">
         <Image
-          src="/hero-banner.png"
+          src={content["home.heroImage"]}
           alt=""
           fill
           priority
@@ -25,15 +29,12 @@ export default async function Home() {
         <div className="container-page relative py-20 lg:py-28">
           <div className="max-w-2xl">
             <p className="inline-flex items-center rounded-full bg-gold/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-gold">
-              La boutique officielle des clubs sportifs
+              {content["home.badge"]}
             </p>
             <h1 className="mt-5 text-4xl font-extrabold leading-tight text-white sm:text-5xl">
-              La boutique 100% clubs péi.
+              {content["home.title"]}
             </h1>
-            <p className="mt-5 max-w-lg text-lg text-neutral-300">
-              Soutenez votre club péi en un clic : maillots, équipements et
-              goodies officiels, livrés chez vous ou à récupérer sur place.
-            </p>
+            <p className="mt-5 max-w-lg text-lg text-neutral-300">{content["home.subtitle"]}</p>
             <div className="mt-8 flex flex-wrap gap-4">
               <a
                 href="#clubs"
@@ -57,10 +58,8 @@ export default async function Home() {
           <p className="text-sm font-semibold uppercase tracking-wide text-accent">
             Nos partenaires
           </p>
-          <h2 className="mt-2 text-3xl font-extrabold text-white">Clubs partenaires</h2>
-          <p className="mx-auto mt-3 max-w-xl text-neutral-400">
-            Sélectionnez un club pour découvrir sa boutique officielle.
-          </p>
+          <h2 className="mt-2 text-3xl font-extrabold text-white">{content["home.partnersTitle"]}</h2>
+          <p className="mx-auto mt-3 max-w-xl text-neutral-400">{content["home.partnersSubtitle"]}</p>
         </div>
 
         {clubs.length === 0 ? (

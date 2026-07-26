@@ -6,7 +6,13 @@ import { SPORTS } from "@/lib/sports";
 
 const initialState: ClubRegistrationState = { status: "idle" };
 
-export function ConceptTabs({ defaultTab }: { defaultTab: "concept" | "inscription" }) {
+export function ConceptTabs({
+  defaultTab,
+  intro,
+}: {
+  defaultTab: "concept" | "inscription";
+  intro: { p1: string; p2: string; p3: string };
+}) {
   const [tab, setTab] = useState<"concept" | "inscription">(defaultTab);
   const [state, formAction, pending] = useActionState(registerClub, initialState);
 
@@ -35,23 +41,9 @@ export function ConceptTabs({ defaultTab }: { defaultTab: "concept" | "inscripti
 
       {tab === "concept" ? (
         <div className="mx-auto max-w-2xl space-y-6 text-neutral-300">
-          <p>
-            <strong className="text-white">Jersey Run</strong> est la boutique
-            en ligne qui réunit plusieurs clubs sportifs sous un même toit.
-            Chaque club dispose de sa propre vitrine pour vendre maillots,
-            équipements et goodies officiels à ses supporters.
-          </p>
-          <p>
-            Chaque club garde le contrôle total : il gère son catalogue
-            d&apos;articles, suit ses ventes et son chiffre d&apos;affaires
-            depuis un espace privé et sécurisé, accessible uniquement après
-            validation par l&apos;administrateur du site.
-          </p>
-          <p>
-            Les visiteurs et clients parcourent librement les clubs
-            partenaires, créent un compte pour suivre leur panier et leurs
-            commandes, et soutiennent ainsi directement leur club favori.
-          </p>
+          <p>{intro.p1}</p>
+          <p>{intro.p2}</p>
+          <p>{intro.p3}</p>
           <p>
             Vous représentez un club et souhaitez rejoindre l&apos;aventure ?
             Rendez-vous dans l&apos;onglet{" "}

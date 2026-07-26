@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ConceptTabs } from "@/components/ConceptTabs";
+import { getSiteContentMap } from "@/lib/siteContent";
 
 export const metadata: Metadata = {
   title: "Le concept — Jersey Run",
@@ -12,6 +13,7 @@ export default async function ConceptPage({
 }) {
   const params = await searchParams;
   const defaultTab = params.tab === "inscription" ? "inscription" : "concept";
+  const content = await getSiteContentMap();
 
   return (
     <div className="container-page py-16">
@@ -23,7 +25,14 @@ export default async function ConceptPage({
           Le concept Jersey Run
         </h1>
       </div>
-      <ConceptTabs defaultTab={defaultTab} />
+      <ConceptTabs
+        defaultTab={defaultTab}
+        intro={{
+          p1: content["concept.intro1"],
+          p2: content["concept.intro2"],
+          p3: content["concept.intro3"],
+        }}
+      />
     </div>
   );
 }
