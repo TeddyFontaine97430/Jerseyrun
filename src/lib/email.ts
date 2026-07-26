@@ -18,7 +18,7 @@ export async function sendEmail({
 
   try {
     await resend.emails.send({
-      from: "Jersey Run <onboarding@resend.dev>",
+      from: "Jersey Run <no-reply@jerseyrun.re>",
       to,
       subject,
       html,
