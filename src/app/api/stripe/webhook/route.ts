@@ -84,6 +84,24 @@ export async function POST(request: Request) {
             ? "Retrait au club"
             : `Livraison à domicile${order.deliveryFeeCents > 0 ? ` (${formatPrice(order.deliveryFeeCents)})` : ""}`;
 
+        const shippingLine1 = shipping?.address?.line1 ?? customerDetails?.address?.line1 ?? "";
+        const shippingLine2 = shipping?.address?.line2 ?? customerDetails?.address?.line2 ?? "";
+        const shippingCity = shipping?.address?.city ?? customerDetails?.address?.city ?? "";
+        const shippingPostalCode = shipping?.address?.postal_code ?? customerDetails?.address?.postal_code ?? "";
+        const shippingCountry = shipping?.address?.country ?? customerDetails?.address?.country ?? "";
+        const customerPhone = customerDetails?.phone ?? "";
+
+        const shippingAddressHtml =
+          order.deliveryMethod === "DELIVERY"
+            ? `
+              <p><strong>Adresse de livraison :</strong><br>
+              ${customerName ?? ""}<br>
+              ${shippingLine1}${shippingLine2 ? `<br>${shippingLine2}` : ""}<br>
+              ${[shippingPostalCode, shippingCity].filter(Boolean).join(" ")}<br>
+              ${shippingCountry}${customerPhone ? `<br>Tél : ${customerPhone}` : ""}</p>
+            `
+            : "";
+
         await notifyAdmin({
           subject: `Nouvelle vente — ${formatPrice(order.totalCents)}`,
           html: `
@@ -132,6 +150,7 @@ export async function POST(request: Request) {
               </ul>
               <p><strong>Articles :</strong></p>
               <ul>${clubItemsList}</ul>
+              ${shippingAddressHtml}
               <p>Connectez-vous à votre espace club pour suivre cette commande.</p>
             `,
           });
