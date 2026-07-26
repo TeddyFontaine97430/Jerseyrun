@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { notifyAdmin, sendEmail } from "@/lib/email";
 import { formatPrice } from "@/lib/money";
 import { decodeSelectedOptions } from "@/lib/productOptions";
+import { getNextInvoiceNumber, generateInvoicePdf } from "@/lib/invoice";
 
 export async function POST(request: Request) {
   const signature = request.headers.get("stripe-signature");
@@ -31,13 +32,15 @@ export async function POST(request: Request) {
     if (orderId) {
       const order = await prisma.order.findUnique({
         where: { id: orderId },
-        include: { items: { include: { club: true } } },
+        include: { items: { include: { club: true } }, user: true },
       });
 
       if (order && order.status === "PENDING") {
         const shipping = checkoutSession.collected_information?.shipping_details;
         const customerDetails = checkoutSession.customer_details;
         const customerName = shipping?.name ?? customerDetails?.name ?? undefined;
+        const invoiceNumber = await getNextInvoiceNumber();
+        const invoicedAt = new Date();
 
         const stockUpdates: Prisma.PrismaPromise<unknown>[] = [];
         for (const item of order.items) {
@@ -65,6 +68,8 @@ export async function POST(request: Request) {
               shippingPostalCode:
                 shipping?.address?.postal_code ?? customerDetails?.address?.postal_code ?? undefined,
               shippingCountry: shipping?.address?.country ?? customerDetails?.address?.country ?? undefined,
+              invoiceNumber,
+              invoicedAt,
             },
           }),
           ...stockUpdates,
@@ -155,6 +160,49 @@ export async function POST(request: Request) {
             `,
           });
         }
+
+        const invoicePdf = await generateInvoicePdf({
+          invoiceNumber,
+          invoiceDate: invoicedAt,
+          customerName: customerName ?? null,
+          customerEmail: order.user.email,
+          customerPhone: customerPhone || null,
+          deliveryMethod: order.deliveryMethod,
+          deliveryFeeCents: order.deliveryFeeCents,
+          shippingLine1: shippingLine1 || null,
+          shippingLine2: shippingLine2 || null,
+          shippingCity: shippingCity || null,
+          shippingPostalCode: shippingPostalCode || null,
+          shippingCountry: shippingCountry || null,
+          items: order.items.map((item) => ({
+            productName: item.productName,
+            quantity: item.quantity,
+            unitPriceCents: item.unitPriceCents,
+            selectedOptions: item.selectedOptions,
+            personalizationText: item.personalizationText,
+            clubName: item.club.name,
+          })),
+          totalCents: order.totalCents,
+        });
+
+        await sendEmail({
+          to: order.user.email,
+          subject: `Votre commande Jersey Run — Facture N° ${invoiceNumber}`,
+          html: `
+            <p>Bonjour${customerName ? ` ${customerName}` : ""},</p>
+            <p>Merci pour votre commande sur Jersey Run ! Voici le récapitulatif de votre achat.</p>
+            <ul>
+              <li><strong>Livraison :</strong> ${deliveryLabel}</li>
+              <li><strong>Total :</strong> ${formatPrice(order.totalCents)}</li>
+            </ul>
+            <p><strong>Articles :</strong></p>
+            <ul>${itemsList}</ul>
+            ${shippingAddressHtml}
+            <p>Vous trouverez votre facture N° ${invoiceNumber} en pièce jointe de cet email.</p>
+            <p>À bientôt sur Jersey Run !</p>
+          `,
+          attachments: [{ filename: `facture-${invoiceNumber}.pdf`, content: invoicePdf }],
+        });
       }
     }
   }
