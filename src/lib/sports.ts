@@ -21,6 +21,7 @@ export const SPORTS = [
   "Judo",
   "Karaté",
   "Lutte",
+  "Multisport",
   "Natation",
   "Pétanque",
   "Plongée",
