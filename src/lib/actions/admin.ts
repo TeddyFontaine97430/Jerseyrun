@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { sendEmail } from "@/lib/email";
 
 async function requireAdmin() {
   const session = await auth();
@@ -16,10 +17,21 @@ async function requireAdmin() {
 
 export async function approveClub(clubId: string) {
   await requireAdmin();
-  await prisma.club.update({ where: { id: clubId }, data: { status: "APPROVED" } });
+  const club = await prisma.club.update({ where: { id: clubId }, data: { status: "APPROVED" } });
   revalidatePath("/admin");
   revalidatePath("/admin/clubs");
   revalidatePath("/");
+
+  await sendEmail({
+    to: club.email,
+    subject: "Votre club a été validé sur Jersey Run",
+    html: `
+      <p>Bonjour,</p>
+      <p>Bonne nouvelle : l'inscription de <strong>${club.name}</strong> sur Jersey Run vient d'être validée.</p>
+      <p>Vous pouvez dès à présent vous connecter à votre espace club pour ajouter vos articles et commencer à vendre.</p>
+      <p>À bientôt sur Jersey Run !</p>
+    `,
+  });
 }
 
 export async function rejectClub(clubId: string) {
