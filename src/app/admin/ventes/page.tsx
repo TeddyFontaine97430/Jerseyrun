@@ -5,7 +5,7 @@ import { ORDER_STATUS_LABELS, ORDER_STATUS_STYLES } from "@/lib/orderStatus";
 import { formatItemDetails } from "@/lib/productOptions";
 import { DeliveryStatusToggle } from "@/components/DeliveryStatusToggle";
 
-export const metadata: Metadata = { title: "Ventes — Administration Jersey Run" };
+export const metadata: Metadata = { title: { absolute: "Ventes — Administration Jersey Run" } };
 
 const PAID_STATUSES = ["PAID", "PROCESSING", "SHIPPED", "COMPLETED"] as const;
 

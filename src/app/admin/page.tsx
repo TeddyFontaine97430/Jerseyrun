@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/money";
 import { ClubApprovalRow } from "@/components/admin/ClubApprovalRow";
 
-export const metadata: Metadata = { title: "Administration — Jersey Run" };
+export const metadata: Metadata = { title: { absolute: "Administration — Jersey Run" } };
 
 export default async function AdminPage() {
   const [pendingClubs, approvedClubsCount, ordersCount, totalRevenue, customersCount] = await Promise.all([

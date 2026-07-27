@@ -19,7 +19,7 @@ function availableStockFor(item: Awaited<ReturnType<typeof getCartForUser>>["ite
   return available;
 }
 
-export const metadata: Metadata = { title: "Mon panier — Jersey Run" };
+export const metadata: Metadata = { title: { absolute: "Mon panier — Jersey Run" } };
 
 export default async function PanierPage() {
   const session = await auth();

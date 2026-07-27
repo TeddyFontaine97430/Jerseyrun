@@ -6,7 +6,7 @@ import { ClubLogoForm } from "@/components/club/ClubLogoForm";
 import { StripeConnectCard } from "@/components/club/StripeConnectCard";
 import { refreshStripeAccountStatus } from "@/lib/actions/stripe-connect";
 
-export const metadata: Metadata = { title: "Paramètres — Espace club Jersey Run" };
+export const metadata: Metadata = { title: { absolute: "Paramètres — Espace club Jersey Run" } };
 
 export default async function ClubParametresPage({
   searchParams,

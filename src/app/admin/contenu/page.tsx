@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { getSiteContentMap } from "@/lib/siteContent";
 import { SiteContentForm } from "@/components/admin/SiteContentForm";
 
-export const metadata: Metadata = { title: "Contenu du site — Administration Jersey Run" };
+export const metadata: Metadata = { title: { absolute: "Contenu du site — Administration Jersey Run" } };
 
 export default async function AdminContentPage() {
   const session = await auth();

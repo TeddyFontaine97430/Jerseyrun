@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { RegisterForm } from "@/components/RegisterForm";
 
-export const metadata: Metadata = { title: "Créer un compte — Jersey Run" };
+export const metadata: Metadata = { title: { absolute: "Créer un compte — Jersey Run" } };
 
 export default function InscriptionPage() {
   return (

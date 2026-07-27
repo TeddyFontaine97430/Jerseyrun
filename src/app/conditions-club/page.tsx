@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "Conditions clubs — Jersey Run" };
+export const metadata: Metadata = { title: { absolute: "Conditions clubs — Jersey Run" } };
 
 export default function ConditionsClubPage() {
   return (

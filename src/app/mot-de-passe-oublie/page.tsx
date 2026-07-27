@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ForgotPasswordForm } from "@/components/ForgotPasswordForm";
 
-export const metadata: Metadata = { title: "Mot de passe oublié — Jersey Run" };
+export const metadata: Metadata = { title: { absolute: "Mot de passe oublié — Jersey Run" } };
 
 export default function MotDePasseOubliePage() {
   return (

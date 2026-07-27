@@ -6,7 +6,7 @@ import { formatPrice } from "@/lib/money";
 import { SUPPLY_ORDER_STATUS_LABELS, SUPPLY_ORDER_STATUS_STYLES } from "@/lib/supplyOrderStatus";
 import { SupplyOrderForm } from "@/components/club/SupplyOrderForm";
 
-export const metadata: Metadata = { title: "Boutique fournisseur — Jersey Run" };
+export const metadata: Metadata = { title: { absolute: "Boutique fournisseur — Jersey Run" } };
 
 export default async function ClubSupplyShopPage() {
   const session = await auth();

@@ -6,7 +6,7 @@ import { ORDER_STATUS_LABELS, ORDER_STATUS_STYLES } from "@/lib/orderStatus";
 import { formatItemDetails } from "@/lib/productOptions";
 import { DeliveryStatusToggle } from "@/components/DeliveryStatusToggle";
 
-export const metadata: Metadata = { title: "Espace club — Jersey Run" };
+export const metadata: Metadata = { title: { absolute: "Espace club — Jersey Run" } };
 
 export default async function ClubDashboardPage() {
   const session = await auth();

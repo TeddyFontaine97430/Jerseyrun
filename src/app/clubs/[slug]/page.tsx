@@ -22,7 +22,23 @@ async function getClub(slug: string) {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const club = await getClub(slug);
-  return { title: club ? `${club.name} — Jersey Run` : "Club introuvable — Jersey Run" };
+  if (!club) return { title: "Club introuvable" };
+
+  const description =
+    club.description ??
+    `Découvrez la boutique officielle de ${club.name} sur Jersey Run : maillots, équipements et goodies.`;
+
+  return {
+    title: club.name,
+    description,
+    alternates: { canonical: `/clubs/${club.slug}` },
+    openGraph: {
+      title: club.name,
+      description,
+      url: `/clubs/${club.slug}`,
+      images: club.logoUrl ? [{ url: club.logoUrl }] : undefined,
+    },
+  };
 }
 
 export default async function ClubShopPage({ params }: Props) {

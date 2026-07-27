@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { auth } from "@/auth";
 import { ProfileForm } from "@/components/account/ProfileForm";
 
-export const metadata: Metadata = { title: "Mon profil — Administration Jersey Run" };
+export const metadata: Metadata = { title: { absolute: "Mon profil — Administration Jersey Run" } };
 
 export default async function AdminParametresPage() {
   const session = await auth();

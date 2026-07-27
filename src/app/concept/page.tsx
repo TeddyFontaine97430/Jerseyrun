@@ -3,7 +3,9 @@ import { ConceptTabs } from "@/components/ConceptTabs";
 import { getSiteContentMap } from "@/lib/siteContent";
 
 export const metadata: Metadata = {
-  title: "Le concept — Jersey Run",
+  title: { absolute: "Le concept — Jersey Run" },
+  description:
+    "Découvrez comment Jersey Run permet à votre club sportif de vendre maillots, équipements et goodies officiels en ligne.",
 };
 
 export default async function ConceptPage({

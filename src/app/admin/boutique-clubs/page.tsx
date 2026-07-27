@@ -7,7 +7,7 @@ import { NewSupplyProductPanel } from "@/components/admin/NewSupplyProductPanel"
 import { SupplyProductRow } from "@/components/admin/SupplyProductRow";
 import { SupplyOrderStatusSelect } from "@/components/admin/SupplyOrderStatusSelect";
 
-export const metadata: Metadata = { title: "Boutique clubs — Administration Jersey Run" };
+export const metadata: Metadata = { title: { absolute: "Boutique clubs — Administration Jersey Run" } };
 
 export default async function AdminSupplyShopPage() {
   const session = await auth();

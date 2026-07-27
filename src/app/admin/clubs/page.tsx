@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 
-export const metadata: Metadata = { title: "Clubs — Administration Jersey Run" };
+export const metadata: Metadata = { title: { absolute: "Clubs — Administration Jersey Run" } };
 
 const STATUS_LABELS: Record<string, string> = {
   PENDING: "En attente",

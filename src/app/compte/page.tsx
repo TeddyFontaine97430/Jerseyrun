@@ -6,7 +6,7 @@ import { ORDER_STATUS_LABELS, ORDER_STATUS_STYLES } from "@/lib/orderStatus";
 import { formatItemDetails } from "@/lib/productOptions";
 import { ProfileForm } from "@/components/account/ProfileForm";
 
-export const metadata: Metadata = { title: "Mon compte — Jersey Run" };
+export const metadata: Metadata = { title: { absolute: "Mon compte — Jersey Run" } };
 
 export default async function ComptePage() {
   const session = await auth();

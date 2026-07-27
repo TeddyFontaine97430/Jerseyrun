@@ -6,7 +6,7 @@ import { getClubForUser } from "@/lib/clubStats";
 import { NewProductPanel } from "@/components/club/NewProductPanel";
 import { ProductRow } from "@/components/club/ProductRow";
 
-export const metadata: Metadata = { title: "Mes articles — Jersey Run" };
+export const metadata: Metadata = { title: { absolute: "Mes articles — Jersey Run" } };
 
 export default async function ClubProductsPage() {
   const session = await auth();

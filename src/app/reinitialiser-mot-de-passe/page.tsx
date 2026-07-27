@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ResetPasswordForm } from "@/components/ResetPasswordForm";
 
-export const metadata: Metadata = { title: "Réinitialiser le mot de passe — Jersey Run" };
+export const metadata: Metadata = { title: { absolute: "Réinitialiser le mot de passe — Jersey Run" } };
 
 type Props = { searchParams: Promise<{ token?: string }> };
 

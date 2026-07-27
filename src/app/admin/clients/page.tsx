@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/money";
 
-export const metadata: Metadata = { title: "Clients — Administration Jersey Run" };
+export const metadata: Metadata = { title: { absolute: "Clients — Administration Jersey Run" } };
 
 const PAID_STATUSES = ["PAID", "PROCESSING", "SHIPPED", "COMPLETED"] as const;
 
