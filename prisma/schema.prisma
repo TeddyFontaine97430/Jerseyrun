@@ -71,6 +71,18 @@ model PasswordResetToken {
   createdAt DateTime  @default(now())
 }
 
+model ClubRegistrationCode {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  code         String
+  name         String
+  sport        String
+  phone        String
+  passwordHash String
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+}
+
 model Club {
   id          String      @id @default(cuid())
   name        String

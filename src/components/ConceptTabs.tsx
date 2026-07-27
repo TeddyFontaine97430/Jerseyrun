@@ -1,7 +1,12 @@
 "use client";
 
-import { useActionState, useState } from "react";
-import { registerClub, type ClubRegistrationState } from "@/lib/actions/club-registration";
+import { useActionState, useEffect, useState, useTransition } from "react";
+import {
+  registerClub,
+  confirmClubRegistrationCode,
+  resendClubRegistrationCode,
+  type ClubRegistrationState,
+} from "@/lib/actions/club-registration";
 import { SPORTS } from "@/lib/sports";
 
 const initialState: ClubRegistrationState = { status: "idle" };
@@ -14,7 +19,19 @@ export function ConceptTabs({
   intro: { p1: string; p2: string; p3: string };
 }) {
   const [tab, setTab] = useState<"concept" | "inscription">(defaultTab);
-  const [state, formAction, pending] = useActionState(registerClub, initialState);
+  const [requestState, requestAction, requestPending] = useActionState(registerClub, initialState);
+  const [confirmState, confirmAction, confirmPending] = useActionState(confirmClubRegistrationCode, initialState);
+  const [stage, setStage] = useState<"form" | "code">("form");
+  const [pendingEmail, setPendingEmail] = useState("");
+  const [resendPending, startResendTransition] = useTransition();
+  const [resendMessage, setResendMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (requestState.status === "code_sent" && requestState.email) {
+      setStage("code");
+      setPendingEmail(requestState.email);
+    }
+  }, [requestState]);
 
   return (
     <div>
@@ -57,14 +74,16 @@ export function ConceptTabs({
             pour déposer votre demande.
           </p>
         </div>
-      ) : (
+      ) : stage === "form" ? (
         <div className="mx-auto max-w-lg">
           <p className="mb-6 text-center text-neutral-400">
-            Renseignez les informations de votre club. Votre demande sera
-            examinée par l&apos;administrateur du site avant activation de
-            votre espace club.
+            Renseignez les informations de votre club. Un code de confirmation vous sera envoyé par email avant
+            l&apos;envoi de votre demande.
           </p>
-          <form action={formAction} className="grid gap-4 rounded-2xl border border-white/10 bg-neutral-900 p-8 shadow-sm">
+          <form
+            action={requestAction}
+            className="grid gap-4 rounded-2xl border border-white/10 bg-neutral-900 p-8 shadow-sm"
+          >
             <div>
               <label htmlFor="name" className="mb-1 block text-sm font-medium text-white">
                 Nom du club
@@ -164,17 +183,69 @@ export function ConceptTabs({
             </div>
             <button
               type="submit"
-              disabled={pending}
+              disabled={requestPending}
               className="mt-2 rounded-full bg-accent px-6 py-3 text-sm font-semibold text-white transition hover:bg-accent-dark disabled:opacity-60"
             >
-              {pending ? "Envoi..." : "Envoyer ma demande d'inscription"}
+              {requestPending ? "Envoi..." : "Recevoir mon code de confirmation"}
             </button>
-            {state.status === "success" && (
-              <p className="text-sm font-medium text-emerald-400">{state.message}</p>
+            {requestState.status === "error" && (
+              <p className="text-sm font-medium text-red-400">{requestState.message}</p>
             )}
-            {state.status === "error" && (
-              <p className="text-sm font-medium text-red-400">{state.message}</p>
+          </form>
+        </div>
+      ) : confirmState.status === "success" ? (
+        <div className="mx-auto max-w-lg rounded-2xl border border-white/10 bg-neutral-900 p-8 text-center shadow-sm">
+          <p className="text-sm font-medium text-emerald-400">{confirmState.message}</p>
+        </div>
+      ) : (
+        <div className="mx-auto max-w-lg">
+          <p className="mb-6 text-center text-neutral-400">
+            Un code à 6 chiffres a été envoyé à <strong className="text-white">{pendingEmail}</strong>. Saisissez-le
+            ci-dessous pour confirmer votre email et finaliser votre demande d&apos;inscription.
+          </p>
+          <form
+            action={confirmAction}
+            className="grid gap-4 rounded-2xl border border-white/10 bg-neutral-900 p-8 shadow-sm"
+          >
+            <input type="hidden" name="email" value={pendingEmail} />
+            <div>
+              <label htmlFor="code" className="mb-1 block text-sm font-medium text-white">
+                Code de confirmation
+              </label>
+              <input
+                id="code"
+                name="code"
+                required
+                inputMode="numeric"
+                maxLength={6}
+                className="w-full rounded-lg border border-white/10 bg-neutral-800 px-3 py-2.5 text-center text-lg tracking-[0.5em] text-white placeholder:text-neutral-500 focus:border-accent focus:outline-none"
+                placeholder="000000"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={confirmPending}
+              className="mt-2 rounded-full bg-accent px-6 py-3 text-sm font-semibold text-white transition hover:bg-accent-dark disabled:opacity-60"
+            >
+              {confirmPending ? "Vérification..." : "Confirmer et envoyer ma demande"}
+            </button>
+            {(confirmState.status === "error" || confirmState.status === "code_sent") && confirmState.message && (
+              <p className="text-sm font-medium text-red-400">{confirmState.message}</p>
             )}
+            <button
+              type="button"
+              disabled={resendPending}
+              onClick={() =>
+                startResendTransition(async () => {
+                  const result = await resendClubRegistrationCode(pendingEmail);
+                  setResendMessage(result.message ?? null);
+                })
+              }
+              className="text-sm font-medium text-neutral-400 hover:text-white disabled:opacity-60"
+            >
+              {resendPending ? "Envoi..." : "Renvoyer le code"}
+            </button>
+            {resendMessage && <p className="text-sm font-medium text-neutral-400">{resendMessage}</p>}
           </form>
         </div>
       )}
