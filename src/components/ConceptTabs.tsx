@@ -140,6 +140,28 @@ export function ConceptTabs({
                 Il vous permettra de vous connecter à votre espace club une fois votre inscription validée.
               </p>
             </div>
+            <div>
+              <label className="flex items-start gap-2 text-sm text-neutral-300">
+                <input
+                  type="checkbox"
+                  name="termsAccepted"
+                  required
+                  className="mt-0.5 h-4 w-4 rounded border-white/20 bg-neutral-800 text-accent focus:ring-accent"
+                />
+                <span>
+                  J&apos;ai lu et j&apos;accepte les{" "}
+                  <a
+                    href="/conditions-club"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-semibold text-accent underline underline-offset-2"
+                  >
+                    conditions d&apos;utilisation pour les clubs
+                  </a>{" "}
+                  (frais Stripe, versement direct, gestion du stock).
+                </span>
+              </label>
+            </div>
             <button
               type="submit"
               disabled={pending}

@@ -11,6 +11,9 @@ const clubSchema = z.object({
   phone: z.string().min(6, "Numéro de téléphone invalide."),
   email: z.string().email("Adresse email invalide."),
   password: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères."),
+  termsAccepted: z.literal("on", {
+    message: "Vous devez accepter les conditions d'utilisation pour les clubs.",
+  }),
 });
 
 export type ClubRegistrationState = {
@@ -38,6 +41,7 @@ export async function registerClub(
     phone: formData.get("phone"),
     email: formData.get("email"),
     password: formData.get("password"),
+    termsAccepted: formData.get("termsAccepted"),
   });
 
   if (!parsed.success) {
@@ -78,6 +82,7 @@ export async function registerClub(
           phone,
           email: normalizedEmail,
           status: "PENDING",
+          termsAcceptedAt: new Date(),
         },
       },
     },
