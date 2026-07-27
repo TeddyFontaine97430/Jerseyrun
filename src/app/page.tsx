@@ -2,13 +2,20 @@ import Link from "next/link";
 import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { ClubLogoCard } from "@/components/ClubLogoCard";
+import { ProductMarquee } from "@/components/ProductMarquee";
 import { getSiteContentMap } from "@/lib/siteContent";
 
 export default async function Home() {
-  const [clubs, content] = await Promise.all([
+  const [clubs, marqueeProducts, content] = await Promise.all([
     prisma.club.findMany({
       where: { status: "APPROVED", active: true },
       orderBy: { name: "asc" },
+    }),
+    prisma.product.findMany({
+      where: { active: true, imageUrl: { not: null }, club: { status: "APPROVED", active: true } },
+      include: { club: { select: { slug: true, name: true } } },
+      orderBy: { createdAt: "desc" },
+      take: 20,
     }),
     getSiteContentMap(),
   ]);
@@ -52,6 +59,16 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      <ProductMarquee
+        products={marqueeProducts.map((product) => ({
+          id: product.id,
+          name: product.name,
+          imageUrl: product.imageUrl as string,
+          clubSlug: product.club.slug,
+          clubName: product.club.name,
+        }))}
+      />
 
       <section id="clubs" className="container-page scroll-mt-24 py-20">
         <div className="mb-10 text-center">
