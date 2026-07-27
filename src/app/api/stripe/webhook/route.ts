@@ -207,5 +207,13 @@ export async function POST(request: Request) {
     }
   }
 
+  if (event.type === "account.updated") {
+    const account = event.data.object as Stripe.Account;
+    await prisma.club.updateMany({
+      where: { stripeAccountId: account.id },
+      data: { stripePayoutsEnabled: account.payouts_enabled ?? false },
+    });
+  }
+
   return NextResponse.json({ received: true });
 }

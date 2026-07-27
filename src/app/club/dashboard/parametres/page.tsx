@@ -3,17 +3,40 @@ import { auth } from "@/auth";
 import { getClubForUser } from "@/lib/clubStats";
 import { ProfileForm } from "@/components/account/ProfileForm";
 import { ClubLogoForm } from "@/components/club/ClubLogoForm";
+import { StripeConnectCard } from "@/components/club/StripeConnectCard";
+import { refreshStripeAccountStatus } from "@/lib/actions/stripe-connect";
 
 export const metadata: Metadata = { title: "Paramètres — Espace club Jersey Run" };
 
-export default async function ClubParametresPage() {
+export default async function ClubParametresPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ stripe?: string }>;
+}) {
   const session = await auth();
   if (!session?.user) return null;
+
+  const params = await searchParams;
+  if (params.stripe === "return") {
+    await refreshStripeAccountStatus();
+  }
+
   const club = await getClubForUser(session.user.id);
 
   return (
     <div>
-      <h2 className="text-lg font-semibold text-white">Logo du club</h2>
+      <h2 className="text-lg font-semibold text-white">Paiements</h2>
+      <p className="mt-1 text-sm text-neutral-400">
+        Connectez votre compte Stripe pour recevoir directement l&apos;argent de vos ventes.
+      </p>
+      <div className="mt-4">
+        <StripeConnectCard
+          stripeAccountId={club?.stripeAccountId ?? null}
+          stripePayoutsEnabled={club?.stripePayoutsEnabled ?? false}
+        />
+      </div>
+
+      <h2 className="mt-10 text-lg font-semibold text-white">Logo du club</h2>
       <p className="mt-1 text-sm text-neutral-400">
         Ce logo est affiché sur la page d&apos;accueil et sur la boutique de votre club.
       </p>

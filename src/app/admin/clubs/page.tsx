@@ -34,6 +34,7 @@ export default async function AdminClubsPage() {
               <th className="px-5 py-3 font-medium">Email</th>
               <th className="px-5 py-3 font-medium">Téléphone</th>
               <th className="px-5 py-3 font-medium">Articles</th>
+              <th className="px-5 py-3 font-medium">Paiements</th>
               <th className="px-5 py-3 font-medium">Statut</th>
               <th className="px-5 py-3 font-medium" />
             </tr>
@@ -46,6 +47,17 @@ export default async function AdminClubsPage() {
                 <td className="px-5 py-3 text-neutral-300">{club.email}</td>
                 <td className="px-5 py-3 text-neutral-300">{club.phone}</td>
                 <td className="px-5 py-3 text-neutral-300">{club._count.products}</td>
+                <td className="px-5 py-3">
+                  {club.stripePayoutsEnabled ? (
+                    <span className="rounded-full bg-emerald-500/15 px-2.5 py-1 text-xs font-semibold text-emerald-300">
+                      Connecté
+                    </span>
+                  ) : (
+                    <span className="rounded-full bg-white/10 px-2.5 py-1 text-xs font-semibold text-neutral-400">
+                      Non connecté
+                    </span>
+                  )}
+                </td>
                 <td className="px-5 py-3">
                   <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_STYLES[club.status]}`}>
                     {STATUS_LABELS[club.status]}

@@ -41,6 +41,16 @@ export async function POST(request: Request) {
     );
   }
 
+  const club = cartItems[0].product.club;
+  if (!club.stripeAccountId || !club.stripePayoutsEnabled) {
+    return NextResponse.json(
+      {
+        error: `"${club.name}" n'a pas encore configuré la réception de ses paiements. Contactez le club ou réessayez plus tard.`,
+      },
+      { status: 400 },
+    );
+  }
+
   for (const item of cartItems) {
     if (!item.product.active) {
       return NextResponse.json(
@@ -135,6 +145,9 @@ export async function POST(request: Request) {
     customer_email: session.user.email ?? undefined,
     line_items: lineItems,
     phone_number_collection: { enabled: true },
+    payment_intent_data: {
+      transfer_data: { destination: club.stripeAccountId },
+    },
     metadata: { orderId: order.id, deliveryMethod },
     success_url: `${baseUrl}/commande/succes?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${baseUrl}/panier`,

@@ -47,6 +47,15 @@ export default async function AdminClubDetailPage({ params }: Props) {
                 {club.active ? "Boutique ouverte" : "Boutique fermée"}
               </span>
             )}
+            {club.stripePayoutsEnabled ? (
+              <span className="rounded-full bg-emerald-500/15 px-2.5 py-1 text-xs font-semibold text-emerald-300">
+                Paiements connectés
+              </span>
+            ) : (
+              <span className="rounded-full bg-white/10 px-2.5 py-1 text-xs font-semibold text-neutral-400">
+                Paiements non connectés
+              </span>
+            )}
           </div>
           <p className="mt-1 text-sm text-neutral-400">
             {club.email} · {club.phone}
