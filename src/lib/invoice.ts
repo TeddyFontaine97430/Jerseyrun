@@ -1,6 +1,5 @@
 import PDFDocument from "pdfkit";
 import { prisma } from "@/lib/prisma";
-import { COMPANY } from "@/lib/company";
 import { formatItemDetails } from "@/lib/productOptions";
 
 export async function getNextInvoiceNumber(): Promise<string> {
@@ -19,12 +18,14 @@ export type InvoiceItem = {
   unitPriceCents: number;
   selectedOptions: string | null;
   personalizationText: string | null;
-  clubName: string;
 };
 
 export type InvoiceData = {
   invoiceNumber: string;
   invoiceDate: Date;
+  sellerName: string;
+  sellerPhone: string;
+  sellerEmail: string;
   customerName: string | null;
   customerEmail: string;
   customerPhone: string | null;
@@ -58,11 +59,9 @@ export async function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
 
     doc.font("Helvetica-Bold").fontSize(11).text("Vendeur");
     doc.font("Helvetica").fontSize(10);
-    doc.text(`${COMPANY.legalName} (${COMPANY.legalForm})`);
-    doc.text(COMPANY.address);
-    doc.text(`${COMPANY.postalCode} ${COMPANY.city}`);
-    doc.text(`SIRET : ${COMPANY.siret}`);
-    doc.text(COMPANY.vatMention);
+    doc.text(data.sellerName);
+    doc.text(`Tél : ${data.sellerPhone}`);
+    doc.text(data.sellerEmail);
 
     doc.y = startY;
     doc.font("Helvetica-Bold").fontSize(11).text("Client", 320, startY, { width: 220 });
@@ -114,9 +113,7 @@ export async function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
         doc.fillColor("#000").fontSize(9);
         y = doc.y + 2;
       }
-      doc.fillColor("#999").fontSize(8).text(`Club : ${item.clubName}`, col.name, y, { width: 260 });
-      doc.fillColor("#000").fontSize(9);
-      y = doc.y + 10;
+      y = doc.y + 8;
     }
 
     doc.moveTo(50, y).lineTo(550, y).strokeColor("#ccc").stroke();
@@ -137,12 +134,6 @@ export async function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
     doc.font("Helvetica-Bold").fontSize(11);
     doc.text("Total", col.unit, y, { width: 80, align: "right" });
     doc.text(formatEuros(data.totalCents), col.total, y, { width: 80, align: "right" });
-
-    doc
-      .font("Helvetica")
-      .fontSize(8)
-      .fillColor("#777")
-      .text(COMPANY.vatMention, 50, 780, { width: 500, align: "center" });
 
     doc.end();
   });

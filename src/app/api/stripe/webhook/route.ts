@@ -161,9 +161,14 @@ export async function POST(request: Request) {
           });
         }
 
+        const sellerClub = order.items[0].club;
+
         const invoicePdf = await generateInvoicePdf({
           invoiceNumber,
           invoiceDate: invoicedAt,
+          sellerName: sellerClub.name,
+          sellerPhone: sellerClub.phone,
+          sellerEmail: sellerClub.email,
           customerName: customerName ?? null,
           customerEmail: order.user.email,
           customerPhone: customerPhone || null,
@@ -180,7 +185,6 @@ export async function POST(request: Request) {
             unitPriceCents: item.unitPriceCents,
             selectedOptions: item.selectedOptions,
             personalizationText: item.personalizationText,
-            clubName: item.club.name,
           })),
           totalCents: order.totalCents,
         });
