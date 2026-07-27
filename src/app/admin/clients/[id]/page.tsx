@@ -29,7 +29,13 @@ function formatAddress(order: {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const customer = await prisma.user.findUnique({ where: { id } });
-  return { title: customer ? `${customer.name ?? customer.email} — Administration` : "Client introuvable" };
+  return {
+    title: {
+      absolute: customer
+        ? `${customer.name ?? customer.email} — Administration Jersey Run`
+        : "Client introuvable — Jersey Run",
+    },
+  };
 }
 
 export default async function AdminClientDetailPage({ params }: Props) {

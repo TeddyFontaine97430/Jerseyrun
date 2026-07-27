@@ -10,7 +10,7 @@ type Props = { params: Promise<{ id: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const club = await prisma.club.findUnique({ where: { id } });
-  return { title: club ? `Articles ${club.name} — Administration` : "Club introuvable" };
+  return { title: { absolute: club ? `Articles ${club.name} — Administration Jersey Run` : "Club introuvable — Jersey Run" } };
 }
 
 export default async function AdminClubProductsPage({ params }: Props) {
