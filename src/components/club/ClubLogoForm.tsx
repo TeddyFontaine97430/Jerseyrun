@@ -5,11 +5,12 @@ import { updateClubLogo, type ClubLogoState } from "@/lib/actions/club-settings"
 
 const initialState: ClubLogoState = { status: "idle" };
 
-export function ClubLogoForm({ logoUrl }: { logoUrl: string | null }) {
+export function ClubLogoForm({ logoUrl, clubId }: { logoUrl: string | null; clubId?: string }) {
   const [state, formAction, pending] = useActionState(updateClubLogo, initialState);
 
   return (
     <form action={formAction} className="grid gap-4 rounded-2xl border border-white/10 bg-neutral-900 p-6 shadow-sm sm:max-w-md">
+      {clubId && <input type="hidden" name="clubId" value={clubId} />}
       <div className="flex items-center gap-4">
         <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-neutral-800">
           {logoUrl ? (

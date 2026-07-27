@@ -12,6 +12,7 @@ import { ClubApprovalRow } from "@/components/admin/ClubApprovalRow";
 import { ClubStatusToggle } from "@/components/admin/ClubStatusToggle";
 import { DeleteClubButton } from "@/components/admin/DeleteClubButton";
 import { DeliveryStatusToggle } from "@/components/DeliveryStatusToggle";
+import { ClubLogoForm } from "@/components/club/ClubLogoForm";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -84,6 +85,9 @@ export default async function AdminClubDetailPage({ params }: Props) {
           <ClubApprovalRow club={club} />
         </div>
       )}
+
+      <h3 className="mt-10 mb-4 text-lg font-semibold text-white">Logo du club</h3>
+      <ClubLogoForm logoUrl={club.logoUrl} clubId={club.id} />
 
       <div className="mt-8 grid gap-4 sm:grid-cols-3">
         <div className="rounded-2xl border border-white/10 bg-neutral-900 p-6 shadow-sm">
