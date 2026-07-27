@@ -76,7 +76,6 @@ export default async function PanierPage() {
           <div className="h-fit rounded-2xl border border-white/10 bg-neutral-900 p-6 shadow-sm">
             <OrderSummary
               subtotalCents={cart.total}
-              itemCount={cart.count}
               singleClub={new Set(cart.items.map((item) => item.product.club.id)).size <= 1}
             />
           </div>

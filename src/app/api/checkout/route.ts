@@ -18,8 +18,8 @@ export async function POST(request: Request) {
     );
   }
 
-  const body = await request.json().catch(() => ({}));
-  const deliveryMethod: DeliveryMethod = body?.deliveryMethod === "PICKUP" ? "PICKUP" : "DELIVERY";
+  // Livraison temporairement désactivée — retrait au club uniquement.
+  const deliveryMethod: DeliveryMethod = "PICKUP";
 
   const cartItems = await prisma.cartItem.findMany({
     where: { userId: session.user.id },
@@ -31,9 +31,12 @@ export async function POST(request: Request) {
   }
 
   const distinctClubIds = new Set(cartItems.map((item) => item.product.clubId));
-  if (deliveryMethod === "PICKUP" && distinctClubIds.size > 1) {
+  if (distinctClubIds.size > 1) {
     return NextResponse.json(
-      { error: "Le retrait au club n'est pas disponible pour une commande contenant plusieurs clubs." },
+      {
+        error:
+          "Le retrait au club n'est pas disponible pour une commande contenant plusieurs clubs. Merci de commander séparément pour chaque club.",
+      },
       { status: 400 },
     );
   }
@@ -132,13 +135,6 @@ export async function POST(request: Request) {
     customer_email: session.user.email ?? undefined,
     line_items: lineItems,
     phone_number_collection: { enabled: true },
-    ...(deliveryMethod === "DELIVERY"
-      ? {
-          shipping_address_collection: {
-            allowed_countries: ["FR", "BE", "CH", "LU", "MC", "DE", "ES", "IT"],
-          },
-        }
-      : {}),
     metadata: { orderId: order.id, deliveryMethod },
     success_url: `${baseUrl}/commande/succes?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${baseUrl}/panier`,

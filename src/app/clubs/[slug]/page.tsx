@@ -49,6 +49,9 @@ export default async function ClubShopPage({ params }: Props) {
               </span>
             )}
             {club.description && <p className="mt-2 max-w-2xl text-neutral-300">{club.description}</p>}
+            <p className="mt-3 text-sm text-neutral-400">
+              Tél : {club.phone} · Email : {club.email}
+            </p>
           </div>
         </div>
       </section>
