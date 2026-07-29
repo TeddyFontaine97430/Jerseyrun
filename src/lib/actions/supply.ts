@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getClubForUser } from "@/lib/clubStats";
+import { notifyAdmin } from "@/lib/email";
+import { formatPrice } from "@/lib/money";
 import type { SupplyOrderStatus } from "@prisma/client";
 
 const supplyProductSchema = z.object({
@@ -188,6 +190,25 @@ export async function createSupplyOrder(
       note,
       items: { create: orderItemsData },
     },
+  });
+
+  const totalCents = orderItemsData.reduce((sum, item) => sum + item.unitPriceCents * item.quantity, 0);
+  const itemsList = orderItemsData
+    .map((item) => `<li>${item.quantity} × ${item.productName} — ${formatPrice(item.unitPriceCents * item.quantity)}</li>`)
+    .join("");
+
+  await notifyAdmin({
+    subject: `Nouvelle demande de commande — ${club.name}`,
+    html: `
+      <p>Le club <strong>${club.name}</strong> vient de passer une demande de commande sur la boutique fournisseur.</p>
+      <ul>
+        <li><strong>Total :</strong> ${formatPrice(totalCents)}</li>
+      </ul>
+      <p><strong>Articles :</strong></p>
+      <ul>${itemsList}</ul>
+      ${note ? `<p><strong>Note du club :</strong> ${note}</p>` : ""}
+      <p>Connectez-vous à l&apos;espace admin pour traiter cette demande.</p>
+    `,
   });
 
   revalidateSupplyPaths();
