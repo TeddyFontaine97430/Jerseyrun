@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { getClubForUser } from "@/lib/clubStats";
 import { prisma } from "@/lib/prisma";
-import { uploadImage, UploadError } from "@/lib/upload";
 
 export type ClubLogoState = {
   status: "idle" | "success" | "error";
@@ -41,16 +40,9 @@ export async function updateClubLogo(
     return { status: "error", message: "Accès non autorisé." };
   }
 
-  const file = formData.get("logoFile");
-  if (!(file instanceof File) || file.size === 0) {
+  const logoUrl = formData.get("logoUrl");
+  if (typeof logoUrl !== "string" || !logoUrl) {
     return { status: "error", message: "Merci de choisir une image." };
-  }
-
-  let logoUrl: string;
-  try {
-    logoUrl = await uploadImage(file, "club-logos");
-  } catch (error) {
-    return { status: "error", message: error instanceof UploadError ? error.message : "Échec de l'envoi de l'image." };
   }
 
   await prisma.club.update({ where: { id: club.id }, data: { logoUrl } });

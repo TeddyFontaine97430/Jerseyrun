@@ -5,7 +5,6 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getClubForUser } from "@/lib/clubStats";
-import { uploadImage, UploadError } from "@/lib/upload";
 import type { SupplyOrderStatus } from "@prisma/client";
 
 const supplyProductSchema = z.object({
@@ -44,15 +43,8 @@ export async function createSupplyProduct(
     return { status: "error", message: parsed.error.issues[0]?.message ?? "Formulaire invalide." };
   }
 
-  let imageUrl: string | null = null;
-  const file = formData.get("imageFile");
-  if (file instanceof File && file.size > 0) {
-    try {
-      imageUrl = await uploadImage(file, "supply-products");
-    } catch (error) {
-      return { status: "error", message: error instanceof UploadError ? error.message : "Échec de l'envoi de l'image." };
-    }
-  }
+  const imageUrlInput = formData.get("imageUrl");
+  const imageUrl = typeof imageUrlInput === "string" && imageUrlInput ? imageUrlInput : null;
 
   const { name, description, price } = parsed.data;
   await prisma.supplyProduct.create({
@@ -87,15 +79,8 @@ export async function updateSupplyProduct(
     return { status: "error", message: parsed.error.issues[0]?.message ?? "Formulaire invalide." };
   }
 
-  let imageUrl = product.imageUrl;
-  const file = formData.get("imageFile");
-  if (file instanceof File && file.size > 0) {
-    try {
-      imageUrl = await uploadImage(file, "supply-products");
-    } catch (error) {
-      return { status: "error", message: error instanceof UploadError ? error.message : "Échec de l'envoi de l'image." };
-    }
-  }
+  const imageUrlInput = formData.get("imageUrl");
+  const imageUrl = typeof imageUrlInput === "string" && imageUrlInput ? imageUrlInput : product.imageUrl;
 
   const { name, description, price } = parsed.data;
   await prisma.supplyProduct.update({

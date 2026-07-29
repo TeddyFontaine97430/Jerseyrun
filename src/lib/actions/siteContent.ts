@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { uploadImage, UploadError } from "@/lib/upload";
 import { SITE_CONTENT_DEFAULTS, type SiteContentKey } from "@/lib/siteContent";
 
 export type SiteContentFormState = {
@@ -33,14 +32,9 @@ export async function updateSiteContent(
     }
   }
 
-  const heroFile = formData.get("home.heroImageFile");
-  if (heroFile instanceof File && heroFile.size > 0) {
-    try {
-      const url = await uploadImage(heroFile, "site-content");
-      updates.push({ key: "home.heroImage", value: url });
-    } catch (error) {
-      return { status: "error", message: error instanceof UploadError ? error.message : "Échec de l'envoi de l'image." };
-    }
+  const heroImageUrl = formData.get("home.heroImageUrl");
+  if (typeof heroImageUrl === "string" && heroImageUrl) {
+    updates.push({ key: "home.heroImage", value: heroImageUrl });
   }
 
   await prisma.$transaction(

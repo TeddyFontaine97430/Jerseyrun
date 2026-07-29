@@ -5,7 +5,6 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getClubForUser } from "@/lib/clubStats";
-import { uploadImage, UploadError } from "@/lib/upload";
 
 const productSchema = z.object({
   name: z.string().min(2, "Le nom est requis."),
@@ -16,14 +15,9 @@ const productSchema = z.object({
   personalizationFee: z.coerce.number().min(0, "Le coût ne peut pas être négatif.").optional(),
 });
 
-async function resolveProductImage(
-  formData: FormData,
-  currentImageUrl: string | null,
-): Promise<string | null> {
-  const file = formData.get("imageFile");
-  if (file instanceof File && file.size > 0) {
-    return uploadImage(file, "products");
-  }
+function resolveProductImage(formData: FormData, currentImageUrl: string | null): string | null {
+  const imageUrl = formData.get("imageUrl");
+  if (typeof imageUrl === "string" && imageUrl) return imageUrl;
   return currentImageUrl;
 }
 
@@ -140,12 +134,7 @@ export async function createProduct(
     return { status: "error", message: parsed.error.issues[0]?.message ?? "Formulaire invalide." };
   }
 
-  let imageUrl: string | null;
-  try {
-    imageUrl = await resolveProductImage(formData, null);
-  } catch (error) {
-    return { status: "error", message: error instanceof UploadError ? error.message : "Échec de l'envoi de l'image." };
-  }
+  const imageUrl = resolveProductImage(formData, null);
 
   const { name, description, price, availability, personalizationEnabled, personalizationFee } = parsed.data;
   const optionGroups = optionGroupsFromFormData(formData);
@@ -197,12 +186,7 @@ export async function updateProduct(
     return { status: "error", message: parsed.error.issues[0]?.message ?? "Formulaire invalide." };
   }
 
-  let imageUrl: string | null;
-  try {
-    imageUrl = await resolveProductImage(formData, product.imageUrl);
-  } catch (error) {
-    return { status: "error", message: error instanceof UploadError ? error.message : "Échec de l'envoi de l'image." };
-  }
+  const imageUrl = resolveProductImage(formData, product.imageUrl);
 
   const { name, description, price, availability, personalizationEnabled, personalizationFee } = parsed.data;
   const optionGroups = optionGroupsFromFormData(formData);

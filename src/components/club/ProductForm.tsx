@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useActionState } from "react";
 import { createProduct, updateProduct, type ProductFormState } from "@/lib/actions/products";
 import { OptionValuesEditor, type OptionValueRow } from "@/components/club/OptionValuesEditor";
+import { uploadImageClient } from "@/lib/uploadClient";
 
 const initialState: ProductFormState = { status: "idle" };
 
@@ -46,6 +47,24 @@ export function ProductForm({
   const [customRows, setCustomRows] = useState<OptionValueRow[]>(customGroup?.values ?? []);
   const [personalizationEnabled, setPersonalizationEnabled] = useState(product?.personalizationEnabled ?? false);
   const [availability, setAvailability] = useState<"IN_STOCK" | "PREORDER">(product?.availability ?? "IN_STOCK");
+  const [imageUrl, setImageUrl] = useState(product?.imageUrl ?? "");
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setUploadError(null);
+    try {
+      const url = await uploadImageClient(file, "products");
+      setImageUrl(url);
+    } catch {
+      setUploadError("Échec de l'envoi de l'image. Réessayez.");
+    } finally {
+      setUploading(false);
+    }
+  }
 
   return (
     <form action={formAction} className="grid gap-4 sm:grid-cols-2">
@@ -54,6 +73,7 @@ export function ProductForm({
       <input type="hidden" name="sizeValuesJson" value={JSON.stringify(sizeRows)} />
       <input type="hidden" name="shoeSizeValuesJson" value={JSON.stringify(shoeSizeRows)} />
       <input type="hidden" name="customOptionValuesJson" value={JSON.stringify(customRows)} />
+      <input type="hidden" name="imageUrl" value={imageUrl} />
       <div>
         <label className="mb-1 block text-sm font-medium text-white">Nom de l&apos;article</label>
         <input
@@ -78,21 +98,23 @@ export function ProductForm({
       <div>
         <label className="mb-1 block text-sm font-medium text-white">Image de l&apos;article (optionnel)</label>
         <div className="flex items-center gap-3">
-          {product?.imageUrl && (
+          {imageUrl && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={product.imageUrl}
+              src={imageUrl}
               alt=""
               className="h-12 w-12 shrink-0 rounded-lg border border-white/10 object-cover"
             />
           )}
           <input
-            name="imageFile"
             type="file"
             accept="image/png,image/jpeg,image/webp,image/gif"
+            onChange={handleFileChange}
             className="w-full text-sm text-neutral-300 file:mr-3 file:rounded-full file:border-0 file:bg-accent file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-accent-dark"
           />
         </div>
+        {uploading && <p className="mt-1 text-xs text-neutral-400">Envoi de l&apos;image...</p>}
+        {uploadError && <p className="mt-1 text-xs text-red-400">{uploadError}</p>}
         {product?.imageUrl && (
           <p className="mt-1 text-xs text-neutral-500">Laissez vide pour conserver l&apos;image actuelle.</p>
         )}
@@ -203,10 +225,10 @@ export function ProductForm({
       <div className="sm:col-span-2 flex items-center gap-4">
         <button
           type="submit"
-          disabled={pending}
+          disabled={pending || uploading}
           className="rounded-full bg-accent px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-dark disabled:opacity-60"
         >
-          {pending ? "Enregistrement..." : product ? "Mettre à jour" : "Ajouter l'article"}
+          {uploading ? "Envoi de l'image..." : pending ? "Enregistrement..." : product ? "Mettre à jour" : "Ajouter l'article"}
         </button>
         {onDone && (
           <button type="button" onClick={onDone} className="text-sm font-medium text-neutral-400 hover:text-white">
