@@ -14,14 +14,7 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json().catch(() => ({}));
-  const paymentMethod = body?.paymentMethod === "ON_SITE" ? "ON_SITE" : "STRIPE";
-
-  if (paymentMethod === "STRIPE" && !stripeConfigured) {
-    return NextResponse.json(
-      { error: "Le paiement en ligne n'est pas encore configuré (clés Stripe manquantes)." },
-      { status: 503 },
-    );
-  }
+  const requestedPaymentMethod = body?.paymentMethod === "ON_SITE" ? "ON_SITE" : "STRIPE";
 
   // Livraison temporairement désactivée — retrait au club uniquement.
   const deliveryMethod: DeliveryMethod = "PICKUP";
@@ -47,20 +40,23 @@ export async function POST(request: Request) {
   }
 
   const club = cartItems[0].product.club;
+  const stripeReady = Boolean(club.stripeAccountId && club.stripePayoutsEnabled);
+
+  // Un club sans compte Stripe connecté ne peut pas encaisser en ligne : le paiement
+  // sur place devient automatiquement le seul mode disponible pour sa boutique.
+  const paymentMethod = stripeReady ? requestedPaymentMethod : "ON_SITE";
 
   if (paymentMethod === "ON_SITE") {
-    if (!club.allowPayOnSite) {
+    if (stripeReady && !club.allowPayOnSite) {
       return NextResponse.json(
         { error: `"${club.name}" n'accepte pas le paiement sur place pour le moment.` },
         { status: 400 },
       );
     }
-  } else if (!club.stripeAccountId || !club.stripePayoutsEnabled) {
+  } else if (!stripeConfigured) {
     return NextResponse.json(
-      {
-        error: `"${club.name}" n'a pas encore configuré la réception de ses paiements. Contactez le club ou réessayez plus tard.`,
-      },
-      { status: 400 },
+      { error: "Le paiement en ligne n'est pas encore configuré (clés Stripe manquantes)." },
+      { status: 503 },
     );
   }
 

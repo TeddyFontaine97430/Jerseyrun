@@ -6,15 +6,19 @@ import { formatPrice } from "@/lib/money";
 export function OrderSummary({
   subtotalCents,
   singleClub,
+  stripeReady,
   allowPayOnSite,
 }: {
   subtotalCents: number;
   singleClub: boolean;
+  stripeReady: boolean;
   allowPayOnSite: boolean;
 }) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<"STRIPE" | "ON_SITE">("STRIPE");
+  const [paymentMethod, setPaymentMethod] = useState<"STRIPE" | "ON_SITE">(stripeReady ? "STRIPE" : "ON_SITE");
+
+  const showPaymentChoice = stripeReady && allowPayOnSite;
 
   async function handleCheckout() {
     setPending(true);
@@ -55,7 +59,7 @@ export function OrderSummary({
         </p>
       )}
 
-      {allowPayOnSite && (
+      {showPaymentChoice ? (
         <div className="mt-4">
           <p className="mb-2 text-sm font-medium text-white">Mode de paiement</p>
           <div className="space-y-2">
@@ -80,6 +84,12 @@ export function OrderSummary({
               Paiement sur place, au retrait
             </label>
           </div>
+        </div>
+      ) : (
+        <div className="mt-4 rounded-lg border border-white/10 px-3 py-2 text-sm">
+          <span className="font-medium text-white">
+            {stripeReady ? "Paiement par carte bancaire" : "Paiement sur place, au retrait"}
+          </span>
         </div>
       )}
 

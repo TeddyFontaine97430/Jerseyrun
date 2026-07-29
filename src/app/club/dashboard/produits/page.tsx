@@ -26,14 +26,16 @@ export default async function ClubProductsPage() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <h2 className="text-lg font-semibold text-white">Mes articles ({products.length})</h2>
-        {stripeReady && <NewProductPanel />}
+        <NewProductPanel />
       </div>
 
       {!stripeReady && (
         <div className="mb-6 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
-          Vous devez d&apos;abord connecter votre compte Stripe pour pouvoir ajouter des articles.{" "}
+          <strong>Vous n&apos;avez pas encore connecté de compte Stripe :</strong> vos ventes seront donc réglées
+          par défaut en paiement sur place, au retrait au club. Si vous souhaitez aussi accepter le paiement par
+          carte bancaire en ligne,{" "}
           <Link href="/club/dashboard/parametres" className="font-semibold underline underline-offset-2">
-            Connecter mon compte Stripe →
+            cliquez ici pour connecter votre compte Stripe →
           </Link>
         </div>
       )}

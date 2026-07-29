@@ -113,15 +113,6 @@ export async function createProduct(
   const club = await resolveTargetClub(formData);
   if (!club) return { status: "error", message: "Accès non autorisé." };
 
-  const session = await auth();
-  if (session?.user?.role === "CLUB" && (!club.stripeAccountId || !club.stripePayoutsEnabled)) {
-    return {
-      status: "error",
-      message:
-        "Vous devez d'abord connecter votre compte Stripe (Paramètres → Paiements) avant de mettre un article en ligne.",
-    };
-  }
-
   const parsed = productSchema.safeParse({
     name: formData.get("name"),
     description: formData.get("description"),
