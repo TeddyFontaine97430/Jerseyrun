@@ -77,6 +77,7 @@ export default async function PanierPage() {
             <OrderSummary
               subtotalCents={cart.total}
               singleClub={new Set(cart.items.map((item) => item.product.club.id)).size <= 1}
+              allowPayOnSite={cart.items.every((item) => item.product.club.allowPayOnSite)}
             />
           </div>
         </div>

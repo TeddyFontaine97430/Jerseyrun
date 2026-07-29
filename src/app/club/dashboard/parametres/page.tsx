@@ -4,6 +4,7 @@ import { getClubForUser } from "@/lib/clubStats";
 import { ProfileForm } from "@/components/account/ProfileForm";
 import { ClubLogoForm } from "@/components/club/ClubLogoForm";
 import { StripeConnectCard } from "@/components/club/StripeConnectCard";
+import { PayOnSiteToggle } from "@/components/club/PayOnSiteToggle";
 import { refreshStripeAccountStatus } from "@/lib/actions/stripe-connect";
 
 export const metadata: Metadata = { title: { absolute: "Paramètres — Espace club Jersey Run" } };
@@ -34,6 +35,15 @@ export default async function ClubParametresPage({
           stripeAccountId={club?.stripeAccountId ?? null}
           stripePayoutsEnabled={club?.stripePayoutsEnabled ?? false}
         />
+      </div>
+
+      <h2 className="mt-10 text-lg font-semibold text-white">Mode de paiement</h2>
+      <p className="mt-1 text-sm text-neutral-400">
+        En plus du paiement par carte bancaire, vous pouvez autoriser vos clients à régler en espèces ou par tout
+        autre moyen directement au club, lors du retrait de leur commande.
+      </p>
+      <div className="mt-4">
+        <PayOnSiteToggle enabled={club?.allowPayOnSite ?? false} />
       </div>
 
       <h2 className="mt-10 text-lg font-semibold text-white">Logo du club</h2>

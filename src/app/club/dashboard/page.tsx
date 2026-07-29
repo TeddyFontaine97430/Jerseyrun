@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { auth } from "@/auth";
-import { getClubForUser, getClubStats, getClubSales } from "@/lib/clubStats";
+import { getClubForUser, getClubStats, getClubSales, getClubPendingOnSiteOrders } from "@/lib/clubStats";
 import { formatPrice } from "@/lib/money";
 import { ORDER_STATUS_LABELS, ORDER_STATUS_STYLES } from "@/lib/orderStatus";
 import { formatItemDetails } from "@/lib/productOptions";
 import { DeliveryStatusToggle } from "@/components/DeliveryStatusToggle";
+import { MarkPaidOnSiteButton } from "@/components/MarkPaidOnSiteButton";
 
 export const metadata: Metadata = { title: { absolute: "Espace club — Jersey Run" } };
 
@@ -14,7 +15,11 @@ export default async function ClubDashboardPage() {
   const club = await getClubForUser(session.user.id);
   if (!club || club.status !== "APPROVED") return null;
 
-  const [stats, sales] = await Promise.all([getClubStats(club.id), getClubSales(club.id)]);
+  const [stats, sales, pendingOnSiteOrders] = await Promise.all([
+    getClubStats(club.id),
+    getClubSales(club.id),
+    getClubPendingOnSiteOrders(club.id),
+  ]);
 
   return (
     <div>
@@ -32,6 +37,52 @@ export default async function ClubDashboardPage() {
           <p className="mt-2 text-3xl font-extrabold text-white">{stats.ordersCount}</p>
         </div>
       </div>
+
+      {pendingOnSiteOrders.length > 0 && (
+        <>
+          <h2 className="mt-10 text-lg font-semibold text-white">
+            Commandes à encaisser sur place ({pendingOnSiteOrders.length})
+          </h2>
+          <div className="mt-4 space-y-4">
+            {pendingOnSiteOrders.map(({ order, items }) => (
+              <div key={order.id} className="rounded-2xl border border-white/10 bg-neutral-900 p-6 shadow-sm">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-medium text-white">
+                      {order.customerName ?? order.user.name ?? order.user.email}
+                    </p>
+                    <p className="text-xs text-neutral-500">
+                      Commande du {order.createdAt.toLocaleDateString("fr-FR")}
+                    </p>
+                  </div>
+                  <MarkPaidOnSiteButton orderId={order.id} />
+                </div>
+                <ul className="mt-3 divide-y divide-white/10">
+                  {items.map((item) => (
+                    <li key={item.id} className="flex justify-between py-2 text-sm">
+                      <span className="text-neutral-200">
+                        {item.quantity} × {item.productName}
+                        {formatItemDetails(item.selectedOptions, item.personalizationText) && (
+                          <span className="ml-2 text-xs text-neutral-500">
+                            — {formatItemDetails(item.selectedOptions, item.personalizationText)}
+                          </span>
+                        )}
+                      </span>
+                      <span className="font-medium text-white">
+                        {formatPrice(item.unitPriceCents * item.quantity)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-3 flex justify-between border-t border-white/10 pt-3 text-sm font-bold text-white">
+                  <span>Total à encaisser</span>
+                  <span>{formatPrice(order.totalCents)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
 
       <h2 className="mt-10 text-lg font-semibold text-white">Ventes récentes</h2>
       {sales.length === 0 ? (

@@ -54,3 +54,15 @@ export async function updateClubLogo(
 
   return { status: "success", message: "Logo mis à jour." };
 }
+
+export async function updatePayOnSiteSetting(enabled: boolean) {
+  const session = await auth();
+  if (!session?.user || session.user.role !== "CLUB") return;
+
+  const club = await getClubForUser(session.user.id);
+  if (!club || club.status !== "APPROVED") return;
+
+  await prisma.club.update({ where: { id: club.id }, data: { allowPayOnSite: enabled } });
+
+  revalidatePath("/club/dashboard/parametres");
+}

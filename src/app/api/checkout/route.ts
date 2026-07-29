@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { stripe, stripeConfigured } from "@/lib/stripe";
+import { notifyAdmin, sendEmail } from "@/lib/email";
+import { formatPrice } from "@/lib/money";
 import { formatSelectedOptions, decodeSelectedOptions } from "@/lib/productOptions";
 import { computeDeliveryFeeCents, type DeliveryMethod } from "@/lib/delivery";
 
@@ -11,7 +13,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Non autorisé." }, { status: 401 });
   }
 
-  if (!stripeConfigured) {
+  const body = await request.json().catch(() => ({}));
+  const paymentMethod = body?.paymentMethod === "ON_SITE" ? "ON_SITE" : "STRIPE";
+
+  if (paymentMethod === "STRIPE" && !stripeConfigured) {
     return NextResponse.json(
       { error: "Le paiement en ligne n'est pas encore configuré (clés Stripe manquantes)." },
       { status: 503 },
@@ -42,7 +47,15 @@ export async function POST(request: Request) {
   }
 
   const club = cartItems[0].product.club;
-  if (!club.stripeAccountId || !club.stripePayoutsEnabled) {
+
+  if (paymentMethod === "ON_SITE") {
+    if (!club.allowPayOnSite) {
+      return NextResponse.json(
+        { error: `"${club.name}" n'accepte pas le paiement sur place pour le moment.` },
+        { status: 400 },
+      );
+    }
+  } else if (!club.stripeAccountId || !club.stripePayoutsEnabled) {
     return NextResponse.json(
       {
         error: `"${club.name}" n'a pas encore configuré la réception de ses paiements. Contactez le club ou réessayez plus tard.`,
@@ -97,6 +110,8 @@ export async function POST(request: Request) {
       totalCents,
       deliveryMethod,
       deliveryFeeCents,
+      paymentMethod,
+      customerName: paymentMethod === "ON_SITE" ? session.user.name ?? undefined : undefined,
       items: {
         create: cartItems.map((item) => ({
           productId: item.productId,
@@ -111,7 +126,52 @@ export async function POST(request: Request) {
     },
   });
 
+  await prisma.cartItem.deleteMany({ where: { userId: session.user.id } });
+
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
+
+  if (paymentMethod === "ON_SITE") {
+    const itemsList = cartItems
+      .map(
+        (item) =>
+          `<li>${item.quantity} × ${item.product.name}${
+            item.personalizationText ? ` (Personnalisé : ${item.personalizationText})` : ""
+          } — ${formatPrice(unitPriceFor(item) * item.quantity)}</li>`,
+      )
+      .join("");
+
+    await notifyAdmin({
+      subject: `Nouvelle commande à régler sur place — ${formatPrice(order.totalCents)}`,
+      html: `
+        <p>Une nouvelle commande à régler sur place vient d'être passée sur Jersey Run.</p>
+        <ul>
+          <li><strong>Client :</strong> ${session.user.name ?? session.user.email}</li>
+          <li><strong>Club :</strong> ${club.name}</li>
+          <li><strong>Total :</strong> ${formatPrice(order.totalCents)}</li>
+        </ul>
+        <p><strong>Articles :</strong></p>
+        <ul>${itemsList}</ul>
+      `,
+    });
+
+    await sendEmail({
+      to: club.email,
+      subject: `Nouvelle commande à régler sur place — ${formatPrice(order.totalCents)}`,
+      html: `
+        <p>Bonjour,</p>
+        <p>Un client a passé une commande sur votre boutique Jersey Run avec paiement sur place.</p>
+        <ul>
+          <li><strong>Client :</strong> ${session.user.name ?? session.user.email}</li>
+          <li><strong>Total à encaisser au retrait :</strong> ${formatPrice(order.totalCents)}</li>
+        </ul>
+        <p><strong>Articles :</strong></p>
+        <ul>${itemsList}</ul>
+        <p>Connectez-vous à votre espace club pour marquer la commande comme payée une fois le règlement reçu.</p>
+      `,
+    });
+
+    return NextResponse.json({ url: `${baseUrl}/commande/succes?method=onsite` });
+  }
 
   const lineItems = cartItems.map((item) => {
     const optionsLabel = formatSelectedOptions(item.selectedOptions);
@@ -146,7 +206,7 @@ export async function POST(request: Request) {
     line_items: lineItems,
     phone_number_collection: { enabled: true },
     payment_intent_data: {
-      transfer_data: { destination: club.stripeAccountId },
+      transfer_data: { destination: club.stripeAccountId! },
     },
     metadata: { orderId: order.id, deliveryMethod },
     success_url: `${baseUrl}/commande/succes?session_id={CHECKOUT_SESSION_ID}`,
@@ -157,8 +217,6 @@ export async function POST(request: Request) {
     where: { id: order.id },
     data: { stripeSessionId: checkoutSession.id },
   });
-
-  await prisma.cartItem.deleteMany({ where: { userId: session.user.id } });
 
   return NextResponse.json({ url: checkoutSession.url });
 }

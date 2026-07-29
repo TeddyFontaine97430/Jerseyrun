@@ -6,12 +6,15 @@ import { formatPrice } from "@/lib/money";
 export function OrderSummary({
   subtotalCents,
   singleClub,
+  allowPayOnSite,
 }: {
   subtotalCents: number;
   singleClub: boolean;
+  allowPayOnSite: boolean;
 }) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<"STRIPE" | "ON_SITE">("STRIPE");
 
   async function handleCheckout() {
     setPending(true);
@@ -20,7 +23,7 @@ export function OrderSummary({
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ deliveryMethod: "PICKUP" }),
+        body: JSON.stringify({ deliveryMethod: "PICKUP", paymentMethod }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -52,6 +55,34 @@ export function OrderSummary({
         </p>
       )}
 
+      {allowPayOnSite && (
+        <div className="mt-4">
+          <p className="mb-2 text-sm font-medium text-white">Mode de paiement</p>
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 text-sm text-neutral-200">
+              <input
+                type="radio"
+                name="paymentMethod"
+                checked={paymentMethod === "STRIPE"}
+                onChange={() => setPaymentMethod("STRIPE")}
+                className="h-4 w-4 border-white/20 bg-neutral-800 text-accent focus:ring-accent"
+              />
+              Carte bancaire (en ligne)
+            </label>
+            <label className="flex items-center gap-2 text-sm text-neutral-200">
+              <input
+                type="radio"
+                name="paymentMethod"
+                checked={paymentMethod === "ON_SITE"}
+                onChange={() => setPaymentMethod("ON_SITE")}
+                className="h-4 w-4 border-white/20 bg-neutral-800 text-accent focus:ring-accent"
+              />
+              Paiement sur place, au retrait
+            </label>
+          </div>
+        </div>
+      )}
+
       <div className="mt-4 flex justify-between border-t border-white/10 pt-2 text-base font-bold text-white">
         <span>Total</span>
         <span>{formatPrice(subtotalCents)}</span>
@@ -63,7 +94,11 @@ export function OrderSummary({
         disabled={pending || !singleClub}
         className="mt-6 w-full rounded-full bg-accent px-6 py-3 text-sm font-semibold text-white transition hover:bg-accent-dark disabled:opacity-60"
       >
-        {pending ? "Redirection..." : "Passer commande et payer"}
+        {pending
+          ? "Redirection..."
+          : paymentMethod === "ON_SITE"
+            ? "Passer commande (paiement sur place)"
+            : "Passer commande et payer"}
       </button>
       {error && <p className="mt-2 text-sm font-medium text-red-400">{error}</p>}
     </div>

@@ -36,6 +36,11 @@ enum DeliveryMethod {
   PICKUP
 }
 
+enum PaymentMethod {
+  STRIPE
+  ON_SITE
+}
+
 enum ProductAvailability {
   IN_STOCK
   PREORDER
@@ -96,6 +101,7 @@ model Club {
   active      Boolean     @default(true)
   stripeAccountId      String?  @unique
   stripePayoutsEnabled Boolean  @default(false)
+  allowPayOnSite       Boolean  @default(false)
   termsAcceptedAt      DateTime?
   owner       User        @relation(fields: [ownerId], references: [id])
   ownerId     String      @unique
@@ -164,6 +170,7 @@ model Order {
   totalCents         Int
   deliveryMethod     DeliveryMethod @default(DELIVERY)
   deliveryFeeCents   Int            @default(0)
+  paymentMethod      PaymentMethod  @default(STRIPE)
   stripeSessionId    String?        @unique
   customerName       String?
   customerPhone      String?

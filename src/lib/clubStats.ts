@@ -27,3 +27,22 @@ export async function getClubSales(clubId: string) {
   });
   return items;
 }
+
+export async function getClubPendingOnSiteOrders(clubId: string) {
+  const items = await prisma.orderItem.findMany({
+    where: { clubId, order: { status: "PENDING", paymentMethod: "ON_SITE" } },
+    include: { order: { include: { user: true } } },
+    orderBy: { order: { createdAt: "desc" } },
+  });
+
+  const orders = new Map<string, { order: (typeof items)[number]["order"]; items: typeof items }>();
+  for (const item of items) {
+    const existing = orders.get(item.orderId);
+    if (existing) {
+      existing.items.push(item);
+    } else {
+      orders.set(item.orderId, { order: item.order, items: [item] });
+    }
+  }
+  return Array.from(orders.values());
+}
