@@ -59,8 +59,8 @@ export function ProductForm({
     try {
       const url = await uploadImageClient(file, "products");
       setImageUrl(url);
-    } catch {
-      setUploadError("Échec de l'envoi de l'image. Réessayez.");
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Échec de l'envoi de l'image. Réessayez.");
     } finally {
       setUploading(false);
     }

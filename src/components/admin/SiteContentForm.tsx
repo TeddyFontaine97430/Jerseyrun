@@ -22,8 +22,8 @@ export function SiteContentForm({ content }: { content: Record<SiteContentKey, s
     try {
       const url = await uploadImageClient(file, "site-content");
       setHeroImageUrl(url);
-    } catch {
-      setUploadError("Échec de l'envoi de l'image. Réessayez.");
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Échec de l'envoi de l'image. Réessayez.");
     } finally {
       setUploading(false);
     }

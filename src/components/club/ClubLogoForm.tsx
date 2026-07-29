@@ -21,8 +21,8 @@ export function ClubLogoForm({ logoUrl, clubId }: { logoUrl: string | null; club
     try {
       const url = await uploadImageClient(file, "club-logos");
       setUploadedLogoUrl(url);
-    } catch {
-      setUploadError("Échec de l'envoi de l'image. Réessayez.");
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Échec de l'envoi de l'image. Réessayez.");
     } finally {
       setUploading(false);
     }
