@@ -62,6 +62,32 @@ export const metadata: Metadata = {
   },
 };
 
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "Jersey Run",
+  url: siteUrl,
+  logo: `${siteUrl}/logo-wordmark.png`,
+  description: siteDescription,
+  address: {
+    "@type": "PostalAddress",
+    streetAddress: "28 chemin Saint Expédit",
+    postalCode: "97430",
+    addressLocality: "Le Tampon",
+    addressRegion: "La Réunion",
+    addressCountry: "FR",
+  },
+  sameAs: ["https://www.facebook.com/p/Jersey-run-cr%C3%A9ation-100082974560526/"],
+};
+
+const websiteJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "Jersey Run",
+  url: siteUrl,
+  inLanguage: "fr-FR",
+};
+
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -75,6 +101,14 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-background">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+        />
         <Providers session={session}>
           <Navbar />
           <main className="flex-1">{children}</main>

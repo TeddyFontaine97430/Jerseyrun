@@ -4,6 +4,8 @@ import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { ProductCard } from "@/components/ProductCard";
 
+const siteUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "https://jerseyrun.re";
+
 type Props = { params: Promise<{ slug: string }> };
 
 async function getClub(slug: string) {
@@ -46,8 +48,59 @@ export default async function ClubShopPage({ params }: Props) {
   const club = await getClub(slug);
   if (!club) notFound();
 
+  const clubUrl = `${siteUrl}/clubs/${club.slug}`;
+
+  const clubJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SportsOrganization",
+    name: club.name,
+    url: clubUrl,
+    telephone: club.phone,
+    email: club.email,
+    ...(club.sport ? { sport: club.sport } : {}),
+    ...(club.logoUrl ? { logo: club.logoUrl } : {}),
+    ...(club.description ? { description: club.description } : {}),
+  };
+
+  const productsJsonLd = club.products.map((product) => {
+    const inStock = product.options.length > 0
+      ? product.options.every((o) => o.values.some((v) => v.stock > 0))
+      : true;
+    return {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      name: product.name,
+      description: product.description ?? `${product.name} — ${club.name}`,
+      ...(product.imageUrl ? { image: product.imageUrl } : {}),
+      brand: { "@type": "Brand", name: club.name },
+      offers: {
+        "@type": "Offer",
+        url: clubUrl,
+        priceCurrency: "EUR",
+        price: (product.priceCents / 100).toFixed(2),
+        availability:
+          product.availability === "PREORDER"
+            ? "https://schema.org/PreOrder"
+            : inStock
+              ? "https://schema.org/InStock"
+              : "https://schema.org/OutOfStock",
+      },
+    };
+  });
+
   return (
     <div>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(clubJsonLd) }}
+      />
+      {productsJsonLd.map((json, i) => (
+        <script
+          key={club.products[i].id}
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(json) }}
+        />
+      ))}
       <section className="border-b border-white/10 bg-gradient-to-b from-neutral-900 to-black">
         <div className="container-page flex flex-col items-center gap-6 py-14 text-center sm:flex-row sm:text-left">
           <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-neutral-900">
