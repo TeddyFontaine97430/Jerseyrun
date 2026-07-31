@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getClubForUser } from "@/lib/clubStats";
+import { notifyAdmin } from "@/lib/email";
+import { formatPrice } from "@/lib/money";
 
 const productSchema = z.object({
   name: z.string().min(2, "Le nom est requis."),
@@ -147,6 +149,21 @@ export async function createProduct(
       },
     },
   });
+
+  const session = await auth();
+  if (session?.user?.role === "CLUB") {
+    await notifyAdmin({
+      subject: `Nouvel article ajouté par ${club.name}`,
+      html: `
+        <p>Le club <strong>${club.name}</strong> vient d'ajouter un nouvel article à sa boutique.</p>
+        <ul>
+          <li><strong>Article :</strong> ${name}</li>
+          <li><strong>Prix :</strong> ${formatPrice(Math.round(price * 100))}</li>
+        </ul>
+        <p>Connectez-vous à l&apos;espace admin pour voir la boutique du club.</p>
+      `,
+    });
+  }
 
   revalidateClubPaths(club);
   return { status: "success", message: "Article ajouté." };
