@@ -5,6 +5,7 @@ import { formatPrice } from "@/lib/money";
 import { ORDER_STATUS_LABELS, ORDER_STATUS_STYLES } from "@/lib/orderStatus";
 import { formatItemDetails } from "@/lib/productOptions";
 import { DeliveryStatusToggle } from "@/components/DeliveryStatusToggle";
+import { ReadyForPickupToggle } from "@/components/ReadyForPickupToggle";
 import { MarkPaidOnSiteButton } from "@/components/MarkPaidOnSiteButton";
 
 export const metadata: Metadata = { title: { absolute: "Espace club — Jersey Run" } };
@@ -97,6 +98,7 @@ export default async function ClubDashboardPage() {
                 <th className="px-5 py-3 font-medium">Quantité</th>
                 <th className="px-5 py-3 font-medium">Montant</th>
                 <th className="px-5 py-3 font-medium">Statut</th>
+                <th className="px-5 py-3 font-medium">Prêt ?</th>
                 <th className="px-5 py-3 font-medium">Livraison</th>
                 <th className="px-5 py-3 font-medium">Date</th>
               </tr>
@@ -125,6 +127,9 @@ export default async function ClubDashboardPage() {
                     >
                       {ORDER_STATUS_LABELS[item.order.status] ?? item.order.status}
                     </span>
+                  </td>
+                  <td className="px-5 py-3">
+                    <ReadyForPickupToggle orderItemId={item.id} readyForPickup={item.readyForPickup} />
                   </td>
                   <td className="px-5 py-3">
                     <DeliveryStatusToggle orderItemId={item.id} delivered={item.delivered} />

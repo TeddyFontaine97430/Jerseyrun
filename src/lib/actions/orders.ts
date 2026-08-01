@@ -31,6 +31,48 @@ export async function toggleOrderItemDelivered(orderItemId: string) {
   revalidatePath("/admin/ventes");
 }
 
+export async function toggleOrderItemReadyForPickup(orderItemId: string) {
+  const session = await auth();
+  if (!session?.user) return;
+
+  const item = await prisma.orderItem.findUnique({
+    where: { id: orderItemId },
+    include: { order: { include: { user: true } }, club: true },
+  });
+  if (!item) return;
+
+  if (session.user.role === "CLUB") {
+    const club = await getClubForUser(session.user.id);
+    if (!club || club.id !== item.clubId) return;
+  } else if (session.user.role !== "ADMIN") {
+    return;
+  }
+
+  const newValue = !item.readyForPickup;
+  await prisma.orderItem.update({ where: { id: orderItemId }, data: { readyForPickup: newValue } });
+
+  if (newValue) {
+    const customerEmail = item.order.user?.email ?? item.order.customerEmail;
+    if (customerEmail) {
+      const customerName = item.order.customerName ?? item.order.user?.name ?? undefined;
+      await sendEmail({
+        to: customerEmail,
+        subject: `Votre commande chez ${item.club.name} est prête à être récupérée`,
+        html: `
+          <p>Bonjour${customerName ? ` ${customerName}` : ""},</p>
+          <p>Bonne nouvelle : votre article <strong>${item.quantity} × ${item.productName}</strong> est prêt et vous attend au club <strong>${item.club.name}</strong> !</p>
+          <p>Vous pouvez venir le récupérer dès que possible.</p>
+          <p>À bientôt sur Jersey Run !</p>
+        `,
+      });
+    }
+  }
+
+  revalidatePath("/club/dashboard");
+  revalidatePath(`/admin/clubs/${item.clubId}`);
+  revalidatePath("/admin/ventes");
+}
+
 export type MarkOrderPaidState = {
   status: "idle" | "success" | "error";
   message?: string;

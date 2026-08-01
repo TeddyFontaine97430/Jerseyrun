@@ -201,6 +201,7 @@ model OrderItem {
   productName         String
   selectedOptions     String?
   personalizationText String?
+  readyForPickup      Boolean @default(false)
   delivered           Boolean @default(false)
 }
 

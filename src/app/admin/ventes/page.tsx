@@ -4,6 +4,7 @@ import { formatPrice } from "@/lib/money";
 import { ORDER_STATUS_LABELS, ORDER_STATUS_STYLES } from "@/lib/orderStatus";
 import { formatItemDetails } from "@/lib/productOptions";
 import { DeliveryStatusToggle } from "@/components/DeliveryStatusToggle";
+import { ReadyForPickupToggle } from "@/components/ReadyForPickupToggle";
 
 export const metadata: Metadata = { title: { absolute: "Ventes — Administration Jersey Run" } };
 
@@ -60,6 +61,7 @@ export default async function AdminVentesPage() {
                 <th className="px-5 py-3 font-medium">Client</th>
                 <th className="px-5 py-3 font-medium">Livraison</th>
                 <th className="px-5 py-3 font-medium">Statut</th>
+                <th className="px-5 py-3 font-medium">Prêt ?</th>
                 <th className="px-5 py-3 font-medium">Livré</th>
               </tr>
             </thead>
@@ -106,6 +108,9 @@ export default async function AdminVentesPage() {
                       >
                         {ORDER_STATUS_LABELS[item.order.status] ?? item.order.status}
                       </span>
+                    </td>
+                    <td className="whitespace-nowrap px-5 py-3">
+                      <ReadyForPickupToggle orderItemId={item.id} readyForPickup={item.readyForPickup} />
                     </td>
                     <td className="whitespace-nowrap px-5 py-3">
                       <DeliveryStatusToggle orderItemId={item.id} delivered={item.delivered} />

@@ -12,6 +12,7 @@ import { ClubApprovalRow } from "@/components/admin/ClubApprovalRow";
 import { ClubStatusToggle } from "@/components/admin/ClubStatusToggle";
 import { DeleteClubButton } from "@/components/admin/DeleteClubButton";
 import { DeliveryStatusToggle } from "@/components/DeliveryStatusToggle";
+import { ReadyForPickupToggle } from "@/components/ReadyForPickupToggle";
 import { MarkPaidOnSiteButton } from "@/components/MarkPaidOnSiteButton";
 import { ClubLogoForm } from "@/components/club/ClubLogoForm";
 
@@ -168,6 +169,7 @@ export default async function AdminClubDetailPage({ params }: Props) {
                 <th className="px-5 py-3 font-medium">Quantité</th>
                 <th className="px-5 py-3 font-medium">Montant</th>
                 <th className="px-5 py-3 font-medium">Statut</th>
+                <th className="px-5 py-3 font-medium">Prêt ?</th>
                 <th className="px-5 py-3 font-medium">Livraison</th>
                 <th className="px-5 py-3 font-medium">Date</th>
               </tr>
@@ -196,6 +198,9 @@ export default async function AdminClubDetailPage({ params }: Props) {
                     >
                       {ORDER_STATUS_LABELS[item.order.status] ?? item.order.status}
                     </span>
+                  </td>
+                  <td className="px-5 py-3">
+                    <ReadyForPickupToggle orderItemId={item.id} readyForPickup={item.readyForPickup} />
                   </td>
                   <td className="px-5 py-3">
                     <DeliveryStatusToggle orderItemId={item.id} delivered={item.delivered} />
