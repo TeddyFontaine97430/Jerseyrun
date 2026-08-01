@@ -61,6 +61,12 @@ export default async function ClubDashboardLayout({ children }: { children: Reac
             Mes articles
           </Link>
           <Link
+            href="/club/dashboard/commande-manuelle"
+            className="rounded-full px-4 py-2 text-sm font-semibold text-neutral-300 hover:text-white"
+          >
+            Commande manuelle
+          </Link>
+          <Link
             href="/club/dashboard/boutique-fournisseur"
             className="rounded-full px-4 py-2 text-sm font-semibold text-neutral-300 hover:text-white"
           >

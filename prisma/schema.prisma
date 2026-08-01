@@ -164,15 +164,17 @@ model CartItem {
 
 model Order {
   id                 String      @id @default(cuid())
-  user               User        @relation(fields: [userId], references: [id])
-  userId             String
+  user               User?       @relation(fields: [userId], references: [id])
+  userId             String?
   status             OrderStatus    @default(PENDING)
   totalCents         Int
   deliveryMethod     DeliveryMethod @default(DELIVERY)
   deliveryFeeCents   Int            @default(0)
   paymentMethod      PaymentMethod  @default(STRIPE)
   stripeSessionId    String?        @unique
+  isManualOrder      Boolean        @default(false)
   customerName       String?
+  customerEmail      String?
   customerPhone      String?
   shippingLine1      String?
   shippingLine2      String?

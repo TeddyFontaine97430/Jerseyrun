@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { getClubForUser } from "@/lib/clubStats";
 import { notifyAdmin, sendEmail } from "@/lib/email";
 import { formatPrice } from "@/lib/money";
-import { decodeSelectedOptions } from "@/lib/productOptions";
+import { decodeSelectedOptions, encodeSelectedOptions } from "@/lib/productOptions";
 import { getNextInvoiceNumber, generateInvoicePdf } from "@/lib/invoice";
 
 export async function toggleOrderItemDelivered(orderItemId: string) {
@@ -59,6 +59,11 @@ export async function markOrderPaidOnSite(orderId: string): Promise<MarkOrderPai
     return { status: "error", message: "Cette commande n'est pas en attente de paiement sur place." };
   }
 
+  if (!order.user) {
+    return { status: "error", message: "Cette commande n'a pas de client associé." };
+  }
+  const orderUser = order.user;
+
   const invoiceNumber = await getNextInvoiceNumber();
   const invoicedAt = new Date();
 
@@ -92,7 +97,7 @@ export async function markOrderPaidOnSite(orderId: string): Promise<MarkOrderPai
     )
     .join("");
 
-  const customerName = order.customerName ?? order.user.name ?? undefined;
+  const customerName = order.customerName ?? orderUser.name ?? undefined;
 
   await notifyAdmin({
     subject: `Nouvelle vente (paiement sur place) — ${formatPrice(order.totalCents)}`,
@@ -116,7 +121,7 @@ export async function markOrderPaidOnSite(orderId: string): Promise<MarkOrderPai
     sellerPhone: sellerClub.phone,
     sellerEmail: sellerClub.email,
     customerName: customerName ?? null,
-    customerEmail: order.user.email,
+    customerEmail: orderUser.email,
     customerPhone: order.customerPhone,
     deliveryMethod: order.deliveryMethod,
     deliveryFeeCents: order.deliveryFeeCents,
@@ -136,7 +141,7 @@ export async function markOrderPaidOnSite(orderId: string): Promise<MarkOrderPai
   });
 
   await sendEmail({
-    to: order.user.email,
+    to: orderUser.email,
     subject: `Votre commande Jersey Run — Facture N° ${invoiceNumber}`,
     html: `
       <p>Bonjour${customerName ? ` ${customerName}` : ""},</p>
@@ -158,4 +163,188 @@ export async function markOrderPaidOnSite(orderId: string): Promise<MarkOrderPai
   revalidatePath("/admin/ventes");
 
   return { status: "success", message: "Commande marquée comme payée." };
+}
+
+export type ManualOrderState = {
+  status: "idle" | "success" | "error";
+  message?: string;
+};
+
+export async function createManualOrder(
+  _prevState: ManualOrderState,
+  formData: FormData,
+): Promise<ManualOrderState> {
+  const session = await auth();
+  if (!session?.user) return { status: "error", message: "Accès non autorisé." };
+
+  let club;
+  if (session.user.role === "CLUB") {
+    club = await getClubForUser(session.user.id);
+    if (!club || club.status !== "APPROVED") return { status: "error", message: "Accès non autorisé." };
+  } else if (session.user.role === "ADMIN") {
+    const clubId = formData.get("clubId");
+    if (typeof clubId !== "string" || !clubId) return { status: "error", message: "Accès non autorisé." };
+    club = await prisma.club.findUnique({ where: { id: clubId } });
+    if (!club) return { status: "error", message: "Club introuvable." };
+  } else {
+    return { status: "error", message: "Accès non autorisé." };
+  }
+
+  const productId = formData.get("productId");
+  if (typeof productId !== "string" || !productId) {
+    return { status: "error", message: "Sélectionnez un article." };
+  }
+
+  const quantityRaw = Number(formData.get("quantity"));
+  const quantity = Number.isFinite(quantityRaw) ? Math.floor(quantityRaw) : 0;
+  if (quantity < 1) return { status: "error", message: "La quantité doit être d'au moins 1." };
+
+  const customerName = ((formData.get("customerName") as string) ?? "").trim();
+  if (!customerName) return { status: "error", message: "Le nom du client est requis." };
+  const customerEmail = ((formData.get("customerEmail") as string) ?? "").trim() || null;
+  const customerPhone = ((formData.get("customerPhone") as string) ?? "").trim() || null;
+  const personalizationText = ((formData.get("personalizationText") as string) ?? "").trim() || null;
+
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+    include: { options: { include: { values: true } } },
+  });
+  if (!product || product.clubId !== club.id) {
+    return { status: "error", message: "Article introuvable." };
+  }
+
+  const selections: { name: string; value: string }[] = [];
+  for (const option of product.options) {
+    const chosen = formData.get(`option_${option.id}`);
+    if (typeof chosen !== "string" || !chosen) {
+      return { status: "error", message: `Choisissez une valeur pour "${option.name}".` };
+    }
+    const optionValue = option.values.find((v) => v.value === chosen);
+    if (!optionValue) {
+      return { status: "error", message: `Valeur invalide pour "${option.name}".` };
+    }
+    if (optionValue.stock < quantity) {
+      return {
+        status: "error",
+        message: `Stock insuffisant pour "${product.name}" (${option.name} : ${chosen}).`,
+      };
+    }
+    selections.push({ name: option.name, value: chosen });
+  }
+
+  const unitPriceCents = product.priceCents + (personalizationText ? product.personalizationFeeCents : 0);
+  const totalCents = unitPriceCents * quantity;
+  const invoiceNumber = await getNextInvoiceNumber();
+  const invoicedAt = new Date();
+  const selectedOptions = encodeSelectedOptions(selections);
+
+  const stockUpdates: Prisma.PrismaPromise<unknown>[] = selections.map((sel) =>
+    prisma.productOptionValue.updateMany({
+      where: { value: sel.value, option: { name: sel.name, productId: product.id } },
+      data: { stock: { decrement: quantity } },
+    }),
+  );
+
+  const [order] = await prisma.$transaction([
+    prisma.order.create({
+      data: {
+        userId: null,
+        isManualOrder: true,
+        status: "PAID",
+        totalCents,
+        deliveryMethod: "PICKUP",
+        paymentMethod: "ON_SITE",
+        customerName,
+        customerEmail,
+        customerPhone,
+        invoiceNumber,
+        invoicedAt,
+        items: {
+          create: [
+            {
+              productId: product.id,
+              clubId: club.id,
+              quantity,
+              unitPriceCents,
+              productName: product.name,
+              selectedOptions,
+              personalizationText,
+              delivered: true,
+            },
+          ],
+        },
+      },
+    }),
+    ...stockUpdates,
+  ]);
+
+  const details = [
+    selections.map((s) => `${s.name} : ${s.value}`).join(", "),
+    personalizationText ? `Personnalisé : ${personalizationText}` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  await notifyAdmin({
+    subject: `Vente manuelle enregistrée par ${club.name} — ${formatPrice(totalCents)}`,
+    html: `
+      <p>Le club <strong>${club.name}</strong> vient d'enregistrer une vente manuelle (hors site).</p>
+      <ul>
+        <li><strong>Client :</strong> ${customerName}</li>
+        <li><strong>Article :</strong> ${quantity} × ${product.name}${details ? ` (${details})` : ""}</li>
+        <li><strong>Total :</strong> ${formatPrice(totalCents)}</li>
+      </ul>
+    `,
+  });
+
+  if (customerEmail) {
+    const invoicePdf = await generateInvoicePdf({
+      invoiceNumber,
+      invoiceDate: invoicedAt,
+      sellerName: club.name,
+      sellerPhone: club.phone,
+      sellerEmail: club.email,
+      customerName,
+      customerEmail,
+      customerPhone,
+      deliveryMethod: "PICKUP",
+      deliveryFeeCents: 0,
+      shippingLine1: null,
+      shippingLine2: null,
+      shippingCity: null,
+      shippingPostalCode: null,
+      shippingCountry: null,
+      items: [
+        {
+          productName: product.name,
+          quantity,
+          unitPriceCents,
+          selectedOptions,
+          personalizationText,
+        },
+      ],
+      totalCents,
+    });
+
+    await sendEmail({
+      to: customerEmail,
+      subject: `Votre achat auprès de ${club.name} — Facture N° ${invoiceNumber}`,
+      html: `
+        <p>Bonjour ${customerName},</p>
+        <p>Merci pour votre achat auprès de ${club.name} !</p>
+        <ul>
+          <li><strong>Article :</strong> ${quantity} × ${product.name}${details ? ` (${details})` : ""}</li>
+          <li><strong>Total :</strong> ${formatPrice(totalCents)}</li>
+        </ul>
+        <p>Vous trouverez votre facture N° ${invoiceNumber} en pièce jointe de cet email.</p>
+      `,
+      attachments: [{ filename: `facture-${invoiceNumber}.pdf`, content: invoicePdf }],
+    });
+  }
+
+  revalidatePath("/club/dashboard");
+  revalidatePath(`/admin/clubs/${club.id}`);
+  revalidatePath("/admin/ventes");
+
+  return { status: "success", message: `Vente enregistrée. Facture N° ${order.invoiceNumber}.` };
 }

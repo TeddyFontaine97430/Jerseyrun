@@ -86,9 +86,11 @@ export default async function AdminVentesPage() {
                     </td>
                     <td className="px-5 py-3 text-neutral-300">
                       <div className="font-medium text-white">
-                        {item.order.customerName ?? item.order.user.name ?? "—"}
+                        {item.order.customerName ?? item.order.user?.name ?? "—"}
                       </div>
-                      <div className="text-xs text-neutral-500">{item.order.user.email}</div>
+                      <div className="text-xs text-neutral-500">
+                        {item.order.user?.email ?? item.order.customerEmail ?? "Vente manuelle"}
+                      </div>
                       {item.order.customerPhone && (
                         <div className="text-xs text-neutral-500">{item.order.customerPhone}</div>
                       )}

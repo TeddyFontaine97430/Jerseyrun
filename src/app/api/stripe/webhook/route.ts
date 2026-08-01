@@ -35,7 +35,8 @@ export async function POST(request: Request) {
         include: { items: { include: { club: true } }, user: true },
       });
 
-      if (order && order.status === "PENDING") {
+      if (order && order.status === "PENDING" && order.user) {
+        const orderUser = order.user;
         const shipping = checkoutSession.collected_information?.shipping_details;
         const customerDetails = checkoutSession.customer_details;
         const customerName = shipping?.name ?? customerDetails?.name ?? undefined;
@@ -170,7 +171,7 @@ export async function POST(request: Request) {
           sellerPhone: sellerClub.phone,
           sellerEmail: sellerClub.email,
           customerName: customerName ?? null,
-          customerEmail: order.user.email,
+          customerEmail: orderUser.email,
           customerPhone: customerPhone || null,
           deliveryMethod: order.deliveryMethod,
           deliveryFeeCents: order.deliveryFeeCents,
@@ -190,7 +191,7 @@ export async function POST(request: Request) {
         });
 
         await sendEmail({
-          to: order.user.email,
+          to: orderUser.email,
           subject: `Votre commande Jersey Run — Facture N° ${invoiceNumber}`,
           html: `
             <p>Bonjour${customerName ? ` ${customerName}` : ""},</p>

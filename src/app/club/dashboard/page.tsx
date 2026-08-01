@@ -49,7 +49,7 @@ export default async function ClubDashboardPage() {
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <p className="text-sm font-medium text-white">
-                      {order.customerName ?? order.user.name ?? order.user.email}
+                      {order.customerName ?? order.user?.name ?? order.user?.email}
                     </p>
                     <p className="text-xs text-neutral-500">
                       Commande du {order.createdAt.toLocaleDateString("fr-FR")}
@@ -112,7 +112,9 @@ export default async function ClubDashboardPage() {
                       </span>
                     )}
                   </td>
-                  <td className="px-5 py-3 text-neutral-300">{item.order.user.name ?? item.order.user.email}</td>
+                  <td className="px-5 py-3 text-neutral-300">
+                    {item.order.customerName ?? item.order.user?.name ?? item.order.user?.email ?? "Vente manuelle"}
+                  </td>
                   <td className="px-5 py-3 text-neutral-300">{item.quantity}</td>
                   <td className="px-5 py-3 text-neutral-300">{formatPrice(item.unitPriceCents * item.quantity)}</td>
                   <td className="px-5 py-3">
