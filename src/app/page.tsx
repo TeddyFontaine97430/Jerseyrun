@@ -5,20 +5,44 @@ import { ClubLogoCard } from "@/components/ClubLogoCard";
 import { ProductMarquee } from "@/components/ProductMarquee";
 import { getSiteContentMap } from "@/lib/siteContent";
 
+// Ce club doit toujours apparaître en premier, aussi bien dans la grille des clubs
+// que dans la bande "fraîchement mis en ligne par nos clubs".
+const PINNED_CLUB_SLUG = "jeunesse-sportive-saint-pierroise";
+
 export default async function Home() {
-  const [clubs, marqueeProducts, content] = await Promise.all([
+  const [clubs, pinnedProducts, otherProducts, content] = await Promise.all([
     prisma.club.findMany({
       where: { status: "APPROVED", active: true },
       orderBy: { name: "asc" },
     }),
     prisma.product.findMany({
-      where: { active: true, imageUrl: { not: null }, club: { status: "APPROVED", active: true } },
+      where: {
+        active: true,
+        imageUrl: { not: null },
+        club: { slug: PINNED_CLUB_SLUG, status: "APPROVED", active: true },
+      },
+      include: { club: { select: { slug: true, name: true } } },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.product.findMany({
+      where: {
+        active: true,
+        imageUrl: { not: null },
+        club: { slug: { not: PINNED_CLUB_SLUG }, status: "APPROVED", active: true },
+      },
       include: { club: { select: { slug: true, name: true } } },
       orderBy: { createdAt: "desc" },
       take: 20,
     }),
     getSiteContentMap(),
   ]);
+
+  const marqueeProducts = [...pinnedProducts, ...otherProducts];
+
+  const pinnedClub = clubs.find((club) => club.slug === PINNED_CLUB_SLUG);
+  const sortedClubs = pinnedClub
+    ? [pinnedClub, ...clubs.filter((club) => club.slug !== PINNED_CLUB_SLUG)]
+    : clubs;
 
   return (
     <div>
@@ -94,13 +118,13 @@ export default async function Home() {
           <p className="mx-auto mt-3 max-w-xl text-neutral-400">{content["home.partnersSubtitle"]}</p>
         </div>
 
-        {clubs.length === 0 ? (
+        {sortedClubs.length === 0 ? (
           <p className="text-center text-neutral-400">
             Aucun club partenaire pour le moment. Revenez bientôt !
           </p>
         ) : (
           <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
-            {clubs.map((club) => (
+            {sortedClubs.map((club) => (
               <ClubLogoCard
                 key={club.id}
                 slug={club.slug}
