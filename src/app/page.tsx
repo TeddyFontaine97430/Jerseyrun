@@ -79,6 +79,14 @@ export default async function Home() {
               >
                 Inscrire mon club
               </Link>
+              <a
+                href="https://www.jerseyrun.fr"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-full border border-gold/40 px-6 py-3 text-sm font-semibold text-gold transition hover:bg-gold/15"
+              >
+                Découvrez la boutique Jersey Run
+              </a>
             </div>
           </div>
         </div>
