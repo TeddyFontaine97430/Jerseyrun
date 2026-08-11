@@ -4,6 +4,13 @@ import { ContactForm } from "@/components/ContactForm";
 export function Footer() {
   return (
     <footer id="contact" className="mt-24 bg-navy text-slate-300">
+      <div className="border-b border-white/10 bg-black/30">
+        <div className="container-page py-5 text-center text-xs text-neutral-400 sm:text-sm">
+          Jersey Run met uniquement à disposition la plateforme aux clubs. Chaque club est responsable de son
+          stock, de ses ventes et de ses clients. Toute réclamation doit se faire directement avec le club
+          concerné.
+        </div>
+      </div>
       <div className="container-page grid gap-12 py-16 lg:grid-cols-2">
         <div>
           <h2 className="text-2xl font-bold text-white">Une question ? Contactez-nous</h2>
