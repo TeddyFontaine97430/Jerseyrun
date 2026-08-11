@@ -83,7 +83,7 @@ export default async function Home() {
                 href="https://www.jerseyrun.fr"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-full border border-gold/40 px-6 py-3 text-sm font-semibold text-gold transition hover:bg-gold/15"
+                className="animate-cta-pulse rounded-full bg-gold px-6 py-3 text-sm font-bold text-black transition hover:bg-gold-dark"
               >
                 Découvrez la boutique Jersey Run
               </a>
