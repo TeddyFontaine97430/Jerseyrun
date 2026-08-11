@@ -92,20 +92,22 @@ export default async function Home() {
         </div>
       </section>
 
-      <Link
-        href="/clubs/jeunesse-sportive-saint-pierroise"
+      <a
+        href={content["home.bannerLink"]}
+        {...(content["home.bannerLink"].startsWith("http")
+          ? { target: "_blank", rel: "noopener noreferrer" }
+          : {})}
         className="block w-full overflow-hidden border-b border-white/10"
-        aria-label="Découvrir la boutique de la Jeunesse Sportive Saint-Pierroise"
       >
         <Image
-          src="https://hlgj7olfcqzaeggk.public.blob.vercel-storage.com/site/banner-js-saint-pierroise-q1S8i1gAxEsFwzEfl7DqpO3K7BjXkS.jpg"
-          alt="Jeunesse Sportive Saint-Pierroise — Maillot officiel saison 2026"
+          src={content["home.bannerImage"]}
+          alt=""
           width={1536}
           height={862}
           sizes="100vw"
           className="h-auto w-full object-cover transition hover:opacity-90"
         />
-      </Link>
+      </a>
 
       <ProductMarquee
         products={marqueeProducts.map((product) => ({

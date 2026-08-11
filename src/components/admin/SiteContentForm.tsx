@@ -11,8 +11,11 @@ const initialState: SiteContentFormState = { status: "idle" };
 export function SiteContentForm({ content }: { content: Record<SiteContentKey, string> }) {
   const [state, formAction, pending] = useActionState(updateSiteContent, initialState);
   const [heroImageUrl, setHeroImageUrl] = useState(content["home.heroImage"] ?? "");
+  const [bannerImageUrl, setBannerImageUrl] = useState(content["home.bannerImage"] ?? "");
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [bannerUploading, setBannerUploading] = useState(false);
+  const [bannerUploadError, setBannerUploadError] = useState<string | null>(null);
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -26,6 +29,21 @@ export function SiteContentForm({ content }: { content: Record<SiteContentKey, s
       setUploadError(err instanceof Error ? err.message : "Échec de l'envoi de l'image. Réessayez.");
     } finally {
       setUploading(false);
+    }
+  }
+
+  async function handleBannerFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBannerUploading(true);
+    setBannerUploadError(null);
+    try {
+      const url = await uploadImageClient(file, "site-content");
+      setBannerImageUrl(url);
+    } catch (err) {
+      setBannerUploadError(err instanceof Error ? err.message : "Échec de l'envoi de l'image. Réessayez.");
+    } finally {
+      setBannerUploading(false);
     }
   }
 
@@ -102,6 +120,51 @@ export function SiteContentForm({ content }: { content: Record<SiteContentKey, s
       </div>
 
       <div className="rounded-2xl border border-white/10 bg-neutral-900 p-6 shadow-sm">
+        <h3 className="mb-4 font-semibold text-white">Bande avant &quot;Nos articles&quot;</h3>
+        <p className="mb-4 text-xs text-neutral-500">
+          Image cliquable en pleine largeur affichée entre le bandeau d&apos;accueil et la bande des articles
+          récents.
+        </p>
+        <div className="grid gap-4">
+          <div>
+            <label className="mb-1 block text-sm font-medium text-white">Image</label>
+            <input type="hidden" name="home.bannerImageUrl" value={bannerImageUrl} />
+            <div className="flex items-center gap-3">
+              {bannerImageUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={bannerImageUrl}
+                  alt=""
+                  className="h-14 w-24 shrink-0 rounded-lg border border-white/10 object-cover"
+                />
+              )}
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/gif"
+                onChange={handleBannerFileChange}
+                className="w-full text-sm text-neutral-300 file:mr-3 file:rounded-full file:border-0 file:bg-accent file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-accent-dark"
+              />
+            </div>
+            {bannerUploading && <p className="mt-1 text-xs text-neutral-400">Envoi de l&apos;image...</p>}
+            {bannerUploadError && <p className="mt-1 text-xs text-red-400">{bannerUploadError}</p>}
+            <p className="mt-1 text-xs text-neutral-500">Laissez vide pour conserver l&apos;image actuelle.</p>
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-white">Lien au clic</label>
+            <input
+              name="home.bannerLink"
+              defaultValue={content["home.bannerLink"]}
+              placeholder="/clubs/mon-club ou https://exemple.fr"
+              className="w-full rounded-lg border border-white/10 bg-neutral-800 px-3 py-2 text-white placeholder:text-neutral-500 focus:border-accent focus:outline-none"
+            />
+            <p className="mt-1 text-xs text-neutral-500">
+              Une page du site (ex : /clubs/mon-club) ou une adresse web complète (ex : https://exemple.fr).
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-white/10 bg-neutral-900 p-6 shadow-sm">
         <h3 className="mb-4 font-semibold text-white">Page &quot;Le concept&quot;</h3>
         <div className="grid gap-4">
           <div>
@@ -137,10 +200,10 @@ export function SiteContentForm({ content }: { content: Record<SiteContentKey, s
       <div className="flex items-center gap-4">
         <button
           type="submit"
-          disabled={pending || uploading}
+          disabled={pending || uploading || bannerUploading}
           className="rounded-full bg-accent px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-dark disabled:opacity-60"
         >
-          {uploading ? "Envoi de l'image..." : pending ? "Enregistrement..." : "Enregistrer"}
+          {uploading || bannerUploading ? "Envoi de l'image..." : pending ? "Enregistrement..." : "Enregistrer"}
         </button>
         {state.status === "success" && <p className="text-sm font-medium text-emerald-400">{state.message}</p>}
         {state.status === "error" && <p className="text-sm font-medium text-red-400">{state.message}</p>}

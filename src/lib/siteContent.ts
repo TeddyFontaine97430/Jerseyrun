@@ -6,6 +6,9 @@ export const SITE_CONTENT_DEFAULTS = {
   "home.subtitle":
     "Soutenez votre club péi en un clic : maillots, équipements et goodies officiels, livrés chez vous ou à récupérer sur place.",
   "home.heroImage": "/hero-banner.png",
+  "home.bannerImage":
+    "https://hlgj7olfcqzaeggk.public.blob.vercel-storage.com/site/banner-js-saint-pierroise-q1S8i1gAxEsFwzEfl7DqpO3K7BjXkS.jpg",
+  "home.bannerLink": "/clubs/jeunesse-sportive-saint-pierroise",
   "home.partnersTitle": "Clubs partenaires",
   "home.partnersSubtitle": "Sélectionnez un club pour découvrir sa boutique officielle.",
   "concept.intro1":

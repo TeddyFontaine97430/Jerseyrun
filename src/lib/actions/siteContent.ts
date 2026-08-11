@@ -11,7 +11,7 @@ export type SiteContentFormState = {
 };
 
 const TEXT_KEYS = Object.keys(SITE_CONTENT_DEFAULTS).filter(
-  (key) => key !== "home.heroImage",
+  (key) => key !== "home.heroImage" && key !== "home.bannerImage",
 ) as SiteContentKey[];
 
 export async function updateSiteContent(
@@ -35,6 +35,11 @@ export async function updateSiteContent(
   const heroImageUrl = formData.get("home.heroImageUrl");
   if (typeof heroImageUrl === "string" && heroImageUrl) {
     updates.push({ key: "home.heroImage", value: heroImageUrl });
+  }
+
+  const bannerImageUrl = formData.get("home.bannerImageUrl");
+  if (typeof bannerImageUrl === "string" && bannerImageUrl) {
+    updates.push({ key: "home.bannerImage", value: bannerImageUrl });
   }
 
   await prisma.$transaction(
