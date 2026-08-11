@@ -4,11 +4,25 @@ import { ContactForm } from "@/components/ContactForm";
 export function Footer() {
   return (
     <footer id="contact" className="mt-24 bg-navy text-slate-300">
-      <div className="border-b border-white/10 bg-black/30">
-        <div className="container-page py-5 text-center text-xs text-neutral-400 sm:text-sm">
-          Jersey Run met uniquement à disposition la plateforme aux clubs. Chaque club est responsable de son
-          stock, de ses ventes et de ses clients. Toute réclamation doit se faire directement avec le club
-          concerné.
+      <div className="bg-accent">
+        <div className="container-page flex items-center justify-center gap-2 py-4 text-center text-xs font-semibold text-white sm:text-sm">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            className="h-5 w-5 shrink-0"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 8v5" strokeLinecap="round" />
+            <circle cx="12" cy="16" r="0.5" fill="currentColor" />
+          </svg>
+          <span>
+            Jersey Run met uniquement à disposition la plateforme aux clubs. Chaque club est responsable de son
+            stock, de ses ventes et de ses clients. Toute réclamation doit se faire directement avec le club
+            concerné.
+          </span>
         </div>
       </div>
       <div className="container-page grid gap-12 py-16 lg:grid-cols-2">
