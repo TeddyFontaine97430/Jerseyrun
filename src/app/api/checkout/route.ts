@@ -51,7 +51,7 @@ export async function POST(request: Request) {
   const stripeReady = Boolean(club.stripeAccountId && club.stripePayoutsEnabled);
 
   const deliveryMethod = requestedDeliveryMethod;
-  if (!isDeliveryZoneAvailable(deliveryMethod, club)) {
+  if (!isDeliveryZoneAvailable(deliveryMethod, club, stripeReady)) {
     return NextResponse.json(
       { error: `"${club.name}" ne propose pas ce mode de livraison pour le moment.` },
       { status: 400 },
@@ -79,9 +79,12 @@ export async function POST(request: Request) {
     }
   }
 
-  // Un club sans compte Stripe connecté ne peut pas encaisser en ligne : le paiement
-  // sur place devient automatiquement le seul mode disponible pour sa boutique.
-  const paymentMethod = stripeReady ? requestedPaymentMethod : "ON_SITE";
+  // Seul le retrait au club peut être réglé sur place ; la livraison (métropole ou
+  // Réunion) doit obligatoirement être payée en ligne avant expédition. Un club sans
+  // compte Stripe connecté ne peut de toute façon pas encaisser en ligne : le paiement
+  // sur place devient alors automatiquement le seul mode disponible pour le retrait.
+  const paymentMethod =
+    deliveryMethod !== "PICKUP" ? "STRIPE" : stripeReady ? requestedPaymentMethod : "ON_SITE";
 
   if (paymentMethod === "ON_SITE") {
     if (stripeReady && !club.allowPayOnSite) {

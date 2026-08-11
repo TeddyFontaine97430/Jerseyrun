@@ -24,6 +24,7 @@ export default async function ClubParametresPage({
   }
 
   const club = await getClubForUser(session.user.id);
+  const stripeReady = Boolean(club?.stripeAccountId && club?.stripePayoutsEnabled);
 
   return (
     <div>
@@ -49,10 +50,17 @@ export default async function ClubParametresPage({
 
       <h2 className="mt-10 text-lg font-semibold text-white">Livraison</h2>
       <p className="mt-1 text-sm text-neutral-400">
-        Le retrait au club est toujours proposé, gratuitement, par défaut. Vous pouvez en plus activer la
-        livraison à domicile et fixer vous-même votre tarif : un prix pour le 1er article, puis un surcoût pour
-        chaque article supplémentaire de la même commande.
+        Le retrait au club est toujours proposé, gratuitement, et peut être réglé sur place. Vous pouvez en plus
+        activer la livraison à domicile et fixer vous-même votre tarif : un prix pour le 1er article, puis un
+        surcoût pour chaque article supplémentaire de la même commande. La livraison devant obligatoirement être
+        réglée en ligne, elle ne sera proposée à vos clients qu&apos;une fois votre compte Stripe connecté
+        ci-dessus.
       </p>
+      {!stripeReady && (
+        <p className="mt-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+          Connectez votre compte Stripe pour activer la livraison auprès de vos clients.
+        </p>
+      )}
       <div className="mt-4">
         <DeliverySettingsForm
           metropole={{

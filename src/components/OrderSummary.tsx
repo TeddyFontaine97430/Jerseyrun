@@ -44,10 +44,13 @@ export function OrderSummary({
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>("PICKUP");
   const [address, setAddress] = useState({ line1: "", line2: "", city: "", postalCode: "" });
 
-  const showPaymentChoice = stripeReady && allowPayOnSite;
-  const showMetropole = Boolean(delivery?.metropoleEnabled);
-  const showReunion = Boolean(delivery?.reunionEnabled);
   const needsAddress = deliveryMethod !== "PICKUP";
+  // La livraison à domicile doit obligatoirement être payée en ligne : elle n'est donc
+  // proposée que si le club a connecté Stripe, et son choix verrouille le paiement en carte.
+  const showMetropole = stripeReady && Boolean(delivery?.metropoleEnabled);
+  const showReunion = stripeReady && Boolean(delivery?.reunionEnabled);
+  const effectivePaymentMethod: "STRIPE" | "ON_SITE" = needsAddress ? "STRIPE" : paymentMethod;
+  const showPaymentChoice = !needsAddress && stripeReady && allowPayOnSite;
   const deliveryFeeCents = feeFor(deliveryMethod, delivery, itemCount);
   const totalCents = subtotalCents + deliveryFeeCents;
 
@@ -63,7 +66,7 @@ export function OrderSummary({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           deliveryMethod,
-          paymentMethod,
+          paymentMethod: effectivePaymentMethod,
           ...(needsAddress
             ? {
                 shippingLine1: address.line1,
@@ -212,8 +215,17 @@ export function OrderSummary({
       ) : (
         <div className="mt-4 rounded-lg border border-white/10 px-3 py-2 text-sm">
           <span className="font-medium text-white">
-            {stripeReady ? "Paiement par carte bancaire" : "Paiement sur place, au retrait"}
+            {needsAddress
+              ? "Paiement par carte bancaire (en ligne)"
+              : stripeReady
+                ? "Paiement par carte bancaire"
+                : "Paiement sur place, au retrait"}
           </span>
+          {needsAddress && (
+            <p className="mt-1 text-xs text-neutral-500">
+              La livraison doit être réglée en ligne avant l&apos;envoi.
+            </p>
+          )}
         </div>
       )}
 
@@ -242,7 +254,7 @@ export function OrderSummary({
       >
         {pending
           ? "Redirection..."
-          : paymentMethod === "ON_SITE"
+          : effectivePaymentMethod === "ON_SITE"
             ? "Passer commande (paiement sur place)"
             : "Passer commande et payer"}
       </button>

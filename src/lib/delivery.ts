@@ -9,8 +9,18 @@ export type ClubDeliverySettings = {
   deliveryReunionExtraItemCents: number;
 };
 
-export function isDeliveryZoneAvailable(zone: DeliveryZone, club: ClubDeliverySettings): boolean {
+/**
+ * A delivery zone (as opposed to pickup) requires paying online: it can only be offered
+ * once the club has connected & activated a Stripe account, on top of the club having
+ * enabled that specific zone in their settings.
+ */
+export function isDeliveryZoneAvailable(
+  zone: DeliveryZone,
+  club: ClubDeliverySettings,
+  stripeReady: boolean,
+): boolean {
   if (zone === "PICKUP") return true;
+  if (!stripeReady) return false;
   if (zone === "DELIVERY_METROPOLE") return club.deliveryMetropoleEnabled;
   return club.deliveryReunionEnabled;
 }
