@@ -125,9 +125,19 @@ model Product {
   personalizationEnabled  Boolean         @default(false)
   personalizationFeeCents Int             @default(0)
   options                 ProductOption[]
+  images                  ProductImage[]
   cartItems               CartItem[]
   orderItems              OrderItem[]
   createdAt               DateTime        @default(now())
+}
+
+model ProductImage {
+  id        String   @id @default(cuid())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+  url       String
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
 }
 
 model ProductOption {

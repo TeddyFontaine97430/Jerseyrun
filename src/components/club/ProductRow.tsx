@@ -16,6 +16,7 @@ export function ProductRow({
     description: string | null;
     priceCents: number;
     imageUrl: string | null;
+    images?: { url: string }[];
     active: boolean;
     availability: "IN_STOCK" | "PREORDER";
     personalizationEnabled: boolean;
@@ -30,7 +31,11 @@ export function ProductRow({
   if (editing) {
     return (
       <div className="border-b border-white/10 p-5 last:border-0">
-        <ProductForm product={product} clubId={clubId} onDone={() => setEditing(false)} />
+        <ProductForm
+          product={{ ...product, images: product.images?.map((i) => i.url) }}
+          clubId={clubId}
+          onDone={() => setEditing(false)}
+        />
       </div>
     );
   }

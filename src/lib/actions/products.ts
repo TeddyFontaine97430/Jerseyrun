@@ -17,10 +17,19 @@ const productSchema = z.object({
   personalizationFee: z.coerce.number().min(0, "Le coût ne peut pas être négatif.").optional(),
 });
 
-function resolveProductImage(formData: FormData, currentImageUrl: string | null): string | null {
-  const imageUrl = formData.get("imageUrl");
-  if (typeof imageUrl === "string" && imageUrl) return imageUrl;
-  return currentImageUrl;
+const MAX_PRODUCT_IMAGES = 3;
+
+function resolveProductImages(formData: FormData): string[] {
+  const raw = formData.get("imagesJson");
+  if (typeof raw !== "string" || !raw) return [];
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return [];
+  }
+  if (!Array.isArray(parsed)) return [];
+  return parsed.filter((url): url is string => typeof url === "string" && url.length > 0).slice(0, MAX_PRODUCT_IMAGES);
 }
 
 type OptionValueRow = { value: string; stock: number };
@@ -127,7 +136,7 @@ export async function createProduct(
     return { status: "error", message: parsed.error.issues[0]?.message ?? "Formulaire invalide." };
   }
 
-  const imageUrl = resolveProductImage(formData, null);
+  const images = resolveProductImages(formData);
 
   const { name, description, price, availability, personalizationEnabled, personalizationFee } = parsed.data;
   const optionGroups = optionGroupsFromFormData(formData);
@@ -137,7 +146,7 @@ export async function createProduct(
       name,
       description: description || null,
       priceCents: Math.round(price * 100),
-      imageUrl,
+      imageUrl: images[0] ?? null,
       availability,
       personalizationEnabled,
       personalizationFeeCents: personalizationEnabled ? Math.round((personalizationFee ?? 0) * 100) : 0,
@@ -146,6 +155,9 @@ export async function createProduct(
           name: group.name,
           values: { create: group.values },
         })),
+      },
+      images: {
+        create: images.map((url, position) => ({ url, position })),
       },
     },
   });
@@ -194,19 +206,20 @@ export async function updateProduct(
     return { status: "error", message: parsed.error.issues[0]?.message ?? "Formulaire invalide." };
   }
 
-  const imageUrl = resolveProductImage(formData, product.imageUrl);
+  const images = resolveProductImages(formData);
 
   const { name, description, price, availability, personalizationEnabled, personalizationFee } = parsed.data;
   const optionGroups = optionGroupsFromFormData(formData);
   await prisma.$transaction([
     prisma.productOption.deleteMany({ where: { productId } }),
+    prisma.productImage.deleteMany({ where: { productId } }),
     prisma.product.update({
       where: { id: productId },
       data: {
         name,
         description: description || null,
         priceCents: Math.round(price * 100),
-        imageUrl,
+        imageUrl: images[0] ?? null,
         availability,
         personalizationEnabled,
         personalizationFeeCents: personalizationEnabled ? Math.round((personalizationFee ?? 0) * 100) : 0,
@@ -215,6 +228,9 @@ export async function updateProduct(
             name: group.name,
             values: { create: group.values },
           })),
+        },
+        images: {
+          create: images.map((url, position) => ({ url, position })),
         },
       },
     }),

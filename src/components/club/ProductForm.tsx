@@ -7,6 +7,7 @@ import { OptionValuesEditor, type OptionValueRow } from "@/components/club/Optio
 import { uploadImageClient } from "@/lib/uploadClient";
 
 const initialState: ProductFormState = { status: "idle" };
+const MAX_IMAGES = 3;
 
 type ProductOptionInitial = {
   name: string;
@@ -17,8 +18,9 @@ type ProductInitial = {
   id: string;
   name: string;
   description: string | null;
-  priceCents: number;
   imageUrl: string | null;
+  images?: string[];
+  priceCents: number;
   availability?: "IN_STOCK" | "PREORDER";
   personalizationEnabled?: boolean;
   personalizationFeeCents?: number;
@@ -47,24 +49,37 @@ export function ProductForm({
   const [customRows, setCustomRows] = useState<OptionValueRow[]>(customGroup?.values ?? []);
   const [personalizationEnabled, setPersonalizationEnabled] = useState(product?.personalizationEnabled ?? false);
   const [availability, setAvailability] = useState<"IN_STOCK" | "PREORDER">(product?.availability ?? "IN_STOCK");
-  const [imageUrl, setImageUrl] = useState(product?.imageUrl ?? "");
-  const [uploading, setUploading] = useState(false);
+  const [images, setImages] = useState<string[]>(
+    product?.images && product.images.length > 0 ? product.images : product?.imageUrl ? [product.imageUrl] : [],
+  );
+  const [uploadingSlot, setUploadingSlot] = useState<number | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleFileChange(slot: number, e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    setUploading(true);
+    setUploadingSlot(slot);
     setUploadError(null);
     try {
       const url = await uploadImageClient(file, "products");
-      setImageUrl(url);
+      setImages((prev) => {
+        const next = [...prev];
+        next[slot] = url;
+        return next;
+      });
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : "Échec de l'envoi de l'image. Réessayez.");
     } finally {
-      setUploading(false);
+      setUploadingSlot(null);
     }
   }
+
+  function removeImage(slot: number) {
+    setImages((prev) => prev.filter((_, i) => i !== slot));
+  }
+
+  const uploading = uploadingSlot !== null;
+  const slots = Array.from({ length: Math.min(images.length + 1, MAX_IMAGES) }, (_, i) => i);
 
   return (
     <form action={formAction} className="grid gap-4 sm:grid-cols-2">
@@ -73,7 +88,7 @@ export function ProductForm({
       <input type="hidden" name="sizeValuesJson" value={JSON.stringify(sizeRows)} />
       <input type="hidden" name="shoeSizeValuesJson" value={JSON.stringify(shoeSizeRows)} />
       <input type="hidden" name="customOptionValuesJson" value={JSON.stringify(customRows)} />
-      <input type="hidden" name="imageUrl" value={imageUrl} />
+      <input type="hidden" name="imagesJson" value={JSON.stringify(images)} />
       <div>
         <label className="mb-1 block text-sm font-medium text-white">Nom de l&apos;article</label>
         <input
@@ -95,28 +110,49 @@ export function ProductForm({
           className="w-full rounded-lg border border-white/10 bg-neutral-800 px-3 py-2 text-white placeholder:text-neutral-500 focus:border-accent focus:outline-none"
         />
       </div>
-      <div>
-        <label className="mb-1 block text-sm font-medium text-white">Image de l&apos;article (optionnel)</label>
-        <div className="flex items-center gap-3">
-          {imageUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={imageUrl}
-              alt=""
-              className="h-12 w-12 shrink-0 rounded-lg border border-white/10 object-cover"
-            />
-          )}
-          <input
-            type="file"
-            accept="image/png,image/jpeg,image/webp,image/gif"
-            onChange={handleFileChange}
-            className="w-full text-sm text-neutral-300 file:mr-3 file:rounded-full file:border-0 file:bg-accent file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-accent-dark"
-          />
+      <div className="sm:col-span-2">
+        <label className="mb-1 block text-sm font-medium text-white">
+          Photos de l&apos;article (optionnel — jusqu&apos;à {MAX_IMAGES})
+        </label>
+        <div className="flex flex-wrap gap-3">
+          {slots.map((slot) => {
+            const url = images[slot];
+            return (
+              <div key={slot} className="flex flex-col items-center gap-1">
+                <div className="relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-lg border border-white/10 bg-neutral-800">
+                  {url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={url} alt="" className="h-full w-full object-cover" />
+                  ) : uploadingSlot === slot ? (
+                    <span className="text-xs text-neutral-500">Envoi...</span>
+                  ) : (
+                    <label className="flex h-full w-full cursor-pointer items-center justify-center text-2xl text-neutral-600 hover:text-neutral-400">
+                      +
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp,image/gif"
+                        onChange={(e) => handleFileChange(slot, e)}
+                        className="hidden"
+                      />
+                    </label>
+                  )}
+                </div>
+                {url && (
+                  <button
+                    type="button"
+                    onClick={() => removeImage(slot)}
+                    className="text-xs font-medium text-neutral-500 hover:text-red-400"
+                  >
+                    Retirer
+                  </button>
+                )}
+              </div>
+            );
+          })}
         </div>
-        {uploading && <p className="mt-1 text-xs text-neutral-400">Envoi de l&apos;image...</p>}
         {uploadError && <p className="mt-1 text-xs text-red-400">{uploadError}</p>}
-        {product?.imageUrl && (
-          <p className="mt-1 text-xs text-neutral-500">Laissez vide pour conserver l&apos;image actuelle.</p>
+        {product && (
+          <p className="mt-1 text-xs text-neutral-500">La première photo sert de vignette dans la boutique.</p>
         )}
       </div>
       <div className="sm:col-span-2">

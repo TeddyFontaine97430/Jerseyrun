@@ -15,7 +15,7 @@ async function getClub(slug: string) {
       products: {
         where: { active: true },
         orderBy: { createdAt: "asc" },
-        include: { options: { include: { values: true } } },
+        include: { options: { include: { values: true } }, images: { orderBy: { position: "asc" } } },
       },
     },
   });
@@ -71,7 +71,11 @@ export default async function ClubShopPage({ params }: Props) {
       "@type": "Product",
       name: product.name,
       description: product.description ?? `${product.name} — ${club.name}`,
-      ...(product.imageUrl ? { image: product.imageUrl } : {}),
+      ...(product.images.length > 0
+        ? { image: product.images.map((img) => img.url) }
+        : product.imageUrl
+          ? { image: product.imageUrl }
+          : {}),
       brand: { "@type": "Brand", name: club.name },
       offers: {
         "@type": "Offer",
@@ -144,6 +148,7 @@ export default async function ClubShopPage({ params }: Props) {
                 description={product.description}
                 priceCents={product.priceCents}
                 imageUrl={product.imageUrl}
+                images={product.images.map((img) => img.url)}
                 options={product.options}
                 availability={product.availability}
                 personalizationEnabled={product.personalizationEnabled}
