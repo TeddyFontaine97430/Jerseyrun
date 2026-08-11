@@ -4,6 +4,7 @@ import { getClubForUser, getClubStats, getClubSales, getClubPendingOnSiteOrders 
 import { formatPrice } from "@/lib/money";
 import { ORDER_STATUS_LABELS, ORDER_STATUS_STYLES } from "@/lib/orderStatus";
 import { formatItemDetails } from "@/lib/productOptions";
+import { deliveryZoneLabel, formatShippingAddress } from "@/lib/delivery";
 import { DeliveryStatusToggle } from "@/components/DeliveryStatusToggle";
 import { ReadyForPickupToggle } from "@/components/ReadyForPickupToggle";
 import { MarkPaidOnSiteButton } from "@/components/MarkPaidOnSiteButton";
@@ -55,6 +56,12 @@ export default async function ClubDashboardPage() {
                     <p className="text-xs text-neutral-500">
                       Commande du {order.createdAt.toLocaleDateString("fr-FR")}
                     </p>
+                    <p className="mt-1 text-xs font-medium text-gold">
+                      {deliveryZoneLabel(order.deliveryMethod)}
+                      {order.deliveryMethod !== "PICKUP" &&
+                        formatShippingAddress(order) &&
+                        ` — ${formatShippingAddress(order)}`}
+                    </p>
                   </div>
                   <MarkPaidOnSiteButton orderId={order.id} />
                 </div>
@@ -99,6 +106,7 @@ export default async function ClubDashboardPage() {
                 <th className="px-5 py-3 font-medium">Montant</th>
                 <th className="px-5 py-3 font-medium">Statut</th>
                 <th className="px-5 py-3 font-medium">Prêt ?</th>
+                <th className="px-5 py-3 font-medium">Livré</th>
                 <th className="px-5 py-3 font-medium">Livraison</th>
                 <th className="px-5 py-3 font-medium">Date</th>
               </tr>
@@ -133,6 +141,12 @@ export default async function ClubDashboardPage() {
                   </td>
                   <td className="px-5 py-3">
                     <DeliveryStatusToggle orderItemId={item.id} delivered={item.delivered} />
+                  </td>
+                  <td className="max-w-[200px] px-5 py-3 text-xs text-neutral-400">
+                    {deliveryZoneLabel(item.order.deliveryMethod)}
+                    {item.order.deliveryMethod !== "PICKUP" && formatShippingAddress(item.order) && (
+                      <div className="text-neutral-500">{formatShippingAddress(item.order)}</div>
+                    )}
                   </td>
                   <td className="px-5 py-3 text-neutral-400">
                     {item.order.createdAt.toLocaleDateString("fr-FR")}

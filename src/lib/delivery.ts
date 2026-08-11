@@ -1,9 +1,64 @@
-export const DELIVERY_BASE_FEE_CENTS = 700;
-export const DELIVERY_EXTRA_PER_ITEM_CENTS = 200;
+export type DeliveryZone = "PICKUP" | "DELIVERY_METROPOLE" | "DELIVERY_REUNION";
 
-export type DeliveryMethod = "DELIVERY" | "PICKUP";
+export type ClubDeliverySettings = {
+  deliveryMetropoleEnabled: boolean;
+  deliveryMetropoleFeeCents: number;
+  deliveryMetropoleExtraItemCents: number;
+  deliveryReunionEnabled: boolean;
+  deliveryReunionFeeCents: number;
+  deliveryReunionExtraItemCents: number;
+};
 
-export function computeDeliveryFeeCents(method: DeliveryMethod, itemCount: number): number {
-  if (method === "PICKUP") return 0;
-  return DELIVERY_BASE_FEE_CENTS + Math.max(0, itemCount - 1) * DELIVERY_EXTRA_PER_ITEM_CENTS;
+export function isDeliveryZoneAvailable(zone: DeliveryZone, club: ClubDeliverySettings): boolean {
+  if (zone === "PICKUP") return true;
+  if (zone === "DELIVERY_METROPOLE") return club.deliveryMetropoleEnabled;
+  return club.deliveryReunionEnabled;
+}
+
+export function computeClubDeliveryFeeCents(
+  zone: DeliveryZone,
+  club: ClubDeliverySettings,
+  itemCount: number,
+): number {
+  if (zone === "PICKUP") return 0;
+  const extraItems = Math.max(0, itemCount - 1);
+  if (zone === "DELIVERY_METROPOLE") {
+    return club.deliveryMetropoleFeeCents + extraItems * club.deliveryMetropoleExtraItemCents;
+  }
+  return club.deliveryReunionFeeCents + extraItems * club.deliveryReunionExtraItemCents;
+}
+
+export function deliveryZoneLabel(zone: DeliveryZone | "DELIVERY"): string {
+  switch (zone) {
+    case "PICKUP":
+      return "Retrait au club";
+    case "DELIVERY_METROPOLE":
+      return "Livraison France métropolitaine";
+    case "DELIVERY_REUNION":
+      return "Livraison Île de la Réunion";
+    default:
+      return "Livraison à domicile";
+  }
+}
+
+export function shippingCountryForZone(zone: DeliveryZone): string | null {
+  if (zone === "DELIVERY_METROPOLE") return "France métropolitaine";
+  if (zone === "DELIVERY_REUNION") return "France — La Réunion";
+  return null;
+}
+
+export function formatShippingAddress(order: {
+  shippingLine1: string | null;
+  shippingLine2: string | null;
+  shippingCity: string | null;
+  shippingPostalCode: string | null;
+  shippingCountry: string | null;
+}): string | null {
+  const parts = [
+    order.shippingLine1,
+    order.shippingLine2,
+    [order.shippingPostalCode, order.shippingCity].filter(Boolean).join(" "),
+    order.shippingCountry,
+  ].filter(Boolean);
+  return parts.length > 0 ? parts.join(", ") : null;
 }

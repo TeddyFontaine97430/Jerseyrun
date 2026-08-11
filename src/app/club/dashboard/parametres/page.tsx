@@ -5,6 +5,7 @@ import { ProfileForm } from "@/components/account/ProfileForm";
 import { ClubLogoForm } from "@/components/club/ClubLogoForm";
 import { StripeConnectCard } from "@/components/club/StripeConnectCard";
 import { PayOnSiteToggle } from "@/components/club/PayOnSiteToggle";
+import { DeliverySettingsForm } from "@/components/club/DeliverySettingsForm";
 import { refreshStripeAccountStatus } from "@/lib/actions/stripe-connect";
 
 export const metadata: Metadata = { title: { absolute: "Paramètres — Espace club Jersey Run" } };
@@ -44,6 +45,27 @@ export default async function ClubParametresPage({
       </p>
       <div className="mt-4">
         <PayOnSiteToggle enabled={club?.allowPayOnSite ?? false} />
+      </div>
+
+      <h2 className="mt-10 text-lg font-semibold text-white">Livraison</h2>
+      <p className="mt-1 text-sm text-neutral-400">
+        Le retrait au club est toujours proposé, gratuitement, par défaut. Vous pouvez en plus activer la
+        livraison à domicile et fixer vous-même votre tarif : un prix pour le 1er article, puis un surcoût pour
+        chaque article supplémentaire de la même commande.
+      </p>
+      <div className="mt-4">
+        <DeliverySettingsForm
+          metropole={{
+            enabled: club?.deliveryMetropoleEnabled ?? false,
+            feeCents: club?.deliveryMetropoleFeeCents ?? 0,
+            extraItemCents: club?.deliveryMetropoleExtraItemCents ?? 0,
+          }}
+          reunion={{
+            enabled: club?.deliveryReunionEnabled ?? false,
+            feeCents: club?.deliveryReunionFeeCents ?? 0,
+            extraItemCents: club?.deliveryReunionExtraItemCents ?? 0,
+          }}
+        />
       </div>
 
       <h2 className="mt-10 text-lg font-semibold text-white">Logo du club</h2>

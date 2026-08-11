@@ -7,6 +7,7 @@ import { notifyAdmin, sendEmail } from "@/lib/email";
 import { formatPrice } from "@/lib/money";
 import { decodeSelectedOptions } from "@/lib/productOptions";
 import { getNextInvoiceNumber, generateInvoicePdf } from "@/lib/invoice";
+import { deliveryZoneLabel } from "@/lib/delivery";
 
 export async function POST(request: Request) {
   const signature = request.headers.get("stripe-signature");
@@ -56,6 +57,9 @@ export async function POST(request: Request) {
           }
         }
 
+        // L'adresse de livraison est déjà collectée par notre propre formulaire au moment
+        // de la création de la commande (cf. /api/checkout) : on la conserve telle quelle
+        // plutôt que de la remplacer par l'adresse de facturation Stripe.
         await prisma.$transaction([
           prisma.order.update({
             where: { id: orderId },
@@ -63,12 +67,13 @@ export async function POST(request: Request) {
               status: "PAID",
               customerName,
               customerPhone: customerDetails?.phone ?? undefined,
-              shippingLine1: shipping?.address?.line1 ?? customerDetails?.address?.line1 ?? undefined,
-              shippingLine2: shipping?.address?.line2 ?? customerDetails?.address?.line2 ?? undefined,
-              shippingCity: shipping?.address?.city ?? customerDetails?.address?.city ?? undefined,
+              shippingLine1: order.shippingLine1 ?? shipping?.address?.line1 ?? customerDetails?.address?.line1 ?? undefined,
+              shippingLine2: order.shippingLine2 ?? shipping?.address?.line2 ?? customerDetails?.address?.line2 ?? undefined,
+              shippingCity: order.shippingCity ?? shipping?.address?.city ?? customerDetails?.address?.city ?? undefined,
               shippingPostalCode:
-                shipping?.address?.postal_code ?? customerDetails?.address?.postal_code ?? undefined,
-              shippingCountry: shipping?.address?.country ?? customerDetails?.address?.country ?? undefined,
+                order.shippingPostalCode ?? shipping?.address?.postal_code ?? customerDetails?.address?.postal_code ?? undefined,
+              shippingCountry:
+                order.shippingCountry ?? shipping?.address?.country ?? customerDetails?.address?.country ?? undefined,
               invoiceNumber,
               invoicedAt,
             },
@@ -85,20 +90,19 @@ export async function POST(request: Request) {
           )
           .join("");
 
-        const deliveryLabel =
-          order.deliveryMethod === "PICKUP"
-            ? "Retrait au club"
-            : `Livraison à domicile${order.deliveryFeeCents > 0 ? ` (${formatPrice(order.deliveryFeeCents)})` : ""}`;
+        const deliveryLabel = `${deliveryZoneLabel(order.deliveryMethod)}${
+          order.deliveryFeeCents > 0 ? ` (${formatPrice(order.deliveryFeeCents)})` : ""
+        }`;
 
-        const shippingLine1 = shipping?.address?.line1 ?? customerDetails?.address?.line1 ?? "";
-        const shippingLine2 = shipping?.address?.line2 ?? customerDetails?.address?.line2 ?? "";
-        const shippingCity = shipping?.address?.city ?? customerDetails?.address?.city ?? "";
-        const shippingPostalCode = shipping?.address?.postal_code ?? customerDetails?.address?.postal_code ?? "";
-        const shippingCountry = shipping?.address?.country ?? customerDetails?.address?.country ?? "";
+        const shippingLine1 = order.shippingLine1 ?? "";
+        const shippingLine2 = order.shippingLine2 ?? "";
+        const shippingCity = order.shippingCity ?? "";
+        const shippingPostalCode = order.shippingPostalCode ?? "";
+        const shippingCountry = order.shippingCountry ?? "";
         const customerPhone = customerDetails?.phone ?? "";
 
         const shippingAddressHtml =
-          order.deliveryMethod === "DELIVERY"
+          order.deliveryMethod !== "PICKUP"
             ? `
               <p><strong>Adresse de livraison :</strong><br>
               ${customerName ?? ""}<br>

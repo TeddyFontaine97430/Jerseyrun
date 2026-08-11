@@ -3,28 +3,13 @@ import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/money";
 import { ORDER_STATUS_LABELS, ORDER_STATUS_STYLES } from "@/lib/orderStatus";
 import { formatItemDetails } from "@/lib/productOptions";
+import { deliveryZoneLabel, formatShippingAddress } from "@/lib/delivery";
 import { DeliveryStatusToggle } from "@/components/DeliveryStatusToggle";
 import { ReadyForPickupToggle } from "@/components/ReadyForPickupToggle";
 
 export const metadata: Metadata = { title: { absolute: "Ventes — Administration Jersey Run" } };
 
 const PAID_STATUSES = ["PAID", "PROCESSING", "SHIPPED", "COMPLETED"] as const;
-
-function formatAddress(order: {
-  shippingLine1: string | null;
-  shippingLine2: string | null;
-  shippingCity: string | null;
-  shippingPostalCode: string | null;
-  shippingCountry: string | null;
-}) {
-  const parts = [
-    order.shippingLine1,
-    order.shippingLine2,
-    [order.shippingPostalCode, order.shippingCity].filter(Boolean).join(" "),
-    order.shippingCountry,
-  ].filter(Boolean);
-  return parts.length > 0 ? parts.join(", ") : null;
-}
 
 export default async function AdminVentesPage() {
   const sales = await prisma.orderItem.findMany({
@@ -67,7 +52,7 @@ export default async function AdminVentesPage() {
             </thead>
             <tbody>
               {sales.map((item) => {
-                const address = formatAddress(item.order);
+                const address = formatShippingAddress(item.order);
                 return (
                   <tr key={item.id} className="border-b border-white/5 align-top last:border-0">
                     <td className="whitespace-nowrap px-5 py-3 text-neutral-400">
@@ -98,7 +83,9 @@ export default async function AdminVentesPage() {
                       )}
                     </td>
                     <td className="max-w-[220px] px-5 py-3 text-xs text-neutral-400">
-                      {address ?? <span className="italic text-slate-300">Non renseignée</span>}
+                      <div className="font-medium text-neutral-300">{deliveryZoneLabel(item.order.deliveryMethod)}</div>
+                      {item.order.deliveryMethod !== "PICKUP" &&
+                        (address ?? <span className="italic text-slate-300">Adresse non renseignée</span>)}
                     </td>
                     <td className="whitespace-nowrap px-5 py-3">
                       <span

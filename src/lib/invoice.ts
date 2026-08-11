@@ -1,6 +1,7 @@
 import PDFDocument from "pdfkit";
 import { prisma } from "@/lib/prisma";
 import { formatItemDetails } from "@/lib/productOptions";
+import { deliveryZoneLabel } from "@/lib/delivery";
 
 export async function getNextInvoiceNumber(): Promise<string> {
   const result = await prisma.$queryRaw<{ n: bigint }[]>`SELECT nextval('invoice_number_seq') AS n`;
@@ -29,7 +30,7 @@ export type InvoiceData = {
   customerName: string | null;
   customerEmail: string;
   customerPhone: string | null;
-  deliveryMethod: "DELIVERY" | "PICKUP";
+  deliveryMethod: "DELIVERY" | "PICKUP" | "DELIVERY_METROPOLE" | "DELIVERY_REUNION";
   deliveryFeeCents: number;
   shippingLine1: string | null;
   shippingLine2: string | null;
@@ -69,7 +70,7 @@ export async function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
     doc.text(data.customerName ?? data.customerEmail, 320, undefined, { width: 220 });
     doc.text(data.customerEmail, 320, undefined, { width: 220 });
     if (data.customerPhone) doc.text(data.customerPhone, 320, undefined, { width: 220 });
-    if (data.deliveryMethod === "DELIVERY") {
+    if (data.deliveryMethod !== "PICKUP") {
       if (data.shippingLine1) doc.text(data.shippingLine1, 320, undefined, { width: 220 });
       if (data.shippingLine2) doc.text(data.shippingLine2, 320, undefined, { width: 220 });
       const cityLine = [data.shippingPostalCode, data.shippingCity].filter(Boolean).join(" ");
@@ -83,9 +84,7 @@ export async function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
     doc
       .font("Helvetica-Bold")
       .fontSize(9)
-      .text(
-        `Mode de livraison : ${data.deliveryMethod === "PICKUP" ? "Retrait au club" : "Livraison à domicile"}`,
-      );
+      .text(`Mode de livraison : ${deliveryZoneLabel(data.deliveryMethod)}`);
     doc.text("Mode de paiement : Carte bancaire (Stripe)");
     doc.moveDown(1);
 

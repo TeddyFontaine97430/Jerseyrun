@@ -34,6 +34,8 @@ enum OrderStatus {
 enum DeliveryMethod {
   DELIVERY
   PICKUP
+  DELIVERY_METROPOLE
+  DELIVERY_REUNION
 }
 
 enum PaymentMethod {
@@ -102,6 +104,12 @@ model Club {
   stripeAccountId      String?  @unique
   stripePayoutsEnabled Boolean  @default(false)
   allowPayOnSite       Boolean  @default(false)
+  deliveryMetropoleEnabled        Boolean @default(false)
+  deliveryMetropoleFeeCents       Int     @default(0)
+  deliveryMetropoleExtraItemCents Int     @default(0)
+  deliveryReunionEnabled          Boolean @default(false)
+  deliveryReunionFeeCents         Int     @default(0)
+  deliveryReunionExtraItemCents   Int     @default(0)
   termsAcceptedAt      DateTime?
   owner       User        @relation(fields: [ownerId], references: [id])
   ownerId     String      @unique

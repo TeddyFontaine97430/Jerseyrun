@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/money";
 import { ORDER_STATUS_LABELS, ORDER_STATUS_STYLES } from "@/lib/orderStatus";
 import { formatItemDetails } from "@/lib/productOptions";
+import { deliveryZoneLabel } from "@/lib/delivery";
 import { ProfileForm } from "@/components/account/ProfileForm";
 
 export const metadata: Metadata = { title: { absolute: "Mon compte — Jersey Run" } };
@@ -78,9 +79,10 @@ export default async function ComptePage() {
               </ul>
               <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-3 text-sm">
                 <span className="text-neutral-400">
-                  {order.deliveryMethod === "PICKUP"
-                    ? "Retrait au club"
-                    : `Livraison à domicile${order.deliveryFeeCents > 0 ? ` (${formatPrice(order.deliveryFeeCents)})` : ""}`}
+                  {deliveryZoneLabel(order.deliveryMethod)}
+                  {order.deliveryMethod !== "PICKUP" && order.deliveryFeeCents > 0
+                    ? ` (${formatPrice(order.deliveryFeeCents)})`
+                    : ""}
                 </span>
                 <span className="font-bold text-white">Total : {formatPrice(order.totalCents)}</span>
               </div>

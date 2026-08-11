@@ -76,11 +76,24 @@ export default async function PanierPage() {
           <div className="h-fit rounded-2xl border border-white/10 bg-neutral-900 p-6 shadow-sm">
             <OrderSummary
               subtotalCents={cart.total}
+              itemCount={cart.count}
               singleClub={new Set(cart.items.map((item) => item.product.club.id)).size <= 1}
               stripeReady={cart.items.every(
                 (item) => item.product.club.stripeAccountId && item.product.club.stripePayoutsEnabled,
               )}
               allowPayOnSite={cart.items.every((item) => item.product.club.allowPayOnSite)}
+              delivery={
+                cart.items.length > 0
+                  ? {
+                      metropoleEnabled: cart.items[0].product.club.deliveryMetropoleEnabled,
+                      metropoleFeeCents: cart.items[0].product.club.deliveryMetropoleFeeCents,
+                      metropoleExtraItemCents: cart.items[0].product.club.deliveryMetropoleExtraItemCents,
+                      reunionEnabled: cart.items[0].product.club.deliveryReunionEnabled,
+                      reunionFeeCents: cart.items[0].product.club.deliveryReunionFeeCents,
+                      reunionExtraItemCents: cart.items[0].product.club.deliveryReunionExtraItemCents,
+                    }
+                  : null
+              }
             />
           </div>
         </div>

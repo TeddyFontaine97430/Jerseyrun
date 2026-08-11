@@ -5,7 +5,13 @@ import { stripe, stripeConfigured } from "@/lib/stripe";
 import { notifyAdmin, sendEmail } from "@/lib/email";
 import { formatPrice } from "@/lib/money";
 import { formatSelectedOptions, decodeSelectedOptions } from "@/lib/productOptions";
-import { computeDeliveryFeeCents, type DeliveryMethod } from "@/lib/delivery";
+import {
+  computeClubDeliveryFeeCents,
+  deliveryZoneLabel,
+  isDeliveryZoneAvailable,
+  shippingCountryForZone,
+  type DeliveryZone,
+} from "@/lib/delivery";
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -16,8 +22,10 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
   const requestedPaymentMethod = body?.paymentMethod === "ON_SITE" ? "ON_SITE" : "STRIPE";
 
-  // Livraison temporairement désactivée — retrait au club uniquement.
-  const deliveryMethod: DeliveryMethod = "PICKUP";
+  const requestedDeliveryMethod: DeliveryZone =
+    body?.deliveryMethod === "DELIVERY_METROPOLE" || body?.deliveryMethod === "DELIVERY_REUNION"
+      ? body.deliveryMethod
+      : "PICKUP";
 
   const cartItems = await prisma.cartItem.findMany({
     where: { userId: session.user.id },
@@ -33,7 +41,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error:
-          "Le retrait au club n'est pas disponible pour une commande contenant plusieurs clubs. Merci de commander séparément pour chaque club.",
+          "Une commande ne peut concerner qu'un seul club à la fois. Merci de commander séparément pour chaque club.",
       },
       { status: 400 },
     );
@@ -41,6 +49,35 @@ export async function POST(request: Request) {
 
   const club = cartItems[0].product.club;
   const stripeReady = Boolean(club.stripeAccountId && club.stripePayoutsEnabled);
+
+  const deliveryMethod = requestedDeliveryMethod;
+  if (!isDeliveryZoneAvailable(deliveryMethod, club)) {
+    return NextResponse.json(
+      { error: `"${club.name}" ne propose pas ce mode de livraison pour le moment.` },
+      { status: 400 },
+    );
+  }
+
+  let shippingLine1: string | undefined;
+  let shippingLine2: string | undefined;
+  let shippingCity: string | undefined;
+  let shippingPostalCode: string | undefined;
+  let shippingCountry: string | undefined;
+
+  if (deliveryMethod !== "PICKUP") {
+    shippingLine1 = typeof body?.shippingLine1 === "string" ? body.shippingLine1.trim() : "";
+    shippingLine2 = typeof body?.shippingLine2 === "string" ? body.shippingLine2.trim() : "";
+    shippingCity = typeof body?.shippingCity === "string" ? body.shippingCity.trim() : "";
+    shippingPostalCode = typeof body?.shippingPostalCode === "string" ? body.shippingPostalCode.trim() : "";
+    shippingCountry = shippingCountryForZone(deliveryMethod) ?? undefined;
+
+    if (!shippingLine1 || !shippingCity || !shippingPostalCode) {
+      return NextResponse.json(
+        { error: "Merci de renseigner votre adresse de livraison complète." },
+        { status: 400 },
+      );
+    }
+  }
 
   // Un club sans compte Stripe connecté ne peut pas encaisser en ligne : le paiement
   // sur place devient automatiquement le seul mode disponible pour sa boutique.
@@ -96,7 +133,7 @@ export async function POST(request: Request) {
 
   const itemsTotalCents = cartItems.reduce((sum, item) => sum + unitPriceFor(item) * item.quantity, 0);
   const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-  const deliveryFeeCents = computeDeliveryFeeCents(deliveryMethod, itemCount);
+  const deliveryFeeCents = computeClubDeliveryFeeCents(deliveryMethod, club, itemCount);
   const totalCents = itemsTotalCents + deliveryFeeCents;
 
   const order = await prisma.order.create({
@@ -108,6 +145,11 @@ export async function POST(request: Request) {
       deliveryFeeCents,
       paymentMethod,
       customerName: paymentMethod === "ON_SITE" ? session.user.name ?? undefined : undefined,
+      shippingLine1,
+      shippingLine2: shippingLine2 || undefined,
+      shippingCity,
+      shippingPostalCode,
+      shippingCountry,
       items: {
         create: cartItems.map((item) => ({
           productId: item.productId,
@@ -125,6 +167,14 @@ export async function POST(request: Request) {
   await prisma.cartItem.deleteMany({ where: { userId: session.user.id } });
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
+  const deliveryLabel = deliveryZoneLabel(deliveryMethod);
+  const shippingAddressHtml =
+    deliveryMethod !== "PICKUP"
+      ? `<p><strong>Adresse de livraison :</strong><br>
+          ${shippingLine1}${shippingLine2 ? `<br>${shippingLine2}` : ""}<br>
+          ${[shippingPostalCode, shippingCity].filter(Boolean).join(" ")}<br>
+          ${shippingCountry ?? ""}</p>`
+      : "";
 
   if (paymentMethod === "ON_SITE") {
     const itemsList = cartItems
@@ -143,10 +193,12 @@ export async function POST(request: Request) {
         <ul>
           <li><strong>Client :</strong> ${session.user.name ?? session.user.email}</li>
           <li><strong>Club :</strong> ${club.name}</li>
+          <li><strong>Livraison :</strong> ${deliveryLabel}</li>
           <li><strong>Total :</strong> ${formatPrice(order.totalCents)}</li>
         </ul>
         <p><strong>Articles :</strong></p>
         <ul>${itemsList}</ul>
+        ${shippingAddressHtml}
       `,
     });
 
@@ -158,10 +210,12 @@ export async function POST(request: Request) {
         <p>Un client a passé une commande sur votre boutique Jersey Run avec paiement sur place.</p>
         <ul>
           <li><strong>Client :</strong> ${session.user.name ?? session.user.email}</li>
+          <li><strong>Livraison :</strong> ${deliveryLabel}</li>
           <li><strong>Total à encaisser au retrait :</strong> ${formatPrice(order.totalCents)}</li>
         </ul>
         <p><strong>Articles :</strong></p>
         <ul>${itemsList}</ul>
+        ${shippingAddressHtml}
         <p>Connectez-vous à votre espace club pour marquer la commande comme payée une fois le règlement reçu.</p>
       `,
     });
@@ -191,7 +245,7 @@ export async function POST(request: Request) {
       price_data: {
         currency: "eur",
         unit_amount: deliveryFeeCents,
-        product_data: { name: "Livraison à domicile (Île de la Réunion)" },
+        product_data: { name: deliveryLabel },
       },
     });
   }
