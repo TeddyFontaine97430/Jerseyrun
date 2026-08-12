@@ -57,6 +57,10 @@ next-env.d.ts
 /android/local.properties
 /android/captures
 /android/.idea
+# clé de signature Android (secret, ne jamais commiter)
+/android/keystore.properties
+*.keystore
+*.jks
 /ios/App/Pods
 /ios/App/build
 /ios/App/App.xcworkspace/xcuserdata
