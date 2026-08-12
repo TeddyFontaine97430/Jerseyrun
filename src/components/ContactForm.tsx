@@ -1,15 +1,25 @@
 "use client";
 
 import { useActionState } from "react";
+import { usePathname } from "next/navigation";
 import { submitContactMessage, type ContactFormState } from "@/lib/actions/contact";
 
 const initialState: ContactFormState = { status: "idle" };
 
 export function ContactForm() {
   const [state, formAction, pending] = useActionState(submitContactMessage, initialState);
+  const pathname = usePathname();
+  const clubSlugMatch = pathname?.match(/^\/clubs\/([^/]+)/);
+  const clubSlug = clubSlugMatch?.[1] ?? "";
 
   return (
     <form action={formAction} className="grid gap-4 sm:grid-cols-2">
+      <input type="hidden" name="clubSlug" value={clubSlug} />
+      {clubSlug && (
+        <p className="sm:col-span-2 text-xs text-neutral-500">
+          Ce message sera envoyé directement au club de cette boutique (Jersey Run en reçoit une copie).
+        </p>
+      )}
       <div className="sm:col-span-1">
         <label htmlFor="name" className="mb-1 block text-sm font-medium text-slate-200">
           Nom

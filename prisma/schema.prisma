@@ -116,6 +116,7 @@ model Club {
   products    Product[]
   orderItems  OrderItem[]
   supplyOrders SupplyOrder[]
+  contactMessages ContactMessage[]
   createdAt   DateTime    @default(now())
 }
 
@@ -228,6 +229,8 @@ model ContactMessage {
   name      String
   email     String
   message   String
+  club      Club?    @relation(fields: [clubId], references: [id])
+  clubId    String?
   createdAt DateTime @default(now())
 }
 
