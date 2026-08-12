@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "178124407892",
+    "project_id": "re-jerseyrun-app",
+    "storage_bucket": "re-jerseyrun-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:178124407892:android:07b709c80dd5792208d9c1",
+        "android_client_info": {
+          "package_name": "re.jerseyrun.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDnJAX8osjFIsfTQ3RR2D3Vt1UdcjTwvk4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -145,6 +145,85 @@ clés Stripe configurées, voir ci-dessus) et apparaissent ensuite dans
 - `prisma/schema.prisma` — modèle de données
 - `prisma/seed.ts` — jeu de données de démonstration
 
+## Application mobile (iOS / Android)
+
+Le site est encapsulé dans une app native via [Capacitor](https://capacitorjs.com) :
+l'app affiche directement `https://jerseyrun.re` dans une WebView native. Toute
+mise à jour du site en production est donc immédiatement visible dans l'app,
+sans re-publication sur les stores.
+
+- `capacitor.config.ts` — configuration (URL du site, nom de l'app, id de bundle)
+- `mobile-shell/` — page de chargement minimale affichée le temps que le site
+  se charge (et si l'appareil n'a pas de connexion)
+- `resources/` — icône et écran de démarrage sources (générés à partir de
+  `public/logo.png`)
+- `ios/`, `android/` — projets natifs générés par Capacitor
+
+### Prérequis pour builder l'app
+
+**iOS** (uniquement possible sur Mac) :
+- [Xcode](https://apps.apple.com/app/xcode/id497799835) complet (pas juste les
+  Command Line Tools) — gros téléchargement, nécessite une connexion avec un
+  identifiant Apple sur le Mac.
+- [CocoaPods](https://cocoapods.org) : `sudo gem install cocoapods` (ou
+  `brew install cocoapods`)
+
+**Android** :
+- [Android Studio](https://developer.android.com/studio)
+
+### Commandes utiles
+
+```bash
+npm run app:sync      # recopie la config/assets web dans les projets natifs
+npm run app:ios        # ouvre le projet iOS dans Xcode
+npm run app:android    # ouvre le projet Android dans Android Studio
+npm run app:icons      # régénère icône + splash depuis resources/icon.png et resources/splash.png
+```
+
+Depuis Xcode ou Android Studio, on peut ensuite lancer l'app sur un
+simulateur/émulateur ou un appareil physique (bouton ▶️).
+
+### Notifications push
+
+Depuis `/admin/notifications`, l'administrateur peut envoyer un message
+(titre + texte + image facultative) qui s'affiche directement sur l'écran
+des personnes ayant installé l'app mobile — utile pour annoncer une nouvelle
+collection, une promotion, etc.
+
+Fonctionnement :
+- L'app enregistre chaque appareil (table `PushDevice`) via
+  `@capacitor/push-notifications` dès qu'un utilisateur accepte les
+  notifications ([src/components/PushRegistration.tsx](src/components/PushRegistration.tsx)).
+- L'envoi passe par Firebase Cloud Messaging (Firebase Admin SDK côté
+  serveur, [src/lib/push.ts](src/lib/push.ts)).
+- L'historique des envois est conservé (table `PushNotification`).
+
+Mise en place (une fois) :
+1. Créer un projet sur [console.firebase.google.com](https://console.firebase.google.com).
+2. Ajouter une app Android avec le nom de package `re.jerseyrun.app`, et
+   télécharger `google-services.json` → le placer dans `android/app/`.
+3. Paramètres du projet → Comptes de service → Générer une nouvelle clé
+   privée → renseigner `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL` et
+   `FIREBASE_PRIVATE_KEY` dans `.env` (voir `.env.example`).
+4. Côté iOS, l'affichage de l'image dans la notification nécessite une
+   Notification Service Extension (Xcode) et un compte Apple Developer —
+   à faire une fois ce compte disponible.
+
+Sans ces clés, la page `/admin/notifications` reste utilisable mais affiche
+un message d'avertissement et l'envoi échoue proprement.
+
+### Publier sur les stores
+
+Nécessite :
+- un [compte Apple Developer](https://developer.apple.com/programs/) (99$/an)
+  pour publier sur l'App Store et tester sur un iPhone physique ;
+- un [compte Google Play Console](https://play.google.com/console/) (25$, paiement
+  unique) pour publier sur le Play Store.
+
+Une fois l'un de ces comptes créé, il faudra configurer la signature de l'app
+(certificats/clés) dans Xcode et/ou Android Studio avant de soumettre un
+build pour validation.
+
 ## Déploiement
 
 Pour un déploiement en production, prévoir :

@@ -6,6 +6,7 @@ import { auth } from "@/auth";
 import { Providers } from "@/components/Providers";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { PushRegistration } from "@/components/PushRegistration";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -114,6 +115,7 @@ export default async function RootLayout({
           <main className="flex-1">{children}</main>
           <Footer />
         </Providers>
+        <PushRegistration />
         <Analytics />
       </body>
     </html>

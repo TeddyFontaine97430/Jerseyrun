@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Jersey Run</string>
+    <string name="title_activity_main">Jersey Run</string>
+    <string name="package_name">re.jerseyrun.app</string>
+    <string name="custom_url_scheme">re.jerseyrun.app</string>
+</resources>

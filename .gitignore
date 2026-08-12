@@ -50,3 +50,15 @@ next-env.d.ts
 
 # claude code local settings (machine-specific, not for sharing)
 .claude/settings.local.json
+
+# app mobile (Capacitor) — artefacts régénérables, pas versionnés
+/android/app/build
+/android/.gradle
+/android/local.properties
+/android/captures
+/android/.idea
+/ios/App/Pods
+/ios/App/build
+/ios/App/App.xcworkspace/xcuserdata
+/ios/App/App.xcodeproj/xcuserdata
+/ios/App/App.xcodeproj/project.xcworkspace/xcuserdata

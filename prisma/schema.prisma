@@ -273,3 +273,30 @@ model SiteContent {
   value     String   @db.Text
   updatedAt DateTime @updatedAt
 }
+
+enum PushPlatform {
+  ANDROID
+  IOS
+}
+
+// Un appareil ayant installé l'app mobile et accepté les notifications.
+// Le token FCM est fourni par Firebase Cloud Messaging côté app.
+model PushDevice {
+  id         String       @id @default(cuid())
+  token      String       @unique
+  platform   PushPlatform
+  createdAt  DateTime     @default(now())
+  lastSeenAt DateTime     @updatedAt
+}
+
+// Historique des notifications envoyées depuis l'administration.
+model PushNotification {
+  id         String   @id @default(cuid())
+  title      String
+  body       String   @db.Text
+  imageUrl   String?
+  sentCount  Int      @default(0)
+  failCount  Int      @default(0)
+  sentByName String?
+  createdAt  DateTime @default(now())
+}
