@@ -73,6 +73,14 @@ export function SupplierForm({ supplier, onDone }: { supplier?: SupplierInitial;
         {state.status === "success" && <p className="text-sm font-medium text-emerald-400">{state.message}</p>}
         {state.status === "error" && <p className="text-sm font-medium text-red-400">{state.message}</p>}
       </div>
+      {state.status === "success" && state.tempPassword && (
+        <div className="sm:col-span-2 rounded-lg border border-amber-500/20 bg-amber-500/10 p-3 text-xs">
+          <p className="font-semibold text-amber-300">Mot de passe temporaire (déjà envoyé par email) :</p>
+          <p className="mt-1 select-all rounded bg-neutral-800 px-2 py-1 font-mono text-sm text-white">
+            {state.tempPassword}
+          </p>
+        </div>
+      )}
     </form>
   );
 }

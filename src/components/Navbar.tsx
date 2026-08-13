@@ -104,6 +104,15 @@ export async function Navbar() {
             </Link>
           )}
 
+          {user?.role === "SUPPLIER" && (
+            <Link
+              href="/fournisseur/dashboard"
+              className="text-sm font-medium text-neutral-300 hover:text-accent"
+            >
+              Espace fournisseur
+            </Link>
+          )}
+
           {user && (
             <form
               action={async () => {
@@ -168,6 +177,11 @@ export async function Navbar() {
           {user?.role === "ADMIN" && (
             <Link href="/admin" className="rounded-lg px-3 py-2 text-sm font-medium text-neutral-300 hover:bg-white/5">
               Administration
+            </Link>
+          )}
+          {user?.role === "SUPPLIER" && (
+            <Link href="/fournisseur/dashboard" className="rounded-lg px-3 py-2 text-sm font-medium text-neutral-300 hover:bg-white/5">
+              Espace fournisseur
             </Link>
           )}
           {user && (

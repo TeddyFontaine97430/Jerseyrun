@@ -7,6 +7,8 @@ import { prisma } from "@/lib/prisma";
 import { getClubForUser } from "@/lib/clubStats";
 import { notifyAdmin, sendEmail } from "@/lib/email";
 import { formatPrice } from "@/lib/money";
+import { getNextSupplyOrderNumber } from "@/lib/supplyOrderNumber";
+import { generateSupplyOrderPdf } from "@/lib/supplyOrderPdf";
 import type { SupplyOrderStatus } from "@prisma/client";
 
 const supplyProductSchema = z.object({
@@ -38,6 +40,7 @@ async function requireAdmin() {
 function revalidateSupplyPaths() {
   revalidatePath("/admin/boutique-clubs");
   revalidatePath("/club/dashboard/boutique-fournisseur");
+  revalidatePath("/fournisseur/dashboard");
 }
 
 export type SupplyProductFormState = {
@@ -258,10 +261,12 @@ export async function createSupplyOrder(
   }
 
   const note = ((formData.get("note") as string) ?? "").trim() || null;
+  const orderNumber = await getNextSupplyOrderNumber();
 
   await prisma.supplyOrder.create({
     data: {
       clubId: club.id,
+      orderNumber,
       note,
       items: { create: orderItemsData },
     },
@@ -276,10 +281,11 @@ export async function createSupplyOrder(
     .join("");
 
   await notifyAdmin({
-    subject: `Nouvelle demande de commande — ${club.name}`,
+    subject: `Nouvelle demande de commande N° ${orderNumber} — ${club.name}`,
     html: `
       <p>Le club <strong>${club.name}</strong> vient de passer une demande de commande sur la boutique fournisseur.</p>
       <ul>
+        <li><strong>Commande N° :</strong> ${orderNumber}</li>
         <li><strong>Total :</strong> ${formatPrice(totalCents)}</li>
       </ul>
       <p><strong>Articles :</strong></p>
@@ -318,6 +324,7 @@ export async function sendSupplyOrderGroupToSupplier(
   if (order.items.length === 0) return { status: "error", message: "Aucune ligne à envoyer pour cet article." };
 
   const productName = order.items[0].productName;
+  const orderNumber = order.orderNumber ?? "N/A";
   const itemsList = order.items
     .map((item) => {
       const details = [item.size ? `taille ${item.size}` : null, item.personalizationText].filter(Boolean).join(" — ");
@@ -325,15 +332,38 @@ export async function sendSupplyOrderGroupToSupplier(
     })
     .join("");
 
+  const pdf = await generateSupplyOrderPdf({
+    orderNumber,
+    orderDate: order.createdAt,
+    clubName: order.club.name,
+    clubPhone: order.club.phone,
+    clubEmail: order.club.email,
+    supplierName: supplier.name,
+    note: order.note,
+    items: order.items.map((item) => ({
+      productName: item.productName,
+      quantity: item.quantity,
+      unitPriceCents: item.unitPriceCents,
+      size: item.size,
+      personalizationText: item.personalizationText,
+    })),
+  });
+
   await sendEmail({
     to: supplier.email,
-    subject: `Commande à préparer — ${order.club.name} — ${productName}`,
+    subject: `Commande N° ${orderNumber} à préparer — ${order.club.name} — ${productName}`,
     html: `
       <p>Nouvelle commande pour le club <strong>${order.club.name}</strong> (Jersey Run).</p>
+      <ul>
+        <li><strong>Commande N° :</strong> ${orderNumber}</li>
+      </ul>
       <ul>${itemsList}</ul>
       ${order.note ? `<p><strong>Remarque du club :</strong> ${order.note}</p>` : ""}
       <p>Merci de confirmer la prise en charge de cette commande.</p>
+      <p>Vous retrouverez cette commande, avec son bon de commande PDF, dans votre espace fournisseur :
+      <a href="https://jerseyrun.re/fournisseur/dashboard">jerseyrun.re/fournisseur/dashboard</a>.</p>
     `,
+    attachments: [{ filename: `commande-${orderNumber}.pdf`, content: pdf }],
   });
 
   await prisma.supplyOrderItem.updateMany({

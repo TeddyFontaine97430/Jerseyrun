@@ -52,10 +52,12 @@ export default async function ClubSupplyShopPage() {
           <table className="w-full text-left text-sm">
             <thead className="border-b border-white/10 text-neutral-400">
               <tr>
+                <th className="px-5 py-3 font-medium">N°</th>
                 <th className="px-5 py-3 font-medium">Date</th>
                 <th className="px-5 py-3 font-medium">Articles</th>
                 <th className="px-5 py-3 font-medium">Montant</th>
                 <th className="px-5 py-3 font-medium">Statut</th>
+                <th className="px-5 py-3 font-medium">PDF</th>
               </tr>
             </thead>
             <tbody>
@@ -63,6 +65,9 @@ export default async function ClubSupplyShopPage() {
                 const total = order.items.reduce((sum, item) => sum + item.unitPriceCents * item.quantity, 0);
                 return (
                   <tr key={order.id} className="border-b border-white/5 align-top last:border-0">
+                    <td className="whitespace-nowrap px-5 py-3 font-mono text-xs text-neutral-400">
+                      {order.orderNumber ?? "—"}
+                    </td>
                     <td className="whitespace-nowrap px-5 py-3 text-neutral-400">
                       {order.createdAt.toLocaleDateString("fr-FR")}
                     </td>
@@ -88,6 +93,14 @@ export default async function ClubSupplyShopPage() {
                       >
                         {SUPPLY_ORDER_STATUS_LABELS[order.status]}
                       </span>
+                    </td>
+                    <td className="whitespace-nowrap px-5 py-3">
+                      <a
+                        href={`/api/supply-orders/${order.id}/pdf`}
+                        className="rounded-full border border-white/10 px-3 py-1 text-xs font-semibold text-neutral-300 hover:border-accent hover:text-accent"
+                      >
+                        Télécharger
+                      </a>
                     </td>
                   </tr>
                 );

@@ -1,12 +1,12 @@
 "use server";
 
-import { randomBytes } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
+import { generateTempPassword } from "@/lib/passwords";
 
 async function requireAdmin() {
   const session = await auth();
@@ -95,10 +95,6 @@ export async function deleteClub(clubId: string): Promise<DeleteClubResult> {
   revalidatePath("/");
 
   redirect("/admin/clubs");
-}
-
-function generateTempPassword() {
-  return randomBytes(9).toString("base64url");
 }
 
 export async function resetClubPassword(clubId: string): Promise<{ email: string; password: string }> {

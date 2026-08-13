@@ -21,6 +21,7 @@ type OrderItem = {
 
 type Order = {
   id: string;
+  orderNumber: string | null;
   createdAt: Date;
   note: string | null;
   status: SupplyOrderStatus;
@@ -144,12 +145,20 @@ export function SupplyOrderCard({ order, suppliers }: { order: Order; suppliers:
     <div className="rounded-2xl border border-white/10 bg-neutral-900 p-5 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="font-semibold text-white">{order.club.name}</p>
+          <p className="font-semibold text-white">
+            {order.club.name} <span className="font-mono text-xs text-neutral-500">N° {order.orderNumber ?? "—"}</span>
+          </p>
           <p className="text-xs text-neutral-500">{order.createdAt.toLocaleDateString("fr-FR")}</p>
         </div>
         <div className="flex items-center gap-3">
           <p className="text-sm font-semibold text-white">{formatPrice(total)}</p>
           <SupplyOrderStatusSelect orderId={order.id} status={order.status} />
+          <a
+            href={`/api/supply-orders/${order.id}/pdf`}
+            className="rounded-full border border-white/10 px-3 py-1 text-xs font-semibold text-neutral-300 hover:border-accent hover:text-accent"
+          >
+            PDF
+          </a>
         </div>
       </div>
 
