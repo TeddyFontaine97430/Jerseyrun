@@ -3,6 +3,7 @@ import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { ClubLogoCard } from "@/components/ClubLogoCard";
 import { ProductMarquee } from "@/components/ProductMarquee";
+import { HomeGallery } from "@/components/HomeGallery";
 import { getSiteContentMap } from "@/lib/siteContent";
 
 // Ce club doit toujours apparaître en premier, aussi bien dans la grille des clubs
@@ -10,7 +11,7 @@ import { getSiteContentMap } from "@/lib/siteContent";
 const PINNED_CLUB_SLUG = "jeunesse-sportive-saint-pierroise";
 
 export default async function Home() {
-  const [clubs, pinnedProducts, otherProducts, content] = await Promise.all([
+  const [clubs, pinnedProducts, otherProducts, content, galleryImages] = await Promise.all([
     prisma.club.findMany({
       where: { status: "APPROVED", active: true },
       orderBy: { name: "asc" },
@@ -35,6 +36,7 @@ export default async function Home() {
       take: 20,
     }),
     getSiteContentMap(),
+    prisma.homeGalleryImage.findMany({ orderBy: { createdAt: "asc" } }),
   ]);
 
   const marqueeProducts = [...pinnedProducts, ...otherProducts];
@@ -91,6 +93,8 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      <HomeGallery images={galleryImages} />
 
       <a
         href={content["home.bannerLink"]}

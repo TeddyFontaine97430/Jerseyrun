@@ -302,6 +302,15 @@ model SiteContent {
   updatedAt DateTime @updatedAt
 }
 
+// Bande d'images cliquables affichée sur la page d'accueil, entre le bandeau
+// principal et la bannière du club mis en avant. Chaque image a son propre lien.
+model HomeGalleryImage {
+  id        String   @id @default(cuid())
+  imageUrl  String
+  link      String
+  createdAt DateTime @default(now())
+}
+
 enum PushPlatform {
   ANDROID
   IOS
