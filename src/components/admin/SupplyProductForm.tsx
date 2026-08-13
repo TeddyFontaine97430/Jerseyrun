@@ -11,19 +11,26 @@ import { uploadImageClient } from "@/lib/uploadClient";
 
 const initialState: SupplyProductFormState = { status: "idle" };
 
+const GENERIC_CLUB_VALUE = "__all__";
+
 type SupplyProductInitial = {
   id: string;
   name: string;
   description: string | null;
   priceCents: number;
   imageUrl: string | null;
+  sizes: string[];
+  personalizationEnabled: boolean;
+  clubId: string | null;
 };
 
 export function SupplyProductForm({
   product,
+  clubs,
   onDone,
 }: {
   product?: SupplyProductInitial;
+  clubs: { id: string; name: string }[];
   onDone?: () => void;
 }) {
   const action = product ? updateSupplyProduct : createSupplyProduct;
@@ -51,6 +58,29 @@ export function SupplyProductForm({
     <form action={formAction} className="grid gap-4 sm:grid-cols-2">
       {product && <input type="hidden" name="productId" value={product.id} />}
       <input type="hidden" name="imageUrl" value={imageUrl} />
+      <div className="sm:col-span-2">
+        <label className="mb-1 block text-sm font-medium text-white">Club propriétaire</label>
+        <select
+          name="clubId"
+          required
+          defaultValue={product ? (product.clubId ?? GENERIC_CLUB_VALUE) : ""}
+          className="w-full rounded-lg border border-white/10 bg-neutral-800 px-3 py-2 text-white focus:border-accent focus:outline-none"
+        >
+          <option value="" disabled>
+            Choisir un club...
+          </option>
+          <option value={GENERIC_CLUB_VALUE}>Tous les clubs (article générique)</option>
+          {clubs.map((club) => (
+            <option key={club.id} value={club.id}>
+              {club.name}
+            </option>
+          ))}
+        </select>
+        <p className="mt-1 text-xs text-neutral-500">
+          Seul ce club verra cet article dans sa boutique fournisseur. Choisissez « Tous les clubs » uniquement pour
+          un article commun (ex: accessoire générique).
+        </p>
+      </div>
       <div>
         <label className="mb-1 block text-sm font-medium text-white">Nom de l&apos;article</label>
         <input
@@ -104,6 +134,32 @@ export function SupplyProductForm({
           defaultValue={product?.description ?? ""}
           className="w-full rounded-lg border border-white/10 bg-neutral-800 px-3 py-2 text-white placeholder:text-neutral-500 focus:border-accent focus:outline-none"
         />
+      </div>
+      <div className="sm:col-span-2">
+        <label className="mb-1 block text-sm font-medium text-white">Tailles disponibles (optionnel)</label>
+        <input
+          name="sizes"
+          defaultValue={product?.sizes.join(", ") ?? ""}
+          placeholder="Ex: XS, S, M, L, XL, XXL"
+          className="w-full rounded-lg border border-white/10 bg-neutral-800 px-3 py-2 text-white placeholder:text-neutral-500 focus:border-accent focus:outline-none"
+        />
+        <p className="mt-1 text-xs text-neutral-500">
+          Séparez les tailles par des virgules. Laissez vide si l&apos;article n&apos;a pas de taille (ex: équipement générique).
+        </p>
+      </div>
+      <div className="sm:col-span-2">
+        <label className="flex items-center gap-2 text-sm text-neutral-200">
+          <input
+            type="checkbox"
+            name="personalizationEnabled"
+            defaultChecked={product?.personalizationEnabled ?? false}
+            className="h-4 w-4 rounded border-white/20 bg-neutral-800 text-accent focus:ring-accent"
+          />
+          Article personnalisable (numéro / nom de joueur)
+        </label>
+        <p className="mt-1 text-xs text-neutral-500">
+          Le club pourra alors ajouter une ligne par joueur (taille + numéro) au lieu d&apos;une simple quantité.
+        </p>
       </div>
       <div className="sm:col-span-2 flex items-center gap-4">
         <button

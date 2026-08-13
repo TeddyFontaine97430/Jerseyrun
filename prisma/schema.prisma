@@ -116,6 +116,7 @@ model Club {
   products    Product[]
   orderItems  OrderItem[]
   supplyOrders SupplyOrder[]
+  supplyProducts SupplyProduct[]
   contactMessages ContactMessage[]
   createdAt   DateTime    @default(now())
 }
@@ -235,14 +236,20 @@ model ContactMessage {
 }
 
 model SupplyProduct {
-  id          String            @id @default(cuid())
-  name        String
-  description String?
-  imageUrl    String?
-  priceCents  Int
-  active      Boolean           @default(true)
-  orderItems  SupplyOrderItem[]
-  createdAt   DateTime          @default(now())
+  id                     String            @id @default(cuid())
+  // Un article est réservé à un club (son maillot, sa tenue...). Laissez vide pour un
+  // article générique visible par tous les clubs (ex: accessoires communs).
+  club                   Club?             @relation(fields: [clubId], references: [id])
+  clubId                 String?
+  name                   String
+  description            String?
+  imageUrl               String?
+  priceCents             Int
+  active                 Boolean           @default(true)
+  sizes                  String[]          @default([])
+  personalizationEnabled Boolean           @default(false)
+  orderItems             SupplyOrderItem[]
+  createdAt              DateTime          @default(now())
 }
 
 model SupplyOrder {
@@ -257,14 +264,30 @@ model SupplyOrder {
 }
 
 model SupplyOrderItem {
-  id             String        @id @default(cuid())
-  order          SupplyOrder   @relation(fields: [orderId], references: [id])
-  orderId        String
-  product        SupplyProduct @relation(fields: [productId], references: [id])
-  productId      String
-  productName    String
-  quantity       Int
-  unitPriceCents Int
+  id                  String        @id @default(cuid())
+  order               SupplyOrder   @relation(fields: [orderId], references: [id])
+  orderId             String
+  product             SupplyProduct @relation(fields: [productId], references: [id])
+  productId           String
+  productName         String
+  quantity            Int
+  unitPriceCents      Int
+  size                String?
+  personalizationText String?
+  supplier            Supplier?     @relation(fields: [supplierId], references: [id])
+  supplierId          String?
+  sentToSupplierAt    DateTime?
+}
+
+model Supplier {
+  id         String            @id @default(cuid())
+  name       String
+  email      String
+  phone      String?
+  notes      String?
+  active     Boolean           @default(true)
+  orderItems SupplyOrderItem[]
+  createdAt  DateTime          @default(now())
 }
 
 model SiteContent {

@@ -8,6 +8,7 @@ import { SupplyProductForm } from "@/components/admin/SupplyProductForm";
 
 export function SupplyProductRow({
   product,
+  clubs,
 }: {
   product: {
     id: string;
@@ -16,7 +17,11 @@ export function SupplyProductRow({
     priceCents: number;
     imageUrl: string | null;
     active: boolean;
+    sizes: string[];
+    personalizationEnabled: boolean;
+    clubId: string | null;
   };
+  clubs: { id: string; name: string }[];
 }) {
   const [editing, setEditing] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -24,7 +29,7 @@ export function SupplyProductRow({
   if (editing) {
     return (
       <div className="border-b border-white/10 p-5 last:border-0">
-        <SupplyProductForm product={product} onDone={() => setEditing(false)} />
+        <SupplyProductForm product={product} clubs={clubs} onDone={() => setEditing(false)} />
       </div>
     );
   }
@@ -42,6 +47,20 @@ export function SupplyProductRow({
         <p className="font-semibold text-white">{product.name}</p>
         <p className="text-sm text-neutral-400">{formatPrice(product.priceCents)}</p>
         {product.description && <p className="mt-0.5 text-xs text-neutral-500">{product.description}</p>}
+        {(product.sizes.length > 0 || product.personalizationEnabled) && (
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {product.sizes.length > 0 && (
+              <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] font-medium text-neutral-300">
+                Tailles : {product.sizes.join(", ")}
+              </span>
+            )}
+            {product.personalizationEnabled && (
+              <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] font-medium text-neutral-300">
+                Personnalisable (n° joueur)
+              </span>
+            )}
+          </div>
+        )}
       </div>
       {!product.active && (
         <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-neutral-400">Masqué</span>

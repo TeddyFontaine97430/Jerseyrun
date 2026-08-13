@@ -15,7 +15,10 @@ export default async function ClubSupplyShopPage() {
   if (!club || club.status !== "APPROVED") return null;
 
   const [products, orders] = await Promise.all([
-    prisma.supplyProduct.findMany({ where: { active: true }, orderBy: { createdAt: "desc" } }),
+    prisma.supplyProduct.findMany({
+      where: { active: true, OR: [{ clubId: null }, { clubId: club.id }] },
+      orderBy: { createdAt: "desc" },
+    }),
     prisma.supplyOrder.findMany({
       where: { clubId: club.id },
       include: { items: true },
@@ -64,11 +67,17 @@ export default async function ClubSupplyShopPage() {
                       {order.createdAt.toLocaleDateString("fr-FR")}
                     </td>
                     <td className="px-5 py-3 text-neutral-300">
-                      {order.items.map((item) => (
-                        <p key={item.id}>
-                          {item.quantity} × {item.productName}
-                        </p>
-                      ))}
+                      {order.items.map((item) => {
+                        const details = [item.size ? `taille ${item.size}` : null, item.personalizationText]
+                          .filter(Boolean)
+                          .join(" — ");
+                        return (
+                          <p key={item.id}>
+                            {item.quantity} × {item.productName}
+                            {details ? ` (${details})` : ""}
+                          </p>
+                        );
+                      })}
                     </td>
                     <td className="whitespace-nowrap px-5 py-3 text-neutral-300">{formatPrice(total)}</td>
                     <td className="whitespace-nowrap px-5 py-3">

@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { formatPrice } from "@/lib/money";
-import { SUPPLY_ORDER_STATUS_LABELS } from "@/lib/supplyOrderStatus";
 import { NewSupplyProductPanel } from "@/components/admin/NewSupplyProductPanel";
 import { SupplyProductRow } from "@/components/admin/SupplyProductRow";
-import { SupplyOrderStatusSelect } from "@/components/admin/SupplyOrderStatusSelect";
+import { SupplyOrderCard } from "@/components/admin/SupplyOrderCard";
 
 export const metadata: Metadata = { title: { absolute: "Boutique clubs — Administration Jersey Run" } };
 
@@ -15,13 +14,25 @@ export default async function AdminSupplyShopPage() {
     return <p className="text-neutral-400">Accès non autorisé.</p>;
   }
 
-  const [products, orders] = await Promise.all([
+  const [products, orders, suppliers, clubs] = await Promise.all([
     prisma.supplyProduct.findMany({ orderBy: { createdAt: "desc" } }),
     prisma.supplyOrder.findMany({
-      include: { club: true, items: true },
+      include: { club: true, items: { include: { supplier: true } } },
       orderBy: { createdAt: "desc" },
     }),
+    prisma.supplier.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
+    prisma.club.findMany({ where: { status: "APPROVED" }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
   ]);
+
+  const clubNameById = new Map(clubs.map((club) => [club.id, club.name]));
+  const productGroups = new Map<string, { label: string; products: typeof products }>();
+  for (const product of products) {
+    const key = product.clubId ?? "__all__";
+    const label = product.clubId ? (clubNameById.get(product.clubId) ?? "Club supprimé") : "Tous les clubs (générique)";
+    const group = productGroups.get(key) ?? { label, products: [] };
+    group.products.push(product);
+    productGroups.set(key, group);
+  }
 
   return (
     <div>
@@ -32,15 +43,22 @@ export default async function AdminSupplyShopPage() {
             Ce catalogue n&apos;est visible que par les clubs. Proposez-leur des articles à commander auprès de vous.
           </p>
         </div>
-        <NewSupplyProductPanel />
+        <NewSupplyProductPanel clubs={clubs} />
       </div>
 
       {products.length === 0 ? (
         <p className="mb-10 text-neutral-400">Aucun article dans le catalogue pour le moment.</p>
       ) : (
-        <div className="mb-10 overflow-hidden rounded-2xl border border-white/10 bg-neutral-900 shadow-sm">
-          {products.map((product) => (
-            <SupplyProductRow key={product.id} product={product} />
+        <div className="mb-10 space-y-6">
+          {Array.from(productGroups.values()).map((group) => (
+            <div key={group.label}>
+              <h4 className="mb-2 text-sm font-semibold text-neutral-300">{group.label}</h4>
+              <div className="overflow-hidden rounded-2xl border border-white/10 bg-neutral-900 shadow-sm">
+                {group.products.map((product) => (
+                  <SupplyProductRow key={product.id} product={product} clubs={clubs} />
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       )}
@@ -48,50 +66,22 @@ export default async function AdminSupplyShopPage() {
       <h3 className="mb-4 text-lg font-semibold text-white">
         Demandes de commande des clubs ({orders.length})
       </h3>
+      {suppliers.length === 0 && orders.length > 0 && (
+        <p className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-sm text-amber-200">
+          Aucun fournisseur actif : ajoutez-en un dans{" "}
+          <Link href="/admin/fournisseurs" className="font-semibold underline">
+            la page Fournisseurs
+          </Link>{" "}
+          pour pouvoir router ces commandes.
+        </p>
+      )}
       {orders.length === 0 ? (
         <p className="text-neutral-400">Aucune demande pour le moment.</p>
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-white/10 bg-neutral-900 shadow-sm">
-          <table className="w-full text-left text-sm">
-            <thead className="border-b border-white/10 text-neutral-400">
-              <tr>
-                <th className="px-5 py-3 font-medium">Date</th>
-                <th className="px-5 py-3 font-medium">Club</th>
-                <th className="px-5 py-3 font-medium">Articles</th>
-                <th className="px-5 py-3 font-medium">Montant</th>
-                <th className="px-5 py-3 font-medium">Remarque</th>
-                <th className="px-5 py-3 font-medium">Statut</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orders.map((order) => {
-                const total = order.items.reduce((sum, item) => sum + item.unitPriceCents * item.quantity, 0);
-                return (
-                  <tr key={order.id} className="border-b border-white/5 align-top last:border-0">
-                    <td className="whitespace-nowrap px-5 py-3 text-neutral-400">
-                      {order.createdAt.toLocaleDateString("fr-FR")}
-                    </td>
-                    <td className="px-5 py-3 font-medium text-white">{order.club.name}</td>
-                    <td className="px-5 py-3 text-neutral-300">
-                      {order.items.map((item) => (
-                        <p key={item.id}>
-                          {item.quantity} × {item.productName}
-                        </p>
-                      ))}
-                    </td>
-                    <td className="whitespace-nowrap px-5 py-3 text-neutral-300">{formatPrice(total)}</td>
-                    <td className="max-w-[220px] px-5 py-3 text-xs text-neutral-400">
-                      {order.note ?? <span className="italic text-slate-300">—</span>}
-                    </td>
-                    <td className="whitespace-nowrap px-5 py-3">
-                      <SupplyOrderStatusSelect orderId={order.id} status={order.status} />
-                      <span className="sr-only">{SUPPLY_ORDER_STATUS_LABELS[order.status]}</span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        <div className="space-y-4">
+          {orders.map((order) => (
+            <SupplyOrderCard key={order.id} order={order} suppliers={suppliers} />
+          ))}
         </div>
       )}
     </div>
