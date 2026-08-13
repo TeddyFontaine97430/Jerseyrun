@@ -48,6 +48,19 @@ export function RegisterForm() {
         />
       </div>
       <div>
+        <label htmlFor="phone" className="mb-1 block text-sm font-medium text-white">
+          Téléphone
+        </label>
+        <input
+          id="phone"
+          name="phone"
+          type="tel"
+          required
+          className="w-full rounded-lg border border-white/10 bg-neutral-800 px-3 py-2.5 text-white placeholder:text-neutral-500 focus:border-accent focus:outline-none"
+          placeholder="06 92 XX XX XX"
+        />
+      </div>
+      <div>
         <label htmlFor="password" className="mb-1 block text-sm font-medium text-white">
           Mot de passe
         </label>

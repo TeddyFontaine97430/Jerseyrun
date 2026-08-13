@@ -31,6 +31,7 @@ export default async function AdminClientsPage() {
               <tr>
                 <th className="px-5 py-3 font-medium">Nom</th>
                 <th className="px-5 py-3 font-medium">Email</th>
+                <th className="px-5 py-3 font-medium">Téléphone</th>
                 <th className="px-5 py-3 font-medium">Inscrit le</th>
                 <th className="px-5 py-3 font-medium">Commandes</th>
                 <th className="px-5 py-3 font-medium">Total dépensé</th>
@@ -45,6 +46,7 @@ export default async function AdminClientsPage() {
                   <tr key={customer.id} className="border-b border-white/5 last:border-0">
                     <td className="px-5 py-3 font-medium text-white">{customer.name ?? "—"}</td>
                     <td className="px-5 py-3 text-neutral-300">{customer.email}</td>
+                    <td className="px-5 py-3 text-neutral-300">{customer.phone ?? "—"}</td>
                     <td className="px-5 py-3 text-neutral-400">
                       {customer.createdAt.toLocaleDateString("fr-FR")}
                     </td>

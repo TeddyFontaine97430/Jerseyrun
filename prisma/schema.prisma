@@ -61,6 +61,7 @@ model User {
   email               String               @unique
   password            String
   name                String?
+  phone               String?
   role                Role                 @default(CUSTOMER)
   club                Club?
   supplier            Supplier?

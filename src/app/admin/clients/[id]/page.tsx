@@ -61,7 +61,10 @@ export default async function AdminClientDetailPage({ params }: Props) {
       <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
         <div>
           <h2 className="text-2xl font-extrabold text-white">{customer.name ?? customer.email}</h2>
-          <p className="mt-1 text-sm text-neutral-400">{customer.email}</p>
+          <p className="mt-1 text-sm text-neutral-400">
+            {customer.email}
+            {customer.phone && <span className="ml-2">· {customer.phone}</span>}
+          </p>
           <p className="text-xs text-neutral-500">
             Inscrit le {customer.createdAt.toLocaleDateString("fr-FR")}
           </p>

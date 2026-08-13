@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 const registerSchema = z.object({
   name: z.string().min(2, "Merci d'indiquer votre nom."),
   email: z.string().email("Adresse email invalide."),
+  phone: z.string().min(6, "Merci d'indiquer un numéro de téléphone valide."),
   password: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères."),
 });
 
@@ -22,6 +23,7 @@ export async function registerCustomer(
   const parsed = registerSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
+    phone: formData.get("phone"),
     password: formData.get("password"),
   });
 
@@ -29,7 +31,7 @@ export async function registerCustomer(
     return { status: "error", message: parsed.error.issues[0]?.message ?? "Formulaire invalide." };
   }
 
-  const { name, email, password } = parsed.data;
+  const { name, email, phone, password } = parsed.data;
   const normalizedEmail = email.toLowerCase().trim();
 
   const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } });
@@ -39,7 +41,7 @@ export async function registerCustomer(
 
   const passwordHash = await bcrypt.hash(password, 10);
   await prisma.user.create({
-    data: { name, email: normalizedEmail, password: passwordHash, role: "CUSTOMER" },
+    data: { name, email: normalizedEmail, phone: phone.trim(), password: passwordHash, role: "CUSTOMER" },
   });
 
   return { status: "success", message: "Votre compte a été créé. Vous pouvez maintenant vous connecter." };
