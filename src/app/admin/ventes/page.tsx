@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/money";
 import { ORDER_STATUS_LABELS, ORDER_STATUS_STYLES } from "@/lib/orderStatus";
@@ -48,6 +49,7 @@ export default async function AdminVentesPage() {
                 <th className="px-5 py-3 font-medium">Statut</th>
                 <th className="px-5 py-3 font-medium">Prêt ?</th>
                 <th className="px-5 py-3 font-medium">Livré</th>
+                <th className="px-5 py-3 font-medium"></th>
               </tr>
             </thead>
             <tbody>
@@ -101,6 +103,14 @@ export default async function AdminVentesPage() {
                     </td>
                     <td className="whitespace-nowrap px-5 py-3">
                       <DeliveryStatusToggle orderItemId={item.id} delivered={item.delivered} />
+                    </td>
+                    <td className="whitespace-nowrap px-5 py-3">
+                      <Link
+                        href={`/admin/commandes/${item.orderId}`}
+                        className="rounded-full border border-white/10 px-3 py-1 text-xs font-semibold text-neutral-300 hover:border-accent hover:text-accent"
+                      >
+                        Modifier
+                      </Link>
                     </td>
                   </tr>
                 );

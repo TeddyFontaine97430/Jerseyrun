@@ -172,6 +172,7 @@ export default async function AdminClubDetailPage({ params }: Props) {
                 <th className="px-5 py-3 font-medium">Prêt ?</th>
                 <th className="px-5 py-3 font-medium">Livraison</th>
                 <th className="px-5 py-3 font-medium">Date</th>
+                <th className="px-5 py-3 font-medium"></th>
               </tr>
             </thead>
             <tbody>
@@ -206,6 +207,14 @@ export default async function AdminClubDetailPage({ params }: Props) {
                     <DeliveryStatusToggle orderItemId={item.id} delivered={item.delivered} />
                   </td>
                   <td className="px-5 py-3 text-neutral-400">{item.order.createdAt.toLocaleDateString("fr-FR")}</td>
+                  <td className="px-5 py-3">
+                    <Link
+                      href={`/admin/commandes/${item.orderId}`}
+                      className="rounded-full border border-white/10 px-3 py-1 text-xs font-semibold text-neutral-300 hover:border-accent hover:text-accent"
+                    >
+                      Modifier
+                    </Link>
+                  </td>
                 </tr>
               ))}
             </tbody>

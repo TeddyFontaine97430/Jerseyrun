@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { auth } from "@/auth";
 import { getClubForUser, getClubStats, getClubSales, getClubPendingOnSiteOrders } from "@/lib/clubStats";
 import { formatPrice } from "@/lib/money";
@@ -63,7 +64,15 @@ export default async function ClubDashboardPage() {
                         ` — ${formatShippingAddress(order)}`}
                     </p>
                   </div>
-                  <MarkPaidOnSiteButton orderId={order.id} />
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href={`/club/dashboard/commandes/${order.id}`}
+                      className="rounded-full border border-white/10 px-4 py-1.5 text-xs font-semibold text-neutral-300 hover:border-accent hover:text-accent"
+                    >
+                      Modifier
+                    </Link>
+                    <MarkPaidOnSiteButton orderId={order.id} />
+                  </div>
                 </div>
                 <ul className="mt-3 divide-y divide-white/10">
                   {items.map((item) => (
@@ -109,6 +118,7 @@ export default async function ClubDashboardPage() {
                 <th className="px-5 py-3 font-medium">Livré</th>
                 <th className="px-5 py-3 font-medium">Livraison</th>
                 <th className="px-5 py-3 font-medium">Date</th>
+                <th className="px-5 py-3 font-medium"></th>
               </tr>
             </thead>
             <tbody>
@@ -150,6 +160,14 @@ export default async function ClubDashboardPage() {
                   </td>
                   <td className="px-5 py-3 text-neutral-400">
                     {item.order.createdAt.toLocaleDateString("fr-FR")}
+                  </td>
+                  <td className="px-5 py-3">
+                    <Link
+                      href={`/club/dashboard/commandes/${item.orderId}`}
+                      className="rounded-full border border-white/10 px-3 py-1 text-xs font-semibold text-neutral-300 hover:border-accent hover:text-accent"
+                    >
+                      Modifier
+                    </Link>
                   </td>
                 </tr>
               ))}

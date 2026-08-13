@@ -10,6 +10,197 @@ import { formatPrice } from "@/lib/money";
 import { decodeSelectedOptions, encodeSelectedOptions } from "@/lib/productOptions";
 import { getNextInvoiceNumber, generateInvoicePdf } from "@/lib/invoice";
 
+function revalidateOrderPaths(orderId: string, clubId: string) {
+  revalidatePath("/club/dashboard");
+  revalidatePath(`/club/dashboard/commandes/${orderId}`);
+  revalidatePath(`/admin/clubs/${clubId}`);
+  revalidatePath("/admin/ventes");
+  revalidatePath(`/admin/commandes/${orderId}`);
+  revalidatePath("/compte");
+}
+
+async function getOrderForManage(orderId: string) {
+  const session = await auth();
+  if (!session?.user) return { error: "Accès non autorisé." as const };
+
+  const order = await prisma.order.findUnique({ where: { id: orderId }, include: { items: true } });
+  if (!order) return { error: "Commande introuvable." as const };
+  if (order.status === "CANCELLED") return { error: "Cette commande est annulée et ne peut plus être modifiée." as const };
+
+  if (session.user.role === "ADMIN") return { order };
+
+  if (session.user.role === "CLUB") {
+    const club = await getClubForUser(session.user.id);
+    if (!club || !order.items.some((item) => item.clubId === club.id)) {
+      return { error: "Accès non autorisé." as const };
+    }
+    return { order };
+  }
+
+  return { error: "Accès non autorisé." as const };
+}
+
+async function recalcOrderTotal(tx: Prisma.TransactionClient, orderId: string) {
+  const [items, order] = await Promise.all([
+    tx.orderItem.findMany({ where: { orderId } }),
+    tx.order.findUniqueOrThrow({ where: { id: orderId } }),
+  ]);
+  const itemsTotal = items.reduce((sum, item) => sum + item.unitPriceCents * item.quantity, 0);
+  await tx.order.update({ where: { id: orderId }, data: { totalCents: itemsTotal + order.deliveryFeeCents } });
+}
+
+export type OrderEditState = { status: "idle" | "success" | "error"; message?: string };
+
+export async function updateOrderItemQuantity(orderItemId: string, quantity: number): Promise<OrderEditState> {
+  if (!Number.isFinite(quantity) || quantity < 1) {
+    return { status: "error", message: "Quantité invalide." };
+  }
+
+  const item = await prisma.orderItem.findUnique({ where: { id: orderItemId } });
+  if (!item) return { status: "error", message: "Article introuvable." };
+
+  const access = await getOrderForManage(item.orderId);
+  if ("error" in access) return { status: "error", message: access.error };
+
+  const delta = quantity - item.quantity;
+  const selections = decodeSelectedOptions(item.selectedOptions);
+
+  if (delta > 0 && selections.length > 0) {
+    for (const sel of selections) {
+      const optionValue = await prisma.productOptionValue.findFirst({
+        where: { value: sel.value, option: { name: sel.name, productId: item.productId } },
+      });
+      if (!optionValue || optionValue.stock < delta) {
+        return { status: "error", message: `Stock insuffisant pour augmenter la quantité de "${item.productName}".` };
+      }
+    }
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.orderItem.update({ where: { id: orderItemId }, data: { quantity } });
+    if (delta !== 0 && selections.length > 0) {
+      for (const sel of selections) {
+        await tx.productOptionValue.updateMany({
+          where: { value: sel.value, option: { name: sel.name, productId: item.productId } },
+          data: { stock: { decrement: delta } },
+        });
+      }
+    }
+    await recalcOrderTotal(tx, item.orderId);
+  });
+
+  revalidateOrderPaths(item.orderId, item.clubId);
+  return { status: "success", message: "Quantité mise à jour." };
+}
+
+export async function removeOrderItem(orderItemId: string): Promise<OrderEditState> {
+  const item = await prisma.orderItem.findUnique({ where: { id: orderItemId } });
+  if (!item) return { status: "error", message: "Article introuvable." };
+
+  const access = await getOrderForManage(item.orderId);
+  if ("error" in access) return { status: "error", message: access.error };
+
+  const itemCount = await prisma.orderItem.count({ where: { orderId: item.orderId } });
+  if (itemCount <= 1) {
+    return {
+      status: "error",
+      message: "Impossible de retirer le dernier article d'une commande : annulez-la plutôt.",
+    };
+  }
+
+  const selections = decodeSelectedOptions(item.selectedOptions);
+
+  await prisma.$transaction(async (tx) => {
+    await tx.orderItem.delete({ where: { id: orderItemId } });
+    for (const sel of selections) {
+      await tx.productOptionValue.updateMany({
+        where: { value: sel.value, option: { name: sel.name, productId: item.productId } },
+        data: { stock: { increment: item.quantity } },
+      });
+    }
+    await recalcOrderTotal(tx, item.orderId);
+  });
+
+  revalidateOrderPaths(item.orderId, item.clubId);
+  return { status: "success", message: "Article retiré de la commande." };
+}
+
+export async function addOrderItem(
+  _prevState: OrderEditState,
+  formData: FormData,
+): Promise<OrderEditState> {
+  const orderId = formData.get("orderId");
+  if (typeof orderId !== "string" || !orderId) return { status: "error", message: "Commande introuvable." };
+
+  const access = await getOrderForManage(orderId);
+  if ("error" in access) return { status: "error", message: access.error };
+  const { order } = access;
+
+  const clubId = order.items[0]?.clubId;
+  if (!clubId) return { status: "error", message: "Commande invalide." };
+
+  const productId = formData.get("productId");
+  if (typeof productId !== "string" || !productId) {
+    return { status: "error", message: "Sélectionnez un article." };
+  }
+
+  const quantityRaw = Number(formData.get("quantity"));
+  const quantity = Number.isFinite(quantityRaw) ? Math.floor(quantityRaw) : 0;
+  if (quantity < 1) return { status: "error", message: "La quantité doit être d'au moins 1." };
+
+  const personalizationText = ((formData.get("personalizationText") as string) ?? "").trim() || null;
+
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+    include: { options: { include: { values: true } } },
+  });
+  if (!product || product.clubId !== clubId) {
+    return { status: "error", message: "Article introuvable." };
+  }
+
+  const selections: { name: string; value: string }[] = [];
+  for (const option of product.options) {
+    const chosen = formData.get(`option_${option.id}`);
+    if (typeof chosen !== "string" || !chosen) {
+      return { status: "error", message: `Choisissez une valeur pour "${option.name}".` };
+    }
+    const optionValue = option.values.find((v) => v.value === chosen);
+    if (!optionValue) return { status: "error", message: `Valeur invalide pour "${option.name}".` };
+    if (optionValue.stock < quantity) {
+      return { status: "error", message: `Stock insuffisant pour "${product.name}" (${option.name} : ${chosen}).` };
+    }
+    selections.push({ name: option.name, value: chosen });
+  }
+
+  const unitPriceCents = product.priceCents + (personalizationText ? product.personalizationFeeCents : 0);
+  const selectedOptions = encodeSelectedOptions(selections);
+
+  await prisma.$transaction(async (tx) => {
+    await tx.orderItem.create({
+      data: {
+        orderId,
+        productId: product.id,
+        clubId,
+        quantity,
+        unitPriceCents,
+        productName: product.name,
+        selectedOptions,
+        personalizationText,
+      },
+    });
+    for (const sel of selections) {
+      await tx.productOptionValue.updateMany({
+        where: { value: sel.value, option: { name: sel.name, productId: product.id } },
+        data: { stock: { decrement: quantity } },
+      });
+    }
+    await recalcOrderTotal(tx, orderId);
+  });
+
+  revalidateOrderPaths(orderId, clubId);
+  return { status: "success", message: "Article ajouté à la commande." };
+}
+
 export async function toggleOrderItemDelivered(orderItemId: string) {
   const session = await auth();
   if (!session?.user) return;
