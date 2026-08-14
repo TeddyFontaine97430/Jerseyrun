@@ -6,7 +6,7 @@ export function HomeGallery({ images }: { images: GalleryImage[] }) {
   if (images.length === 0) return null;
 
   return (
-    <section className="border-b border-white/10 bg-black py-6">
+    <section className="-mt-12 border-b border-white/10 bg-black py-10 sm:-mt-16">
       <div className="container-page flex flex-wrap justify-center gap-4">
         {images.map((image) => {
           const isExternal = image.link.startsWith("http");
