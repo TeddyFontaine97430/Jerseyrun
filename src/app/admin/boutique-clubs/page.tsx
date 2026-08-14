@@ -17,7 +17,10 @@ export default async function AdminSupplyShopPage() {
   const [products, orders, suppliers, clubs] = await Promise.all([
     prisma.supplyProduct.findMany({ orderBy: { createdAt: "desc" } }),
     prisma.supplyOrder.findMany({
-      include: { club: true, items: { include: { supplier: true } } },
+      include: {
+        club: true,
+        items: { include: { supplier: true, product: { select: { imageUrl: true } } } },
+      },
       orderBy: { createdAt: "desc" },
     }),
     prisma.supplier.findMany({ where: { active: true }, orderBy: { name: "asc" } }),

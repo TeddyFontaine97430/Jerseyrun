@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Image from "next/image";
 import { formatPrice } from "@/lib/money";
 import { sendSupplyOrderGroupToSupplier } from "@/lib/actions/supply";
 import { SupplyOrderStatusSelect } from "@/components/admin/SupplyOrderStatusSelect";
@@ -17,6 +18,7 @@ type OrderItem = {
   supplierId: string | null;
   sentToSupplierAt: Date | null;
   supplier: { id: string; name: string } | null;
+  product: { imageUrl: string | null } | null;
 };
 
 type Order = {
@@ -34,10 +36,11 @@ function describeLine(item: OrderItem): string {
   return `${item.quantity} × ${details || "sans précision"}`;
 }
 
-function ProductGroup({ orderId, productId, productName, items, suppliers }: {
+function ProductGroup({ orderId, productId, productName, productImageUrl, items, suppliers }: {
   orderId: string;
   productId: string;
   productName: string;
+  productImageUrl: string | null;
   items: OrderItem[];
   suppliers: { id: string; name: string }[];
 }) {
@@ -66,13 +69,28 @@ function ProductGroup({ orderId, productId, productName, items, suppliers }: {
   return (
     <div className="rounded-xl border border-white/10 bg-neutral-800/50 p-3">
       <div className="flex flex-wrap items-start justify-between gap-2">
-        <div>
-          <p className="text-sm font-semibold text-white">{productName}</p>
-          <ul className="mt-1 space-y-0.5 text-xs text-neutral-400">
-            {items.map((item) => (
-              <li key={item.id}>{describeLine(item)}</li>
-            ))}
-          </ul>
+        <div className="flex items-start gap-3">
+          {productImageUrl ? (
+            <Image
+              src={productImageUrl}
+              alt={productName}
+              width={48}
+              height={48}
+              className="h-12 w-12 shrink-0 rounded-lg border border-white/10 object-cover"
+            />
+          ) : (
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-neutral-900 text-lg">
+              📦
+            </div>
+          )}
+          <div>
+            <p className="text-sm font-semibold text-white">{productName}</p>
+            <ul className="mt-1 space-y-0.5 text-xs text-neutral-400">
+              {items.map((item) => (
+                <li key={item.id}>{describeLine(item)}</li>
+              ))}
+            </ul>
+          </div>
         </div>
         <p className="text-xs font-medium text-neutral-300">{formatPrice(subtotal)}</p>
       </div>
@@ -176,6 +194,7 @@ export function SupplyOrderCard({ order, suppliers }: { order: Order; suppliers:
             orderId={order.id}
             productId={productId}
             productName={items[0].productName}
+            productImageUrl={items[0].product?.imageUrl ?? null}
             items={items}
             suppliers={suppliers}
           />

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getSupplierForUser } from "@/lib/supplierStats";
@@ -15,7 +16,7 @@ export default async function SupplierDashboardPage() {
 
   const items = await prisma.supplyOrderItem.findMany({
     where: { supplierId: supplier.id },
-    include: { order: { include: { club: true } } },
+    include: { order: { include: { club: true } }, product: { select: { imageUrl: true } } },
     orderBy: { sentToSupplierAt: "desc" },
   });
 
@@ -87,12 +88,25 @@ export default async function SupplierDashboardPage() {
                       .filter(Boolean)
                       .join(" — ");
                     return (
-                      <li key={item.id} className="flex justify-between py-2 text-sm">
-                        <span className="text-neutral-200">
+                      <li key={item.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+                        <span className="flex items-center gap-2 text-neutral-200">
+                          {item.product?.imageUrl ? (
+                            <Image
+                              src={item.product.imageUrl}
+                              alt={item.productName}
+                              width={32}
+                              height={32}
+                              className="h-8 w-8 shrink-0 rounded-md border border-white/10 object-cover"
+                            />
+                          ) : (
+                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-white/10 bg-neutral-800 text-sm">
+                              📦
+                            </span>
+                          )}
                           {item.quantity} × {item.productName}
                           {details && <span className="ml-2 text-xs text-neutral-500">({details})</span>}
                         </span>
-                        <span className="font-medium text-white">
+                        <span className="shrink-0 font-medium text-white">
                           {formatPrice(item.unitPriceCents * item.quantity)}
                         </span>
                       </li>

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getClubForUser } from "@/lib/clubStats";
@@ -21,7 +22,7 @@ export default async function ClubSupplyShopPage() {
     }),
     prisma.supplyOrder.findMany({
       where: { clubId: club.id },
-      include: { items: true },
+      include: { items: { include: { product: { select: { imageUrl: true } } } } },
       orderBy: { createdAt: "desc" },
     }),
   ]);
@@ -72,17 +73,43 @@ export default async function ClubSupplyShopPage() {
                       {order.createdAt.toLocaleDateString("fr-FR")}
                     </td>
                     <td className="px-5 py-3 text-neutral-300">
-                      {order.items.map((item) => {
-                        const details = [item.size ? `taille ${item.size}` : null, item.personalizationText]
-                          .filter(Boolean)
-                          .join(" — ");
-                        return (
-                          <p key={item.id}>
-                            {item.quantity} × {item.productName}
-                            {details ? ` (${details})` : ""}
-                          </p>
-                        );
-                      })}
+                      {Array.from(
+                        order.items.reduce((groups, item) => {
+                          const list = groups.get(item.productId) ?? [];
+                          list.push(item);
+                          groups.set(item.productId, list);
+                          return groups;
+                        }, new Map<string, typeof order.items>()),
+                      ).map(([productId, items]) => (
+                        <div key={productId} className="mb-2 flex items-start gap-2 last:mb-0">
+                          {items[0].product?.imageUrl ? (
+                            <Image
+                              src={items[0].product.imageUrl}
+                              alt={items[0].productName}
+                              width={32}
+                              height={32}
+                              className="h-8 w-8 shrink-0 rounded-md border border-white/10 object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-white/10 bg-neutral-800 text-sm">
+                              📦
+                            </div>
+                          )}
+                          <div>
+                            <p className="font-medium text-white">{items[0].productName}</p>
+                            {items.map((item) => {
+                              const details = [item.size ? `taille ${item.size}` : null, item.personalizationText]
+                                .filter(Boolean)
+                                .join(" — ");
+                              return (
+                                <p key={item.id} className="text-xs text-neutral-400">
+                                  {item.quantity} × {details || "sans précision"}
+                                </p>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
                     </td>
                     <td className="whitespace-nowrap px-5 py-3 text-neutral-300">{formatPrice(total)}</td>
                     <td className="whitespace-nowrap px-5 py-3">
