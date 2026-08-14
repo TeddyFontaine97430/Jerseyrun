@@ -15,6 +15,21 @@ async function requireAdmin() {
   }
 }
 
+// Mode d'emploi "Espace club", envoyé automatiquement à chaque club validé.
+const CLUB_MANUAL_URL =
+  "https://hlgj7olfcqzaeggk.public.blob.vercel-storage.com/site/Jersey-Run-Mode-emploi-espace-club.pdf";
+
+async function fetchClubManualAttachment(): Promise<{ filename: string; content: Buffer }[]> {
+  try {
+    const response = await fetch(CLUB_MANUAL_URL);
+    if (!response.ok) return [];
+    const buffer = Buffer.from(await response.arrayBuffer());
+    return [{ filename: "Jersey-Run-Mode-emploi-espace-club.pdf", content: buffer }];
+  } catch {
+    return [];
+  }
+}
+
 export async function approveClub(clubId: string) {
   await requireAdmin();
   const club = await prisma.club.update({ where: { id: clubId }, data: { status: "APPROVED" } });
@@ -29,8 +44,12 @@ export async function approveClub(clubId: string) {
       <p>Bonjour,</p>
       <p>Bonne nouvelle : l'inscription de <strong>${club.name}</strong> sur Jersey Run vient d'être validée.</p>
       <p>Vous pouvez dès à présent vous connecter à votre espace club pour ajouter vos articles et commencer à vendre.</p>
+      <p>Vous trouverez en pièce jointe le mode d'emploi de votre espace club : création d'articles, suivi des
+      commandes, vente en direct, commande de matériel auprès de Jersey Run, réglages de paiement et de
+      livraison...</p>
       <p>À bientôt sur Jersey Run !</p>
     `,
+    attachments: await fetchClubManualAttachment(),
   });
 }
 
