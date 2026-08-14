@@ -5,6 +5,7 @@ import Image from "next/image";
 import { formatPrice } from "@/lib/money";
 import { sendSupplyOrderGroupToSupplier } from "@/lib/actions/supply";
 import { SupplyOrderStatusSelect } from "@/components/admin/SupplyOrderStatusSelect";
+import { describeSupplyOrderItemDetails } from "@/lib/supplyOrderItem";
 import type { SupplyOrderStatus } from "@prisma/client";
 
 type OrderItem = {
@@ -14,7 +15,8 @@ type OrderItem = {
   quantity: number;
   unitPriceCents: number;
   size: string | null;
-  personalizationText: string | null;
+  personalizationNumber: string | null;
+  personalizationName: string | null;
   supplierId: string | null;
   sentToSupplierAt: Date | null;
   supplier: { id: string; name: string } | null;
@@ -32,7 +34,7 @@ type Order = {
 };
 
 function describeLine(item: OrderItem): string {
-  const details = [item.size ? `taille ${item.size}` : null, item.personalizationText].filter(Boolean).join(" — ");
+  const details = describeSupplyOrderItemDetails(item);
   return `${item.quantity} × ${details || "sans précision"}`;
 }
 

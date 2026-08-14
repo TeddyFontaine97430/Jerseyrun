@@ -18,7 +18,8 @@ export function SupplyProductRow({
     imageUrl: string | null;
     active: boolean;
     sizes: string[];
-    personalizationEnabled: boolean;
+    personalizationNumberEnabled: boolean;
+    personalizationNameEnabled: boolean;
     clubId: string | null;
   };
   clubs: { id: string; name: string }[];
@@ -47,16 +48,21 @@ export function SupplyProductRow({
         <p className="font-semibold text-white">{product.name}</p>
         <p className="text-sm text-neutral-400">{formatPrice(product.priceCents)}</p>
         {product.description && <p className="mt-0.5 text-xs text-neutral-500">{product.description}</p>}
-        {(product.sizes.length > 0 || product.personalizationEnabled) && (
+        {(product.sizes.length > 0 || product.personalizationNumberEnabled || product.personalizationNameEnabled) && (
           <div className="mt-1.5 flex flex-wrap gap-1.5">
             {product.sizes.length > 0 && (
               <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] font-medium text-neutral-300">
                 Tailles : {product.sizes.join(", ")}
               </span>
             )}
-            {product.personalizationEnabled && (
+            {product.personalizationNumberEnabled && (
               <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] font-medium text-neutral-300">
                 Personnalisable (n° joueur)
+              </span>
+            )}
+            {product.personalizationNameEnabled && (
+              <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] font-medium text-neutral-300">
+                Personnalisable (prénom)
               </span>
             )}
           </div>

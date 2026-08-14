@@ -1,4 +1,5 @@
 import PDFDocument from "pdfkit";
+import { describeSupplyOrderItemDetails } from "@/lib/supplyOrderItem";
 
 function formatEuros(cents: number): string {
   return `${(cents / 100).toFixed(2).replace(".", ",")} €`;
@@ -9,7 +10,8 @@ export type SupplyOrderPdfItem = {
   quantity: number;
   unitPriceCents: number;
   size: string | null;
-  personalizationText: string | null;
+  personalizationNumber: string | null;
+  personalizationName: string | null;
 };
 
 export type SupplyOrderPdfData = {
@@ -78,9 +80,7 @@ export async function generateSupplyOrderPdf(data: SupplyOrderPdfData): Promise<
     doc.font("Helvetica").fontSize(9);
     let totalCents = 0;
     for (const item of data.items) {
-      const details = [item.size ? `taille ${item.size}` : null, item.personalizationText]
-        .filter(Boolean)
-        .join(" — ");
+      const details = describeSupplyOrderItemDetails(item);
       const lineTotal = item.unitPriceCents * item.quantity;
       totalCents += lineTotal;
       doc.text(item.productName, col.name, y, { width: 260 });

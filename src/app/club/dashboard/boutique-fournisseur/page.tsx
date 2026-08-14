@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getClubForUser } from "@/lib/clubStats";
 import { formatPrice } from "@/lib/money";
 import { SUPPLY_ORDER_STATUS_LABELS, SUPPLY_ORDER_STATUS_STYLES } from "@/lib/supplyOrderStatus";
+import { describeSupplyOrderItemDetails } from "@/lib/supplyOrderItem";
 import { SupplyOrderForm } from "@/components/club/SupplyOrderForm";
 
 export const metadata: Metadata = { title: { absolute: "Boutique fournisseur — Jersey Run" } };
@@ -98,9 +99,7 @@ export default async function ClubSupplyShopPage() {
                           <div>
                             <p className="font-medium text-white">{items[0].productName}</p>
                             {items.map((item) => {
-                              const details = [item.size ? `taille ${item.size}` : null, item.personalizationText]
-                                .filter(Boolean)
-                                .join(" — ");
+                              const details = describeSupplyOrderItemDetails(item);
                               return (
                                 <p key={item.id} className="text-xs text-neutral-400">
                                   {item.quantity} × {details || "sans précision"}

@@ -9,6 +9,7 @@ import { notifyAdmin, sendEmail } from "@/lib/email";
 import { formatPrice } from "@/lib/money";
 import { getNextSupplyOrderNumber } from "@/lib/supplyOrderNumber";
 import { generateSupplyOrderPdf } from "@/lib/supplyOrderPdf";
+import { describeSupplyOrderItemDetails } from "@/lib/supplyOrderItem";
 import type { SupplyOrderStatus } from "@prisma/client";
 
 const supplyProductSchema = z.object({
@@ -16,7 +17,8 @@ const supplyProductSchema = z.object({
   description: z.string().optional(),
   price: z.coerce.number().min(0.01, "Le prix doit être supérieur à 0."),
   sizes: z.string().optional(),
-  personalizationEnabled: z.union([z.literal("on"), z.null()]).optional(),
+  personalizationNumberEnabled: z.union([z.literal("on"), z.null()]).optional(),
+  personalizationNameEnabled: z.union([z.literal("on"), z.null()]).optional(),
   clubId: z.string().min(1, "Choisissez un club (ou « Tous les clubs »)."),
 });
 
@@ -59,7 +61,8 @@ export async function createSupplyProduct(
     description: formData.get("description"),
     price: formData.get("price"),
     sizes: formData.get("sizes"),
-    personalizationEnabled: formData.get("personalizationEnabled"),
+    personalizationNumberEnabled: formData.get("personalizationNumberEnabled"),
+    personalizationNameEnabled: formData.get("personalizationNameEnabled"),
     clubId: formData.get("clubId"),
   });
   if (!parsed.success) {
@@ -69,7 +72,15 @@ export async function createSupplyProduct(
   const imageUrlInput = formData.get("imageUrl");
   const imageUrl = typeof imageUrlInput === "string" && imageUrlInput ? imageUrlInput : null;
 
-  const { name, description, price, sizes, personalizationEnabled, clubId: clubIdRaw } = parsed.data;
+  const {
+    name,
+    description,
+    price,
+    sizes,
+    personalizationNumberEnabled,
+    personalizationNameEnabled,
+    clubId: clubIdRaw,
+  } = parsed.data;
   const clubId = clubIdRaw === GENERIC_CLUB_VALUE ? null : clubIdRaw;
   if (clubId) {
     const club = await prisma.club.findUnique({ where: { id: clubId } });
@@ -83,7 +94,8 @@ export async function createSupplyProduct(
       priceCents: Math.round(price * 100),
       imageUrl,
       sizes: parseSizes(sizes),
-      personalizationEnabled: personalizationEnabled === "on",
+      personalizationNumberEnabled: personalizationNumberEnabled === "on",
+      personalizationNameEnabled: personalizationNameEnabled === "on",
       clubId,
     },
   });
@@ -107,7 +119,8 @@ export async function updateSupplyProduct(
     description: formData.get("description"),
     price: formData.get("price"),
     sizes: formData.get("sizes"),
-    personalizationEnabled: formData.get("personalizationEnabled"),
+    personalizationNumberEnabled: formData.get("personalizationNumberEnabled"),
+    personalizationNameEnabled: formData.get("personalizationNameEnabled"),
     clubId: formData.get("clubId"),
   });
   if (!parsed.success) {
@@ -117,7 +130,15 @@ export async function updateSupplyProduct(
   const imageUrlInput = formData.get("imageUrl");
   const imageUrl = typeof imageUrlInput === "string" && imageUrlInput ? imageUrlInput : product.imageUrl;
 
-  const { name, description, price, sizes, personalizationEnabled, clubId: clubIdRaw } = parsed.data;
+  const {
+    name,
+    description,
+    price,
+    sizes,
+    personalizationNumberEnabled,
+    personalizationNameEnabled,
+    clubId: clubIdRaw,
+  } = parsed.data;
   const clubId = clubIdRaw === GENERIC_CLUB_VALUE ? null : clubIdRaw;
   if (clubId) {
     const club = await prisma.club.findUnique({ where: { id: clubId } });
@@ -132,7 +153,8 @@ export async function updateSupplyProduct(
       priceCents: Math.round(price * 100),
       imageUrl,
       sizes: parseSizes(sizes),
-      personalizationEnabled: personalizationEnabled === "on",
+      personalizationNumberEnabled: personalizationNumberEnabled === "on",
+      personalizationNameEnabled: personalizationNameEnabled === "on",
       clubId,
     },
   });
@@ -180,7 +202,8 @@ type ParsedLine = {
   productId: string;
   size: string;
   quantity: number;
-  text: string;
+  number: string;
+  name: string;
 };
 
 function parseOrderLines(formData: FormData): ParsedLine[] {
@@ -194,10 +217,11 @@ function parseOrderLines(formData: FormData): ParsedLine[] {
   for (const id of ids) {
     const productId = (formData.get(`line_${id}_productId`) as string) ?? "";
     const size = ((formData.get(`line_${id}_size`) as string) ?? "").trim();
-    const text = ((formData.get(`line_${id}_text`) as string) ?? "").trim();
+    const number = ((formData.get(`line_${id}_number`) as string) ?? "").trim();
+    const name = ((formData.get(`line_${id}_name`) as string) ?? "").trim();
     const quantity = Math.floor(Number(formData.get(`line_${id}_qty`)));
     if (!productId || !Number.isFinite(quantity) || quantity <= 0) continue;
-    lines.push({ productId, size, quantity, text });
+    lines.push({ productId, size, quantity, number, name });
   }
   return lines;
 }
@@ -236,7 +260,8 @@ export async function createSupplyOrder(
     quantity: number;
     unitPriceCents: number;
     size: string | null;
-    personalizationText: string | null;
+    personalizationNumber: string | null;
+    personalizationName: string | null;
   }[] = [];
 
   for (const line of lines) {
@@ -244,7 +269,8 @@ export async function createSupplyOrder(
     if (!product) continue;
 
     if (product.sizes.length > 0 && !product.sizes.includes(line.size)) continue;
-    if (product.personalizationEnabled && !line.text) continue;
+    if (product.personalizationNumberEnabled && !line.number) continue;
+    if (product.personalizationNameEnabled && !line.name) continue;
 
     orderItemsData.push({
       productId: product.id,
@@ -252,7 +278,8 @@ export async function createSupplyOrder(
       quantity: line.quantity,
       unitPriceCents: product.priceCents,
       size: product.sizes.length > 0 ? line.size : null,
-      personalizationText: product.personalizationEnabled ? line.text : null,
+      personalizationNumber: product.personalizationNumberEnabled ? line.number : null,
+      personalizationName: product.personalizationNameEnabled ? line.name : null,
     });
   }
 
@@ -275,7 +302,7 @@ export async function createSupplyOrder(
   const totalCents = orderItemsData.reduce((sum, item) => sum + item.unitPriceCents * item.quantity, 0);
   const itemsList = orderItemsData
     .map((item) => {
-      const details = [item.size ? `taille ${item.size}` : null, item.personalizationText].filter(Boolean).join(" — ");
+      const details = describeSupplyOrderItemDetails(item);
       return `<li>${item.quantity} × ${item.productName}${details ? ` (${details})` : ""} — ${formatPrice(item.unitPriceCents * item.quantity)}</li>`;
     })
     .join("");
@@ -327,7 +354,7 @@ export async function sendSupplyOrderGroupToSupplier(
   const orderNumber = order.orderNumber ?? "N/A";
   const itemsList = order.items
     .map((item) => {
-      const details = [item.size ? `taille ${item.size}` : null, item.personalizationText].filter(Boolean).join(" — ");
+      const details = describeSupplyOrderItemDetails(item);
       return `<li>${item.quantity} × ${item.productName}${details ? ` (${details})` : ""}</li>`;
     })
     .join("");
@@ -345,7 +372,8 @@ export async function sendSupplyOrderGroupToSupplier(
       quantity: item.quantity,
       unitPriceCents: item.unitPriceCents,
       size: item.size,
-      personalizationText: item.personalizationText,
+      personalizationNumber: item.personalizationNumber,
+      personalizationName: item.personalizationName,
     })),
   });
 

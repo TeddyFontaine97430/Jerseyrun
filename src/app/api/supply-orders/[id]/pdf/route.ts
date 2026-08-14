@@ -57,7 +57,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       quantity: item.quantity,
       unitPriceCents: item.unitPriceCents,
       size: item.size,
-      personalizationText: item.personalizationText,
+      personalizationNumber: item.personalizationNumber,
+      personalizationName: item.personalizationName,
     })),
   });
 

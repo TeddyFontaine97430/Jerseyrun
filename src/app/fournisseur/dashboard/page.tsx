@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getSupplierForUser } from "@/lib/supplierStats";
 import { formatPrice } from "@/lib/money";
 import { SUPPLY_ORDER_STATUS_LABELS, SUPPLY_ORDER_STATUS_STYLES } from "@/lib/supplyOrderStatus";
+import { describeSupplyOrderItemDetails } from "@/lib/supplyOrderItem";
 
 export const metadata: Metadata = { title: { absolute: "Espace fournisseur — Jersey Run" } };
 
@@ -84,9 +85,7 @@ export default async function SupplierDashboardPage() {
 
                 <ul className="mt-3 divide-y divide-white/10">
                   {orderItems.map((item) => {
-                    const details = [item.size ? `taille ${item.size}` : null, item.personalizationText]
-                      .filter(Boolean)
-                      .join(" — ");
+                    const details = describeSupplyOrderItemDetails(item);
                     return (
                       <li key={item.id} className="flex items-center justify-between gap-3 py-2 text-sm">
                         <span className="flex items-center gap-2 text-neutral-200">

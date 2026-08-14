@@ -15,21 +15,26 @@ type SupplyProductItem = {
   imageUrl: string | null;
   priceCents: number;
   sizes: string[];
-  personalizationEnabled: boolean;
+  personalizationNumberEnabled: boolean;
+  personalizationNameEnabled: boolean;
 };
 
-type Line = { id: string; productId: string; size: string; qty: number; text: string };
+type Line = { id: string; productId: string; size: string; qty: number; number: string; name: string };
+
+function isPersonalized(product: SupplyProductItem): boolean {
+  return product.personalizationNumberEnabled || product.personalizationNameEnabled;
+}
 
 function buildInitialLines(products: SupplyProductItem[]): Line[] {
   const lines: Line[] = [];
   for (const product of products) {
-    if (product.personalizationEnabled) continue; // ajoutées à la demande
+    if (isPersonalized(product)) continue; // ajoutées à la demande
     if (product.sizes.length > 0) {
       for (const size of product.sizes) {
-        lines.push({ id: `${product.id}-${size}`, productId: product.id, size, qty: 0, text: "" });
+        lines.push({ id: `${product.id}-${size}`, productId: product.id, size, qty: 0, number: "", name: "" });
       }
     } else {
-      lines.push({ id: product.id, productId: product.id, size: "", qty: 0, text: "" });
+      lines.push({ id: product.id, productId: product.id, size: "", qty: 0, number: "", name: "" });
     }
   }
   return lines;
@@ -54,7 +59,7 @@ export function SupplyOrderForm({ products }: { products: SupplyProductItem[] })
   function addPersonalizedLine(productId: string) {
     setLines((prev) => [
       ...prev,
-      { id: crypto.randomUUID(), productId, size: "", qty: 1, text: "" },
+      { id: crypto.randomUUID(), productId, size: "", qty: 1, number: "", name: "" },
     ]);
   }
 
@@ -87,7 +92,7 @@ export function SupplyOrderForm({ products }: { products: SupplyProductItem[] })
               {product.description && <p className="mt-1 text-xs text-neutral-400">{product.description}</p>}
               <p className="mt-2 text-sm font-bold text-white">{formatPrice(product.priceCents)}</p>
 
-              {product.personalizationEnabled ? (
+              {isPersonalized(product) ? (
                 <div className="mt-3 space-y-2">
                   {productLines.map((line) => (
                     <div key={line.id} className="rounded-lg border border-white/10 bg-neutral-800 p-2">
@@ -112,14 +117,26 @@ export function SupplyOrderForm({ products }: { products: SupplyProductItem[] })
                             ))}
                           </select>
                         )}
-                        <input
-                          name={`line_${line.id}_text`}
-                          required
-                          value={line.text}
-                          onChange={(e) => updateLine(line.id, { text: e.target.value })}
-                          placeholder="N° et nom du joueur"
-                          className="w-full min-w-0 flex-1 rounded-md border border-white/10 bg-neutral-900 px-2 py-1.5 text-xs text-white placeholder:text-neutral-500 focus:border-accent focus:outline-none"
-                        />
+                        {product.personalizationNumberEnabled && (
+                          <input
+                            name={`line_${line.id}_number`}
+                            required
+                            value={line.number}
+                            onChange={(e) => updateLine(line.id, { number: e.target.value })}
+                            placeholder="N° du joueur"
+                            className="w-full min-w-0 flex-1 rounded-md border border-white/10 bg-neutral-900 px-2 py-1.5 text-xs text-white placeholder:text-neutral-500 focus:border-accent focus:outline-none"
+                          />
+                        )}
+                        {product.personalizationNameEnabled && (
+                          <input
+                            name={`line_${line.id}_name`}
+                            required
+                            value={line.name}
+                            onChange={(e) => updateLine(line.id, { name: e.target.value })}
+                            placeholder="Prénom du joueur"
+                            className="w-full min-w-0 flex-1 rounded-md border border-white/10 bg-neutral-900 px-2 py-1.5 text-xs text-white placeholder:text-neutral-500 focus:border-accent focus:outline-none"
+                          />
+                        )}
                         <button
                           type="button"
                           onClick={() => removeLine(line.id)}

@@ -20,7 +20,8 @@ type SupplyProductInitial = {
   priceCents: number;
   imageUrl: string | null;
   sizes: string[];
-  personalizationEnabled: boolean;
+  personalizationNumberEnabled: boolean;
+  personalizationNameEnabled: boolean;
   clubId: string | null;
 };
 
@@ -147,18 +148,29 @@ export function SupplyProductForm({
           Séparez les tailles par des virgules. Laissez vide si l&apos;article n&apos;a pas de taille (ex: équipement générique).
         </p>
       </div>
-      <div className="sm:col-span-2">
+      <div className="sm:col-span-2 space-y-2">
+        <p className="text-sm font-medium text-white">Options de personnalisation</p>
         <label className="flex items-center gap-2 text-sm text-neutral-200">
           <input
             type="checkbox"
-            name="personalizationEnabled"
-            defaultChecked={product?.personalizationEnabled ?? false}
+            name="personalizationNumberEnabled"
+            defaultChecked={product?.personalizationNumberEnabled ?? false}
             className="h-4 w-4 rounded border-white/20 bg-neutral-800 text-accent focus:ring-accent"
           />
-          Article personnalisable (numéro / nom de joueur)
+          Numéro de joueur
         </label>
-        <p className="mt-1 text-xs text-neutral-500">
-          Le club pourra alors ajouter une ligne par joueur (taille + numéro) au lieu d&apos;une simple quantité.
+        <label className="flex items-center gap-2 text-sm text-neutral-200">
+          <input
+            type="checkbox"
+            name="personalizationNameEnabled"
+            defaultChecked={product?.personalizationNameEnabled ?? false}
+            className="h-4 w-4 rounded border-white/20 bg-neutral-800 text-accent focus:ring-accent"
+          />
+          Personnalisation prénom
+        </label>
+        <p className="text-xs text-neutral-500">
+          Cochez une ou les deux options : le club pourra alors ajouter une ligne par joueur (taille + numéro et/ou
+          prénom) au lieu d&apos;une simple quantité.
         </p>
       </div>
       <div className="sm:col-span-2 flex items-center gap-4">
