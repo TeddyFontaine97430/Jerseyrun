@@ -39,7 +39,10 @@ export async function addHomeGalleryImage(
     return { status: "error", message: parsed.error.issues[0]?.message ?? "Formulaire invalide." };
   }
 
-  await prisma.homeGalleryImage.create({ data: parsed.data });
+  const last = await prisma.homeGalleryImage.findFirst({ orderBy: { position: "desc" } });
+  const position = (last?.position ?? -1) + 1;
+
+  await prisma.homeGalleryImage.create({ data: { ...parsed.data, position } });
 
   revalidateHomeGalleryPaths();
   return { status: "success", message: "Image ajoutée." };
@@ -57,5 +60,26 @@ export async function updateHomeGalleryImageLink(id: string, link: string) {
 export async function deleteHomeGalleryImage(id: string) {
   if (!(await requireAdmin())) return;
   await prisma.homeGalleryImage.delete({ where: { id } });
+  revalidateHomeGalleryPaths();
+}
+
+export async function moveHomeGalleryImage(id: string, direction: "up" | "down") {
+  if (!(await requireAdmin())) return;
+
+  const images = await prisma.homeGalleryImage.findMany({ orderBy: { position: "asc" } });
+  const index = images.findIndex((img) => img.id === id);
+  if (index === -1) return;
+
+  const swapWithIndex = direction === "up" ? index - 1 : index + 1;
+  if (swapWithIndex < 0 || swapWithIndex >= images.length) return;
+
+  const current = images[index];
+  const swapWith = images[swapWithIndex];
+
+  await prisma.$transaction([
+    prisma.homeGalleryImage.update({ where: { id: current.id }, data: { position: swapWith.position } }),
+    prisma.homeGalleryImage.update({ where: { id: swapWith.id }, data: { position: current.position } }),
+  ]);
+
   revalidateHomeGalleryPaths();
 }

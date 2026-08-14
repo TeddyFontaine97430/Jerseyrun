@@ -15,7 +15,7 @@ export default async function AdminContentPage() {
 
   const [content, galleryImages] = await Promise.all([
     getSiteContentMap(),
-    prisma.homeGalleryImage.findMany({ orderBy: { createdAt: "asc" } }),
+    prisma.homeGalleryImage.findMany({ orderBy: { position: "asc" } }),
   ]);
 
   return (

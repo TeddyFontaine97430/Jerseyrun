@@ -309,6 +309,7 @@ model HomeGalleryImage {
   id        String   @id @default(cuid())
   imageUrl  String
   link      String
+  position  Int      @default(0)
   createdAt DateTime @default(now())
 }
 

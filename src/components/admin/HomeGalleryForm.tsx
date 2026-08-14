@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import {
   addHomeGalleryImage,
   deleteHomeGalleryImage,
+  moveHomeGalleryImage,
   updateHomeGalleryImageLink,
   type HomeGalleryFormState,
 } from "@/lib/actions/homeGallery";
@@ -14,7 +15,15 @@ const initialState: HomeGalleryFormState = { status: "idle" };
 
 type GalleryImage = { id: string; imageUrl: string; link: string };
 
-function GalleryImageRow({ image }: { image: GalleryImage }) {
+function GalleryImageRow({
+  image,
+  isFirst,
+  isLast,
+}: {
+  image: GalleryImage;
+  isFirst: boolean;
+  isLast: boolean;
+}) {
   const [link, setLink] = useState(image.link);
   const [isPending, startTransition] = useTransition();
   const [saved, setSaved] = useState(false);
@@ -32,8 +41,32 @@ function GalleryImageRow({ image }: { image: GalleryImage }) {
     startTransition(() => deleteHomeGalleryImage(image.id));
   }
 
+  function handleMove(direction: "up" | "down") {
+    startTransition(() => moveHomeGalleryImage(image.id, direction));
+  }
+
   return (
     <div className="flex items-center gap-3 rounded-lg border border-white/10 bg-neutral-800/50 p-3">
+      <div className="flex shrink-0 flex-col gap-1">
+        <button
+          type="button"
+          disabled={isPending || isFirst}
+          onClick={() => handleMove("up")}
+          aria-label="Monter"
+          className="flex h-6 w-6 items-center justify-center rounded border border-white/10 text-neutral-300 hover:border-accent hover:text-accent disabled:opacity-30"
+        >
+          ↑
+        </button>
+        <button
+          type="button"
+          disabled={isPending || isLast}
+          onClick={() => handleMove("down")}
+          aria-label="Descendre"
+          className="flex h-6 w-6 items-center justify-center rounded border border-white/10 text-neutral-300 hover:border-accent hover:text-accent disabled:opacity-30"
+        >
+          ↓
+        </button>
+      </div>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={image.imageUrl}
@@ -104,8 +137,13 @@ export function HomeGalleryForm({ images }: { images: GalleryImage[] }) {
     <div className="space-y-4">
       {images.length > 0 && (
         <div className="space-y-3">
-          {images.map((image) => (
-            <GalleryImageRow key={image.id} image={image} />
+          {images.map((image, index) => (
+            <GalleryImageRow
+              key={image.id}
+              image={image}
+              isFirst={index === 0}
+              isLast={index === images.length - 1}
+            />
           ))}
         </div>
       )}

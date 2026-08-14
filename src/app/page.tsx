@@ -36,7 +36,7 @@ export default async function Home() {
       take: 20,
     }),
     getSiteContentMap(),
-    prisma.homeGalleryImage.findMany({ orderBy: { createdAt: "asc" } }),
+    prisma.homeGalleryImage.findMany({ orderBy: { position: "asc" } }),
   ]);
 
   const marqueeProducts = [...pinnedProducts, ...otherProducts];
