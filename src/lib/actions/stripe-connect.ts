@@ -22,6 +22,11 @@ export async function connectStripeAccount() {
       capabilities: {
         transfers: { requested: true },
       },
+      // Toujours le délai de versement le plus court que Stripe autorise pour le pays du
+      // compte, plutôt que le calendrier par défaut plus prudent qui peut s'appliquer.
+      settings: {
+        payouts: { schedule: { interval: "daily", delay_days: "minimum" } },
+      },
     });
     accountId = account.id;
     await prisma.club.update({ where: { id: club.id }, data: { stripeAccountId: accountId } });
