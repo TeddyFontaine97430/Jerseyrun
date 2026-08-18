@@ -143,3 +143,25 @@ export async function resetCustomerPassword(userId: string): Promise<{ email: st
 
   return { email: user.email, password };
 }
+
+export type DeleteCustomerResult = { status: "success" } | { status: "error"; message: string };
+
+export async function deleteCustomer(customerId: string): Promise<DeleteCustomerResult> {
+  await requireAdmin();
+
+  const customer = await prisma.user.findUnique({ where: { id: customerId } });
+  if (!customer || customer.role !== "CUSTOMER") {
+    return { status: "error", message: "Client introuvable." };
+  }
+
+  // Le compte est supprimé, mais l'historique de commandes est conservé (détaché du
+  // compte) pour ne pas fausser le chiffre d'affaires et les ventes des clubs concernés.
+  await prisma.$transaction([
+    prisma.cartItem.deleteMany({ where: { userId: customerId } }),
+    prisma.order.updateMany({ where: { userId: customerId }, data: { userId: null } }),
+    prisma.user.delete({ where: { id: customerId } }),
+  ]);
+
+  revalidatePath("/admin/clients");
+  redirect("/admin/clients");
+}

@@ -7,6 +7,7 @@ import { ORDER_STATUS_LABELS, ORDER_STATUS_STYLES } from "@/lib/orderStatus";
 import { formatItemDetails } from "@/lib/productOptions";
 import { resetCustomerPassword } from "@/lib/actions/admin";
 import { ResetPasswordButton } from "@/components/admin/ResetPasswordButton";
+import { DeleteCustomerButton } from "@/components/admin/DeleteCustomerButton";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -69,10 +70,13 @@ export default async function AdminClientDetailPage({ params }: Props) {
             Inscrit le {customer.createdAt.toLocaleDateString("fr-FR")}
           </p>
         </div>
-        <ResetPasswordButton
-          action={resetCustomerPassword.bind(null, customer.id)}
-          label="Réinitialiser le mot de passe"
-        />
+        <div className="flex flex-wrap items-start gap-2">
+          <ResetPasswordButton
+            action={resetCustomerPassword.bind(null, customer.id)}
+            label="Réinitialiser le mot de passe"
+          />
+          <DeleteCustomerButton customerId={customer.id} customerLabel={customer.name ?? customer.email} />
+        </div>
       </div>
 
       <h3 className="mt-8 text-lg font-semibold text-white">
