@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/money";
 import { ORDER_STATUS_LABELS, ORDER_STATUS_STYLES } from "@/lib/orderStatus";
@@ -15,7 +16,11 @@ const PAID_STATUSES = ["PAID", "PROCESSING", "SHIPPED", "COMPLETED", "PREORDER"]
 export default async function AdminVentesPage() {
   const sales = await prisma.orderItem.findMany({
     where: { order: { status: { in: [...PAID_STATUSES] } } },
-    include: { order: { include: { user: true } }, club: true },
+    include: {
+      order: { include: { user: true } },
+      club: true,
+      product: { select: { imageUrl: true, images: { orderBy: { position: "asc" }, take: 1, select: { url: true } } } },
+    },
     orderBy: { order: { createdAt: "desc" } },
   });
 
@@ -62,12 +67,32 @@ export default async function AdminVentesPage() {
                     </td>
                     <td className="px-5 py-3 font-medium text-white">{item.club.name}</td>
                     <td className="px-5 py-3 text-neutral-200">
-                      {item.productName}
-                      {formatItemDetails(item.selectedOptions, item.personalizationText) && (
-                        <span className="ml-1.5 text-xs text-neutral-500">
-                          ({formatItemDetails(item.selectedOptions, item.personalizationText)})
+                      <div className="flex items-center gap-2.5">
+                        {(() => {
+                          const imageUrl = item.product.images[0]?.url ?? item.product.imageUrl;
+                          return imageUrl ? (
+                            <Image
+                              src={imageUrl}
+                              alt=""
+                              width={36}
+                              height={36}
+                              className="h-9 w-9 shrink-0 rounded-lg border border-white/10 object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-neutral-800 text-base">
+                              📦
+                            </div>
+                          );
+                        })()}
+                        <span>
+                          {item.productName}
+                          {formatItemDetails(item.selectedOptions, item.personalizationText) && (
+                            <span className="ml-1.5 text-xs text-neutral-500">
+                              ({formatItemDetails(item.selectedOptions, item.personalizationText)})
+                            </span>
+                          )}
                         </span>
-                      )}
+                      </div>
                     </td>
                     <td className="px-5 py-3 text-neutral-300">{item.quantity}</td>
                     <td className="whitespace-nowrap px-5 py-3 text-neutral-300">
