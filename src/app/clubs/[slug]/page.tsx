@@ -62,6 +62,57 @@ export default async function ClubShopPage({ params }: Props) {
     ...(club.description ? { description: club.description } : {}),
   };
 
+  // Retrait au club : toujours disponible, gratuit.
+  const shippingDetails = [
+    {
+      "@type": "OfferShippingDetails",
+      shippingRate: { "@type": "MonetaryAmount", value: "0.00", currency: "EUR" },
+      shippingDestination: { "@type": "DefinedRegion", addressCountry: "RE" },
+    },
+    ...(club.deliveryReunionEnabled
+      ? [
+          {
+            "@type": "OfferShippingDetails",
+            shippingRate: {
+              "@type": "MonetaryAmount",
+              value: (club.deliveryReunionFeeCents / 100).toFixed(2),
+              currency: "EUR",
+            },
+            shippingDestination: { "@type": "DefinedRegion", addressCountry: "RE" },
+          },
+        ]
+      : []),
+    ...(club.deliveryMetropoleEnabled
+      ? [
+          {
+            "@type": "OfferShippingDetails",
+            shippingRate: {
+              "@type": "MonetaryAmount",
+              value: (club.deliveryMetropoleFeeCents / 100).toFixed(2),
+              currency: "EUR",
+            },
+            shippingDestination: { "@type": "DefinedRegion", addressCountry: "FR" },
+          },
+        ]
+      : []),
+  ];
+
+  // Droit de rétractation légal de 14 jours (vente à distance, France/UE) pour les
+  // articles standards ; les articles personnalisables en sont exemptés par la loi.
+  const returnPolicy14Days = {
+    "@type": "MerchantReturnPolicy",
+    applicableCountry: "FR",
+    returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+    merchantReturnDays: 14,
+    returnMethod: "https://schema.org/ReturnByMail",
+    returnFees: "https://schema.org/ReturnFeesCustomerResponsibility",
+  };
+  const returnPolicyNotPermitted = {
+    "@type": "MerchantReturnPolicy",
+    applicableCountry: "FR",
+    returnPolicyCategory: "https://schema.org/MerchantReturnNotPermitted",
+  };
+
   const productsJsonLd = club.products.map((product) => {
     const inStock = product.options.length > 0
       ? product.options.every((o) => o.values.some((v) => v.stock > 0))
@@ -88,6 +139,10 @@ export default async function ClubShopPage({ params }: Props) {
             : inStock
               ? "https://schema.org/InStock"
               : "https://schema.org/OutOfStock",
+        hasMerchantReturnPolicy: product.personalizationEnabled
+          ? returnPolicyNotPermitted
+          : returnPolicy14Days,
+        shippingDetails,
       },
     };
   });
