@@ -4,6 +4,7 @@ import type { Prisma } from "@prisma/client";
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 import { notifyAdmin, sendEmail } from "@/lib/email";
+import { sendPushToAdmins } from "@/lib/push";
 import { formatPrice } from "@/lib/money";
 import { decodeSelectedOptions } from "@/lib/productOptions";
 import { getNextInvoiceNumber, generateInvoicePdf } from "@/lib/invoice";
@@ -124,6 +125,11 @@ export async function POST(request: Request) {
             <p><strong>Articles :</strong></p>
             <ul>${itemsList}</ul>
           `,
+        });
+
+        await sendPushToAdmins({
+          title: "Nouvelle commande",
+          body: `${customerName ?? "Un client"} — ${formatPrice(order.totalCents)}`,
         });
 
         const itemsByClub = new Map<string, { email: string; name: string; items: typeof order.items }>();

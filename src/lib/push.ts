@@ -1,5 +1,6 @@
 import { cert, getApps, initializeApp, type App } from "firebase-admin/app";
 import { getMessaging } from "firebase-admin/messaging";
+import { prisma } from "@/lib/prisma";
 
 let app: App | null = null;
 
@@ -104,4 +105,36 @@ export async function sendPushToTokens(
   }
 
   return result;
+}
+
+/**
+ * Envoie une notification push aux appareils de l'administrateur uniquement (nouvelle
+ * commande, nouveau club à valider, résumé quotidien...). Ne fait rien — sans erreur —
+ * si Firebase n'est pas configuré ou si aucun appareil admin n'est enregistré, pour ne
+ * jamais bloquer le flux appelant (vente, inscription...).
+ */
+export async function sendPushToAdmins(notification: {
+  title: string;
+  body: string;
+  imageUrl?: string | null;
+}): Promise<void> {
+  if (!isPushConfigured()) return;
+
+  const devices = await prisma.pushDevice.findMany({
+    where: { user: { role: "ADMIN" } },
+    select: { token: true },
+  });
+  if (devices.length === 0) return;
+
+  try {
+    const result = await sendPushToTokens(
+      devices.map((d) => d.token),
+      notification,
+    );
+    if (result.invalidTokens.length > 0) {
+      await prisma.pushDevice.deleteMany({ where: { token: { in: result.invalidTokens } } });
+    }
+  } catch (error) {
+    console.error("[push] Échec de l'envoi aux appareils admin :", error);
+  }
 }

@@ -77,6 +77,7 @@ model User {
   cartItems           CartItem[]
   orders              Order[]
   passwordResetTokens PasswordResetToken[]
+  pushDevices         PushDevice[]
   createdAt           DateTime             @default(now())
 }
 
@@ -336,6 +337,10 @@ model PushDevice {
   id         String       @id @default(cuid())
   token      String       @unique
   platform   PushPlatform
+  // Compte connecté au moment de l'enregistrement de l'appareil, pour pouvoir cibler
+  // uniquement les appareils de l'administrateur (résumé quotidien, nouvelles ventes...).
+  user       User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId     String?
   createdAt  DateTime     @default(now())
   lastSeenAt DateTime     @updatedAt
 }

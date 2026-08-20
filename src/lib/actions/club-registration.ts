@@ -4,6 +4,7 @@ import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { notifyAdmin, sendEmail } from "@/lib/email";
+import { sendPushToAdmins } from "@/lib/push";
 
 const clubSchema = z.object({
   name: z.string().min(2, "Merci d'indiquer le nom du club."),
@@ -187,6 +188,11 @@ export async function confirmClubRegistrationCode(
       </ul>
       <p>Rendez-vous dans l'administration pour valider ou refuser cette demande.</p>
     `,
+  });
+
+  await sendPushToAdmins({
+    title: "Nouveau club à valider",
+    body: `${pending.name} (${pending.sport}) souhaite rejoindre Jersey Run.`,
   });
 
   return {

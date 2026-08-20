@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
 const bodySchema = z.object({
@@ -24,12 +25,16 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   const { token, platform } = parsed.data;
+  const session = await auth();
+  const userId = session?.user?.id;
 
   await prisma.pushDevice.upsert({
     where: { token },
-    create: { token, platform: platform === "ios" ? "IOS" : "ANDROID" },
-    // Remonte lastSeenAt (@updatedAt) à chaque relance de l'app.
-    update: { platform: platform === "ios" ? "IOS" : "ANDROID" },
+    create: { token, platform: platform === "ios" ? "IOS" : "ANDROID", userId },
+    // Remonte lastSeenAt (@updatedAt) à chaque relance de l'app, et rattache l'appareil au
+    // compte actuellement connecté (utile si quelqu'un d'autre se connecte sur le même
+    // appareil par la suite).
+    update: { platform: platform === "ios" ? "IOS" : "ANDROID", userId },
   });
 
   return NextResponse.json({ ok: true });

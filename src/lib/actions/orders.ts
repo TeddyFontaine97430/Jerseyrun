@@ -6,6 +6,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getClubForUser } from "@/lib/clubStats";
 import { notifyAdmin, sendEmail } from "@/lib/email";
+import { sendPushToAdmins } from "@/lib/push";
 import { formatPrice } from "@/lib/money";
 import { decodeSelectedOptions, encodeSelectedOptions } from "@/lib/productOptions";
 import { getNextInvoiceNumber, generateInvoicePdf } from "@/lib/invoice";
@@ -359,6 +360,11 @@ export async function markOrderPaidOnSite(orderId: string): Promise<MarkOrderPai
     `,
   });
 
+  await sendPushToAdmins({
+    title: "Nouvelle commande (paiement sur place)",
+    body: `${customerName ?? "Un client"} — ${formatPrice(order.totalCents)}`,
+  });
+
   const sellerClub = order.items[0].club;
 
   const invoicePdf = await generateInvoicePdf({
@@ -561,6 +567,11 @@ export async function createManualOrder(
         <li><strong>Total :</strong> ${formatPrice(totalCents)}</li>
       </ul>
     `,
+  });
+
+  await sendPushToAdmins({
+    title: `Vente manuelle — ${club.name}`,
+    body: `${customerName} — ${quantity} × ${product.name} — ${formatPrice(totalCents)}`,
   });
 
   if (customerEmail) {
