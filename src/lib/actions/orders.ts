@@ -206,7 +206,10 @@ export async function toggleOrderItemDelivered(orderItemId: string) {
   const session = await auth();
   if (!session?.user) return;
 
-  const item = await prisma.orderItem.findUnique({ where: { id: orderItemId } });
+  const item = await prisma.orderItem.findUnique({
+    where: { id: orderItemId },
+    include: { order: { include: { items: true } } },
+  });
   if (!item) return;
 
   if (session.user.role === "CLUB") {
@@ -216,7 +219,17 @@ export async function toggleOrderItemDelivered(orderItemId: string) {
     return;
   }
 
-  await prisma.orderItem.update({ where: { id: orderItemId }, data: { delivered: !item.delivered } });
+  const newDelivered = !item.delivered;
+  await prisma.orderItem.update({ where: { id: orderItemId }, data: { delivered: newDelivered } });
+
+  // Une fois que tous les articles d'une commande sont marqués livrés, on fait passer
+  // son état à "Livrée" pour qu'il reste cohérent avec les cases cochées individuellement.
+  if (newDelivered && item.order.status !== "CANCELLED") {
+    const allDelivered = item.order.items.every((i) => (i.id === orderItemId ? true : i.delivered));
+    if (allDelivered) {
+      await prisma.order.update({ where: { id: item.orderId }, data: { status: "COMPLETED" } });
+    }
+  }
 
   revalidatePath("/club/dashboard");
   revalidatePath(`/admin/clubs/${item.clubId}`);

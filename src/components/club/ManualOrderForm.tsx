@@ -117,7 +117,7 @@ export function ManualOrderForm({ products, clubId }: { products: ManualOrderPro
           <select
             name="manualStatus"
             required
-            defaultValue="COMPLETED"
+            defaultValue="PROCESSING"
             className="w-full rounded-lg border border-white/10 bg-neutral-800 px-3 py-2 text-white focus:border-accent focus:outline-none"
           >
             {MANUAL_ORDER_STATUS_OPTIONS.map((option) => (
