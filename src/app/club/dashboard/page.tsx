@@ -3,7 +3,7 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { getClubForUser, getClubStats, getClubSales, getClubPendingOnSiteOrders } from "@/lib/clubStats";
 import { formatPrice } from "@/lib/money";
-import { ORDER_STATUS_LABELS, ORDER_STATUS_STYLES } from "@/lib/orderStatus";
+import { ORDER_STATUS_LABELS, ORDER_STATUS_STYLES, MANUAL_PAYMENT_METHOD_LABELS } from "@/lib/orderStatus";
 import { formatItemDetails } from "@/lib/productOptions";
 import { deliveryZoneLabel, formatShippingAddress } from "@/lib/delivery";
 import { DeliveryStatusToggle } from "@/components/DeliveryStatusToggle";
@@ -134,6 +134,11 @@ export default async function ClubDashboardPage() {
                   </td>
                   <td className="px-5 py-3 text-neutral-300">
                     {item.order.customerName ?? item.order.user?.name ?? item.order.user?.email ?? "Vente manuelle"}
+                    {item.order.manualPaymentMethod && (
+                      <span className="ml-1.5 text-xs text-neutral-500">
+                        ({MANUAL_PAYMENT_METHOD_LABELS[item.order.manualPaymentMethod]})
+                      </span>
+                    )}
                   </td>
                   <td className="px-5 py-3 text-neutral-300">{item.quantity}</td>
                   <td className="px-5 py-3 text-neutral-300">{formatPrice(item.unitPriceCents * item.quantity)}</td>

@@ -10,7 +10,7 @@ import { ReadyForPickupToggle } from "@/components/ReadyForPickupToggle";
 
 export const metadata: Metadata = { title: { absolute: "Ventes — Administration Jersey Run" } };
 
-const PAID_STATUSES = ["PAID", "PROCESSING", "SHIPPED", "COMPLETED"] as const;
+const PAID_STATUSES = ["PAID", "PROCESSING", "SHIPPED", "COMPLETED", "PREORDER"] as const;
 
 export default async function AdminVentesPage() {
   const sales = await prisma.orderItem.findMany({

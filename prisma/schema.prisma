@@ -30,6 +30,7 @@ enum OrderStatus {
   SHIPPED
   COMPLETED
   CANCELLED
+  PREORDER
 }
 
 enum DeliveryMethod {
@@ -42,6 +43,14 @@ enum DeliveryMethod {
 enum PaymentMethod {
   STRIPE
   ON_SITE
+}
+
+// Moyen de règlement précis utilisé pour une vente enregistrée manuellement par un club
+// (paiement sur place, hors Stripe).
+enum ManualPaymentMethod {
+  ESPECES
+  CARTE
+  CHEQUE
 }
 
 enum ProductAvailability {
@@ -186,29 +195,30 @@ model CartItem {
 }
 
 model Order {
-  id                 String         @id @default(cuid())
-  user               User?          @relation(fields: [userId], references: [id])
-  userId             String?
-  status             OrderStatus    @default(PENDING)
-  totalCents         Int
-  deliveryMethod     DeliveryMethod @default(DELIVERY)
-  deliveryFeeCents   Int            @default(0)
-  paymentMethod      PaymentMethod  @default(STRIPE)
-  stripeSessionId    String?        @unique
-  isManualOrder      Boolean        @default(false)
-  customerName       String?
-  customerEmail      String?
-  customerPhone      String?
-  shippingLine1      String?
-  shippingLine2      String?
-  shippingCity       String?
-  shippingPostalCode String?
-  shippingCountry    String?
-  invoiceNumber      String?        @unique
-  invoicedAt         DateTime?
-  items              OrderItem[]
-  createdAt          DateTime       @default(now())
-  updatedAt          DateTime       @updatedAt
+  id                  String               @id @default(cuid())
+  user                User?                @relation(fields: [userId], references: [id])
+  userId              String?
+  status              OrderStatus          @default(PENDING)
+  totalCents          Int
+  deliveryMethod      DeliveryMethod       @default(DELIVERY)
+  deliveryFeeCents    Int                  @default(0)
+  paymentMethod       PaymentMethod        @default(STRIPE)
+  manualPaymentMethod ManualPaymentMethod?
+  stripeSessionId     String?              @unique
+  isManualOrder       Boolean              @default(false)
+  customerName        String?
+  customerEmail       String?
+  customerPhone       String?
+  shippingLine1       String?
+  shippingLine2       String?
+  shippingCity        String?
+  shippingPostalCode  String?
+  shippingCountry     String?
+  invoiceNumber       String?              @unique
+  invoicedAt          DateTime?
+  items               OrderItem[]
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
 }
 
 model OrderItem {

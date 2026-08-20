@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 
-const PAID_STATUSES = ["PAID", "PROCESSING", "SHIPPED", "COMPLETED"] as const;
+const PAID_STATUSES = ["PAID", "PROCESSING", "SHIPPED", "COMPLETED", "PREORDER"] as const;
 
 export async function getClubForUser(userId: string) {
   return prisma.club.findUnique({ where: { ownerId: userId } });

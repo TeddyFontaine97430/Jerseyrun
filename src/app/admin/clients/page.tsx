@@ -5,7 +5,7 @@ import { formatPrice } from "@/lib/money";
 
 export const metadata: Metadata = { title: { absolute: "Clients — Administration Jersey Run" } };
 
-const PAID_STATUSES = ["PAID", "PROCESSING", "SHIPPED", "COMPLETED"] as const;
+const PAID_STATUSES = ["PAID", "PROCESSING", "SHIPPED", "COMPLETED", "PREORDER"] as const;
 
 export default async function AdminClientsPage() {
   const customers = await prisma.user.findMany({

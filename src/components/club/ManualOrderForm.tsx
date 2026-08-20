@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useActionState } from "react";
 import { createManualOrder, type ManualOrderState } from "@/lib/actions/orders";
 import { formatPrice } from "@/lib/money";
+import { MANUAL_ORDER_STATUS_OPTIONS, MANUAL_PAYMENT_METHOD_LABELS } from "@/lib/orderStatus";
 
 const initialState: ManualOrderState = { status: "idle" };
 
@@ -93,6 +94,39 @@ export function ManualOrderForm({ products, clubId }: { products: ManualOrderPro
           required
           className="w-full rounded-lg border border-white/10 bg-neutral-800 px-3 py-2 text-white focus:border-accent focus:outline-none"
         />
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div>
+          <label className="mb-1 block text-sm font-medium text-white">Moyen de paiement</label>
+          <select
+            name="manualPaymentMethod"
+            required
+            defaultValue="ESPECES"
+            className="w-full rounded-lg border border-white/10 bg-neutral-800 px-3 py-2 text-white focus:border-accent focus:outline-none"
+          >
+            {Object.entries(MANUAL_PAYMENT_METHOD_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium text-white">État de la commande</label>
+          <select
+            name="manualStatus"
+            required
+            defaultValue="COMPLETED"
+            className="w-full rounded-lg border border-white/10 bg-neutral-800 px-3 py-2 text-white focus:border-accent focus:outline-none"
+          >
+            {MANUAL_ORDER_STATUS_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {product?.personalizationEnabled && (

@@ -9,10 +9,10 @@ export default async function AdminPage() {
   const [pendingClubs, approvedClubsCount, ordersCount, totalRevenue, customersCount] = await Promise.all([
     prisma.club.findMany({ where: { status: "PENDING" }, orderBy: { createdAt: "asc" } }),
     prisma.club.count({ where: { status: "APPROVED" } }),
-    prisma.order.count({ where: { status: { in: ["PAID", "PROCESSING", "SHIPPED", "COMPLETED"] } } }),
+    prisma.order.count({ where: { status: { in: ["PAID", "PROCESSING", "SHIPPED", "COMPLETED", "PREORDER"] } } }),
     prisma.order.aggregate({
       _sum: { totalCents: true },
-      where: { status: { in: ["PAID", "PROCESSING", "SHIPPED", "COMPLETED"] } },
+      where: { status: { in: ["PAID", "PROCESSING", "SHIPPED", "COMPLETED", "PREORDER"] } },
     }),
     prisma.user.count({ where: { role: "CUSTOMER" } }),
   ]);

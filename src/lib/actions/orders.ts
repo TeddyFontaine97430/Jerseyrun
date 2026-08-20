@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import type { Prisma } from "@prisma/client";
+import type { Prisma, OrderStatus, ManualPaymentMethod } from "@prisma/client";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getClubForUser } from "@/lib/clubStats";
@@ -9,6 +9,7 @@ import { notifyAdmin, sendEmail } from "@/lib/email";
 import { formatPrice } from "@/lib/money";
 import { decodeSelectedOptions, encodeSelectedOptions } from "@/lib/productOptions";
 import { getNextInvoiceNumber, generateInvoicePdf } from "@/lib/invoice";
+import { MANUAL_PAYMENT_METHOD_LABELS, ORDER_STATUS_LABELS } from "@/lib/orderStatus";
 
 function revalidateOrderPaths(orderId: string, clubId: string) {
   revalidatePath("/club/dashboard");
@@ -438,6 +439,22 @@ export async function createManualOrder(
   const customerPhone = ((formData.get("customerPhone") as string) ?? "").trim() || null;
   const personalizationText = ((formData.get("personalizationText") as string) ?? "").trim() || null;
 
+  const manualPaymentMethod = formData.get("manualPaymentMethod");
+  if (
+    typeof manualPaymentMethod !== "string" ||
+    !["ESPECES", "CARTE", "CHEQUE"].includes(manualPaymentMethod)
+  ) {
+    return { status: "error", message: "Choisissez le moyen de paiement." };
+  }
+
+  const manualStatus = formData.get("manualStatus");
+  if (
+    typeof manualStatus !== "string" ||
+    !["PROCESSING", "PREORDER", "COMPLETED"].includes(manualStatus)
+  ) {
+    return { status: "error", message: "Choisissez l'état de la commande." };
+  }
+
   const product = await prisma.product.findUnique({
     where: { id: productId },
     include: { options: { include: { values: true } } },
@@ -483,10 +500,11 @@ export async function createManualOrder(
       data: {
         userId: null,
         isManualOrder: true,
-        status: "PAID",
+        status: manualStatus as OrderStatus,
         totalCents,
         deliveryMethod: "PICKUP",
         paymentMethod: "ON_SITE",
+        manualPaymentMethod: manualPaymentMethod as ManualPaymentMethod,
         customerName,
         customerEmail,
         customerPhone,
@@ -502,7 +520,7 @@ export async function createManualOrder(
               productName: product.name,
               selectedOptions,
               personalizationText,
-              delivered: true,
+              delivered: manualStatus === "COMPLETED",
             },
           ],
         },
@@ -524,6 +542,8 @@ export async function createManualOrder(
       <p>Le club <strong>${club.name}</strong> vient d'enregistrer une vente manuelle (hors site).</p>
       <ul>
         <li><strong>Client :</strong> ${customerName}</li>
+        <li><strong>Paiement :</strong> ${MANUAL_PAYMENT_METHOD_LABELS[manualPaymentMethod]}</li>
+        <li><strong>État :</strong> ${ORDER_STATUS_LABELS[manualStatus]}</li>
         <li><strong>Article :</strong> ${quantity} × ${product.name}${details ? ` (${details})` : ""}</li>
         <li><strong>Total :</strong> ${formatPrice(totalCents)}</li>
       </ul>
