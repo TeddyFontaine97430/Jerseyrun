@@ -9,9 +9,11 @@ import { getSiteContentMap } from "@/lib/siteContent";
 // Ce club doit toujours apparaître en premier, aussi bien dans la grille des clubs
 // que dans la bande "fraîchement mis en ligne par nos clubs".
 const PINNED_CLUB_SLUG = "jeunesse-sportive-saint-pierroise";
+// Ses articles doivent toujours apparaître en dernier dans cette même bande.
+const LAST_CLUB_SLUG = "tbk-fc";
 
 export default async function Home() {
-  const [clubs, pinnedProducts, otherProducts, content, galleryImages] = await Promise.all([
+  const [clubs, pinnedProducts, otherProducts, lastProducts, content, galleryImages] = await Promise.all([
     prisma.club.findMany({
       where: { status: "APPROVED", active: true },
       orderBy: { name: "asc" },
@@ -29,17 +31,25 @@ export default async function Home() {
       where: {
         active: true,
         imageUrl: { not: null },
-        club: { slug: { not: PINNED_CLUB_SLUG }, status: "APPROVED", active: true },
+        club: { slug: { notIn: [PINNED_CLUB_SLUG, LAST_CLUB_SLUG] }, status: "APPROVED", active: true },
       },
       include: { club: { select: { slug: true, name: true } } },
       orderBy: { createdAt: "desc" },
-      take: 20,
+    }),
+    prisma.product.findMany({
+      where: {
+        active: true,
+        imageUrl: { not: null },
+        club: { slug: LAST_CLUB_SLUG, status: "APPROVED", active: true },
+      },
+      include: { club: { select: { slug: true, name: true } } },
+      orderBy: { createdAt: "desc" },
     }),
     getSiteContentMap(),
     prisma.homeGalleryImage.findMany({ orderBy: { position: "asc" } }),
   ]);
 
-  const marqueeProducts = [...pinnedProducts, ...otherProducts];
+  const marqueeProducts = [...pinnedProducts, ...otherProducts, ...lastProducts];
 
   const pinnedClub = clubs.find((club) => club.slug === PINNED_CLUB_SLUG);
   const sortedClubs = pinnedClub
