@@ -9,8 +9,20 @@ import { getSiteContentMap } from "@/lib/siteContent";
 // Ce club doit toujours apparaître en premier, aussi bien dans la grille des clubs
 // que dans la bande "fraîchement mis en ligne par nos clubs".
 const PINNED_CLUB_SLUG = "jeunesse-sportive-saint-pierroise";
-// Ses articles doivent toujours apparaître en dernier dans cette même bande.
+// Ses articles doivent toujours apparaître en dernier dans cette même bande, et limités
+// à une sélection de 4 qui change automatiquement chaque jour.
 const LAST_CLUB_SLUG = "tbk-fc";
+const LAST_CLUB_DAILY_COUNT = 4;
+
+// Choisit `count` éléments dans `items`, une sélection différente à chaque jour
+// (calendaire, UTC) sans configuration ni tâche planifiée : le calcul dépend
+// uniquement de la date du jour, donc il change tout seul à minuit.
+function pickDailyRotation<T>(items: T[], count: number): T[] {
+  if (items.length <= count) return items;
+  const dayIndex = Math.floor(Date.now() / 86_400_000);
+  const start = (dayIndex * count) % items.length;
+  return Array.from({ length: count }, (_, i) => items[(start + i) % items.length]);
+}
 
 export default async function Home() {
   const [clubs, pinnedProducts, otherProducts, lastProducts, content, galleryImages] = await Promise.all([
@@ -49,7 +61,11 @@ export default async function Home() {
     prisma.homeGalleryImage.findMany({ orderBy: { position: "asc" } }),
   ]);
 
-  const marqueeProducts = [...pinnedProducts, ...otherProducts, ...lastProducts];
+  const marqueeProducts = [
+    ...pinnedProducts,
+    ...otherProducts,
+    ...pickDailyRotation(lastProducts, LAST_CLUB_DAILY_COUNT),
+  ];
 
   const pinnedClub = clubs.find((club) => club.slug === PINNED_CLUB_SLUG);
   const sortedClubs = pinnedClub

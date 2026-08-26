@@ -9,6 +9,15 @@
         "cd \"/Users/fontaineteddy/Documents/SITE INTERNET\" && PATH=\"/Users/fontaineteddy/Documents/SITE INTERNET/.node-local/bin:$PATH\" npm run dev"
       ],
       "port": 3000
+    },
+    {
+      "name": "atelier-commandes-dev",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "-c",
+        "cd \"/Users/fontaineteddy/Documents/atelier-commandes\" && npm run dev"
+      ],
+      "port": 3010
     }
   ]
 }
