@@ -47,12 +47,18 @@ export default async function ClubDashboardPage() {
             Commandes à encaisser sur place ({pendingOnSiteOrders.length})
           </h2>
           <div className="mt-4 space-y-4">
-            {pendingOnSiteOrders.map(({ order, items }) => (
+            {pendingOnSiteOrders.map(({ order, items }) => {
+              const phone = order.customerPhone ?? order.user?.phone;
+              const email = order.customerEmail ?? order.user?.email;
+              return (
               <div key={order.id} className="rounded-2xl border border-white/10 bg-neutral-900 p-6 shadow-sm">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <p className="text-sm font-medium text-white">
-                      {order.customerName ?? order.user?.name ?? order.user?.email}
+                      {order.customerName ?? order.user?.name ?? email}
+                    </p>
+                    <p className="text-xs text-neutral-500">
+                      {[phone, email].filter(Boolean).join(" · ")}
                     </p>
                     <p className="text-xs text-neutral-500">
                       Commande du {order.createdAt.toLocaleDateString("fr-FR")}
@@ -96,7 +102,8 @@ export default async function ClubDashboardPage() {
                   <span>{formatPrice(order.totalCents)}</span>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         </>
       )}

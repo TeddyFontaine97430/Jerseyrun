@@ -139,6 +139,15 @@ export async function POST(request: Request) {
   const deliveryFeeCents = computeClubDeliveryFeeCents(deliveryMethod, club, itemCount);
   const totalCents = itemsTotalCents + deliveryFeeCents;
 
+  // Le numéro de téléphone est obligatoire à l'inscription mais absent de la session ;
+  // on le récupère pour qu'il reste consultable directement sur la commande (utile pour
+  // les commandes à régler et récupérer sur place, sans paiement Stripe en ligne pour le
+  // recueillir).
+  const customerContact =
+    paymentMethod === "ON_SITE"
+      ? await prisma.user.findUnique({ where: { id: session.user.id }, select: { phone: true } })
+      : null;
+
   const order = await prisma.order.create({
     data: {
       userId: session.user.id,
@@ -148,6 +157,8 @@ export async function POST(request: Request) {
       deliveryFeeCents,
       paymentMethod,
       customerName: paymentMethod === "ON_SITE" ? session.user.name ?? undefined : undefined,
+      customerEmail: paymentMethod === "ON_SITE" ? session.user.email ?? undefined : undefined,
+      customerPhone: paymentMethod === "ON_SITE" ? customerContact?.phone ?? undefined : undefined,
       shippingLine1,
       shippingLine2: shippingLine2 || undefined,
       shippingCity,
