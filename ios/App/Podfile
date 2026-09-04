@@ -16,7 +16,10 @@ end
 
 target 'App' do
   capacitor_pods
-  # Add your Pods here
+  # Convertit le token APNs natif en token FCM, pour que les notifications
+  # envoyées depuis Firebase Admin (src/lib/push.ts) fonctionnent sur iOS
+  # comme sur Android.
+  pod 'FirebaseMessaging'
 end
 
 post_install do |installer|
