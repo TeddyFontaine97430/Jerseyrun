@@ -6,6 +6,7 @@ import { ORDER_STATUS_LABELS, ORDER_STATUS_STYLES } from "@/lib/orderStatus";
 import { formatItemDetails } from "@/lib/productOptions";
 import { deliveryZoneLabel } from "@/lib/delivery";
 import { ProfileForm } from "@/components/account/ProfileForm";
+import { DeleteAccountForm } from "@/components/account/DeleteAccountForm";
 
 export const metadata: Metadata = { title: { absolute: "Mon compte — Jersey Run" } };
 
@@ -90,6 +91,11 @@ export default async function ComptePage() {
           ))}
         </div>
       )}
+
+      <h2 className="mt-14 text-xl font-semibold text-white">Supprimer mon compte</h2>
+      <div className="mt-4">
+        <DeleteAccountForm />
+      </div>
     </div>
   );
 }
