@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1, maximum-scale=1" />
+    <title>Jersey Run</title>
+    <style>
+      html, body {
+        height: 100%;
+        margin: 0;
+        background: #2c2e76;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      }
+      .wrap { text-align: center; color: #fff; padding: 0 32px; }
+      .spinner {
+        width: 36px;
+        height: 36px;
+        margin: 0 auto 16px;
+        border: 3px solid rgba(255, 255, 255, 0.25);
+        border-top-color: #fff;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      p { opacity: 0.85; font-size: 14px; margin: 0 0 4px; }
+      .hint { opacity: 0.6; font-size: 12px; }
+      button {
+        display: none;
+        margin-top: 20px;
+        padding: 10px 24px;
+        border-radius: 999px;
+        border: none;
+        background: #fff;
+        color: #2c2e76;
+        font-size: 14px;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <!--
+      Page de secours (server.errorPath, voir capacitor.config.ts) : Capacitor
+      l'affiche automatiquement si le chargement de https://jerseyrun.re
+      échoue au lancement (ex : réseau pas encore prêt sur un tout premier
+      lancement), au lieu de laisser un écran blanc (refus Apple, Guideline
+      2.1(a) App Completeness). On retente tout seul plusieurs fois, puis on
+      propose un bouton si ça persiste.
+    -->
+    <div class="wrap">
+      <div class="spinner" id="spinner"></div>
+      <p id="message">Connexion à Jersey Run…</p>
+      <p class="hint" id="hint"></p>
+      <button id="retry">Réessayer</button>
+    </div>
+    <script>
+      var TARGET = "https://jerseyrun.re/";
+      var attempt = 0;
+      var maxAutoAttempts = 6;
+      var spinner = document.getElementById("spinner");
+      var message = document.getElementById("message");
+      var hint = document.getElementById("hint");
+      var button = document.getElementById("retry");
+
+      function goToApp() {
+        window.location.replace(TARGET);
+      }
+
+      function tryReconnect() {
+        attempt += 1;
+        // Une requête réseau simple suffit à savoir si la connexion est prête ;
+        // { mode: "no-cors" } évite les soucis de CORS puisqu'on ne lit pas la
+        // réponse, on veut juste savoir si elle arrive.
+        fetch(TARGET, { mode: "no-cors", cache: "no-store" })
+          .then(goToApp)
+          .catch(function () {
+            if (attempt < maxAutoAttempts) {
+              setTimeout(tryReconnect, Math.min(attempt * 1500, 6000));
+            } else {
+              spinner.style.display = "none";
+              message.textContent = "Connexion impossible pour le moment.";
+              hint.textContent = "Vérifiez votre connexion internet, puis réessayez.";
+              button.style.display = "inline-block";
+            }
+          });
+      }
+
+      button.addEventListener("click", function () {
+        attempt = 0;
+        spinner.style.display = "block";
+        message.textContent = "Connexion à Jersey Run…";
+        hint.textContent = "";
+        button.style.display = "none";
+        tryReconnect();
+      });
+
+      tryReconnect();
+    </script>
+  </body>
+</html>

@@ -10,6 +10,11 @@ const config: CapacitorConfig = {
     // sur les stores.
     url: "https://jerseyrun.re",
     androidScheme: "https",
+    // Si le chargement échoue au lancement (ex : réseau pas encore prêt),
+    // Capacitor affiche cette page locale au lieu d'un écran blanc, et elle
+    // retente la connexion toute seule (voir mobile-shell/error.html).
+    // Refus Apple du 2026-09-24 : Guideline 2.1(a), App Completeness.
+    errorPath: "error.html",
   },
   ios: {
     contentInset: "automatic",
