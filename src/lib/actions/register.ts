@@ -7,7 +7,10 @@ import { prisma } from "@/lib/prisma";
 const registerSchema = z.object({
   name: z.string().min(2, "Merci d'indiquer votre nom."),
   email: z.string().email("Adresse email invalide."),
-  phone: z.string().min(6, "Merci d'indiquer un numéro de téléphone valide."),
+  // Facultatif : pas indispensable au fonctionnement de l'app (le numéro utile
+  // à la livraison est recueilli au paiement). Apple, refus du 2026-10-01,
+  // Guideline 5.1.1(v) : ne pas exiger d'information non essentielle.
+  phone: z.string().optional(),
   password: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères."),
 });
 
@@ -40,8 +43,15 @@ export async function registerCustomer(
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
+  const trimmedPhone = phone?.trim();
   await prisma.user.create({
-    data: { name, email: normalizedEmail, phone: phone.trim(), password: passwordHash, role: "CUSTOMER" },
+    data: {
+      name,
+      email: normalizedEmail,
+      phone: trimmedPhone ? trimmedPhone : null,
+      password: passwordHash,
+      role: "CUSTOMER",
+    },
   });
 
   return { status: "success", message: "Votre compte a été créé. Vous pouvez maintenant vous connecter." };

@@ -15,6 +15,12 @@ const config: CapacitorConfig = {
     // retente la connexion toute seule (voir mobile-shell/error.html).
     // Refus Apple du 2026-09-24 : Guideline 2.1(a), App Completeness.
     errorPath: "error.html",
+    // Sans ça, Capacitor bloque la navigation vers le paiement Stripe (domaine
+    // différent de jerseyrun.re) et ouvre Safari à la place, éjectant
+    // l'utilisateur hors de l'app en pleine commande. Refus Apple du
+    // 2026-10-01 : Guideline 4.2, "does not provide adequate features to
+    // sufficiently support the Payment task".
+    allowNavigation: ["*.stripe.com"],
   },
   ios: {
     contentInset: "automatic",
