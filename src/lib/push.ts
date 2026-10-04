@@ -90,8 +90,13 @@ export async function sendPushToTokens(
           ...(notification.imageUrl ? { imageUrl: notification.imageUrl } : {}),
         },
       },
+      // "mutable-content" déclenche le module de notification de l'app iPhone
+      // (NotificationServiceExtension), qui télécharge et affiche l'image.
       apns: notification.imageUrl
-        ? { fcmOptions: { imageUrl: notification.imageUrl } }
+        ? {
+            payload: { aps: { "mutable-content": 1 } },
+            fcmOptions: { imageUrl: notification.imageUrl },
+          }
         : undefined,
     });
 

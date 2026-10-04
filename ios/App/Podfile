@@ -22,6 +22,12 @@ target 'App' do
   pod 'FirebaseMessaging'
 end
 
+# Module de notification : télécharge l'image jointe aux notifications avant
+# leur affichage (voir NotificationServiceExtension/NotificationService.swift).
+target 'NotificationServiceExtension' do
+  pod 'FirebaseMessaging'
+end
+
 post_install do |installer|
   assertDeploymentTarget(installer)
 end
