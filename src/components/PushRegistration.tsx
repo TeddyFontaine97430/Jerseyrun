@@ -32,6 +32,9 @@ export function PushRegistration() {
       await PushNotifications.register();
 
       PushNotifications.addListener("registration", async (token) => {
+        // Sur iOS, ce token est le jeton brut d'Apple (APNs), que Firebase refuse.
+        // Le vrai jeton (FCM) est envoyé par le code natif (AppDelegate.swift).
+        if (Capacitor.getPlatform() === "ios") return;
         try {
           await fetch("/api/push/register", {
             method: "POST",

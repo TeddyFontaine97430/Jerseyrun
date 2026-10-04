@@ -67,6 +67,13 @@ export async function sendPushToTokens(
 
   const messaging = getMessaging(firebaseApp);
   const result: PushSendResult = { sentCount: 0, failCount: 0, invalidTokens: [] };
+
+  // Les jetons bruts APNs (64 caractères hexadécimaux) ne marchent pas avec FCM :
+  // on les ignore et on les signale comme invalides pour nettoyage.
+  const isRawApnsToken = (t: string) => /^[0-9a-f]{64}$/i.test(t);
+  result.invalidTokens.push(...tokens.filter(isRawApnsToken));
+  tokens = tokens.filter((t) => !isRawApnsToken(t));
+  if (tokens.length === 0) return result;
   const BATCH_SIZE = 500;
 
   for (let i = 0; i < tokens.length; i += BATCH_SIZE) {
