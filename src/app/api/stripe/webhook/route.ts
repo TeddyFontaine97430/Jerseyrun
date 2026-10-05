@@ -129,6 +129,7 @@ export async function POST(request: Request) {
 
         await sendPushToAdmins({
           title: "Nouvelle commande",
+          link: "/admin/ventes",
           body: `${customerName ?? "Un client"} — ${formatPrice(order.totalCents)}`,
         });
 

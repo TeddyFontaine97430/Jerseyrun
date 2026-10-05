@@ -31,6 +31,19 @@ export function PushRegistration() {
 
       await PushNotifications.register();
 
+      // Quand la personne appuie sur une notification contenant un lien : page du site
+      // ("/clubs/...") ou adresse web. Un lien externe est ouvert par l'app dans le
+      // navigateur du téléphone ; tout autre format est ignoré par sécurité.
+      PushNotifications.addListener("pushNotificationActionPerformed", (action) => {
+        const url = action.notification.data?.url;
+        if (typeof url !== "string") return;
+        if (url.startsWith("/") && !url.startsWith("//")) {
+          window.location.assign(url);
+        } else if (/^https:\/\//i.test(url)) {
+          window.location.assign(url);
+        }
+      });
+
       PushNotifications.addListener("registration", async (token) => {
         // Sur iOS, ce token est le jeton brut d'Apple (APNs), que Firebase refuse.
         // Le vrai jeton (FCM) est envoyé par le code natif (AppDelegate.swift).

@@ -68,6 +68,18 @@ export function PushNotificationForm({ deviceCount }: { deviceCount: number }) {
             />
           </div>
           <div>
+            <label className="mb-1 block text-sm font-medium text-white">Lien au clic (facultatif)</label>
+            <input
+              name="link"
+              placeholder="/clubs/tbk-fc ou https://exemple.fr"
+              className="w-full rounded-lg border border-white/10 bg-neutral-800 px-3 py-2 text-white placeholder:text-neutral-500 focus:border-accent focus:outline-none"
+            />
+            <p className="mt-1 text-xs text-neutral-500">
+              Quand la personne appuie sur la notification, l&apos;app s&apos;ouvre sur cette page du site (ex :
+              /clubs/tbk-fc) ou sur cette adresse web. Sans lien, l&apos;app s&apos;ouvre simplement sur l&apos;accueil.
+            </p>
+          </div>
+          <div>
             <label className="mb-1 block text-sm font-medium text-white">Image (facultatif)</label>
             <input type="hidden" name="imageUrl" value={imageUrl} />
             <div className="flex items-center gap-3">

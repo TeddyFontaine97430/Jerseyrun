@@ -53,7 +53,7 @@ export type PushSendResult = {
  */
 export async function sendPushToTokens(
   tokens: string[],
-  notification: { title: string; body: string; imageUrl?: string | null },
+  notification: { title: string; body: string; imageUrl?: string | null; link?: string | null },
 ): Promise<PushSendResult> {
   const firebaseApp = getFirebaseApp();
   if (!firebaseApp) {
@@ -85,6 +85,8 @@ export async function sendPushToTokens(
         body: notification.body,
         ...(notification.imageUrl ? { imageUrl: notification.imageUrl } : {}),
       },
+      // Lu par l'app (voir PushRegistration) quand la personne appuie sur la notification.
+      ...(notification.link ? { data: { url: notification.link } } : {}),
       android: {
         notification: {
           ...(notification.imageUrl ? { imageUrl: notification.imageUrl } : {}),
@@ -129,6 +131,7 @@ export async function sendPushToAdmins(notification: {
   title: string;
   body: string;
   imageUrl?: string | null;
+  link?: string | null;
 }): Promise<void> {
   if (!isPushConfigured()) return;
 

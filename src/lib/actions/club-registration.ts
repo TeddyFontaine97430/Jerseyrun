@@ -193,6 +193,7 @@ export async function confirmClubRegistrationCode(
   await sendPushToAdmins({
     title: "Nouveau club à valider",
     body: `${pending.name} (${pending.sport}) souhaite rejoindre Jersey Run.`,
+    link: "/admin",
   });
 
   return {

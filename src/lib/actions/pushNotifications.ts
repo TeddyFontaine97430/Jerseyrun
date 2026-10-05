@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { isPushConfigured, sendPushToTokens } from "@/lib/push";
+import { normalizeLink } from "@/lib/links";
 
 export type SendPushFormState = {
   status: "idle" | "success" | "error";
@@ -30,9 +31,18 @@ export async function sendPushNotification(
   const title = String(formData.get("title") ?? "").trim();
   const body = String(formData.get("body") ?? "").trim();
   const imageUrl = String(formData.get("imageUrl") ?? "").trim();
+  const rawLink = String(formData.get("link") ?? "").trim();
+  const link = rawLink ? normalizeLink(rawLink) : "";
 
   if (!title || !body) {
     return { status: "error", message: "Le titre et le message sont obligatoires." };
+  }
+
+  if (link && !/^(\/|https?:\/\/)/i.test(link)) {
+    return {
+      status: "error",
+      message: "Le lien doit être une page du site (ex : /clubs/tbk-fc) ou une adresse web (https://...).",
+    };
   }
 
   const devices = await prisma.pushDevice.findMany({ select: { token: true } });
@@ -49,6 +59,7 @@ export async function sendPushNotification(
     title,
     body,
     imageUrl: imageUrl || null,
+    link: link || null,
   });
 
   if (result.invalidTokens.length > 0) {
@@ -60,6 +71,7 @@ export async function sendPushNotification(
       title,
       body,
       imageUrl: imageUrl || null,
+      link: link || null,
       sentCount: result.sentCount,
       failCount: result.failCount,
       sentByName: session.user.name ?? session.user.email ?? null,

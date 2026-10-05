@@ -363,6 +363,7 @@ export async function markOrderPaidOnSite(orderId: string): Promise<MarkOrderPai
   await sendPushToAdmins({
     title: "Nouvelle commande (paiement sur place)",
     body: `${customerName ?? "Un client"} — ${formatPrice(order.totalCents)}`,
+    link: "/admin",
   });
 
   const sellerClub = order.items[0].club;
@@ -572,6 +573,7 @@ export async function createManualOrder(
   await sendPushToAdmins({
     title: `Vente manuelle — ${club.name}`,
     body: `${customerName} — ${quantity} × ${product.name} — ${formatPrice(totalCents)}`,
+    link: "/admin/ventes",
   });
 
   if (customerEmail) {

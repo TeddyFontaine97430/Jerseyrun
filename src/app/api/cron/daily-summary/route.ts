@@ -49,6 +49,7 @@ export async function GET(request: Request) {
   await sendPushToAdmins({
     title: `Résumé du ${dateLabel}`,
     body: parts.join(" — "),
+    link: "/admin/ventes",
   });
 
   return NextResponse.json({ ok: true, ordersCount, revenueCents, newCustomers });

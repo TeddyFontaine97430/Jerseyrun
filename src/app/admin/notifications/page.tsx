@@ -61,7 +61,10 @@ export default async function AdminNotificationsPage() {
                       {n.createdAt.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
                     </td>
                     <td className="px-5 py-3 font-medium text-white">{n.title}</td>
-                    <td className="max-w-xs truncate px-5 py-3 text-neutral-400">{n.body}</td>
+                    <td className="max-w-xs px-5 py-3 text-neutral-400">
+                      <p className="truncate">{n.body}</p>
+                      {n.link && <p className="truncate text-xs text-accent">→ {n.link}</p>}
+                    </td>
                     <td className="px-5 py-3 text-neutral-400">{n.sentByName ?? "—"}</td>
                     <td className="px-5 py-3 text-neutral-400">
                       {n.sentCount} envoyée{n.sentCount > 1 ? "s" : ""}

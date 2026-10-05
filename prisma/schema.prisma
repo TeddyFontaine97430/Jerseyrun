@@ -351,6 +351,7 @@ model PushNotification {
   title      String
   body       String   @db.Text
   imageUrl   String?
+  link       String?
   sentCount  Int      @default(0)
   failCount  Int      @default(0)
   sentByName String?
