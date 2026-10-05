@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { isExternalLink, normalizeLink } from "@/lib/links";
 
 type GalleryImage = { id: string; imageUrl: string; link: string };
 
@@ -9,11 +10,12 @@ export function HomeGallery({ images }: { images: GalleryImage[] }) {
     <section className="-mt-12 border-b border-white/10 bg-black py-10 sm:-mt-16">
       <div className="container-page flex flex-wrap justify-center gap-4">
         {images.map((image) => {
-          const isExternal = image.link.startsWith("http");
+          const href = normalizeLink(image.link);
+          const isExternal = isExternalLink(href);
           return (
             <a
               key={image.id}
-              href={image.link}
+              href={href}
               {...(isExternal ? { target: "_blank", rel: "noopener noreferrer" } : {})}
               className="block h-28 w-28 shrink-0 overflow-hidden rounded-2xl border border-white/10 transition hover:opacity-90 sm:h-32 sm:w-32"
             >

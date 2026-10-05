@@ -5,6 +5,7 @@ import { ClubLogoCard } from "@/components/ClubLogoCard";
 import { ProductMarquee } from "@/components/ProductMarquee";
 import { HomeGallery } from "@/components/HomeGallery";
 import { getSiteContentMap } from "@/lib/siteContent";
+import { isExternalLink, normalizeLink } from "@/lib/links";
 
 // Ce club doit toujours apparaître en premier, aussi bien dans la grille des clubs
 // que dans la bande "fraîchement mis en ligne par nos clubs".
@@ -123,8 +124,8 @@ export default async function Home() {
       <HomeGallery images={galleryImages} />
 
       <a
-        href={content["home.bannerLink"]}
-        {...(content["home.bannerLink"].startsWith("http")
+        href={normalizeLink(content["home.bannerLink"])}
+        {...(isExternalLink(normalizeLink(content["home.bannerLink"]))
           ? { target: "_blank", rel: "noopener noreferrer" }
           : {})}
         className="block w-full overflow-hidden border-b border-white/10"

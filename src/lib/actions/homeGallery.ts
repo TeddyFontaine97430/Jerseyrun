@@ -4,6 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { normalizeLink } from "@/lib/links";
 
 async function requireAdmin() {
   const session = await auth();
@@ -42,7 +43,9 @@ export async function addHomeGalleryImage(
   const last = await prisma.homeGalleryImage.findFirst({ orderBy: { position: "desc" } });
   const position = (last?.position ?? -1) + 1;
 
-  await prisma.homeGalleryImage.create({ data: { ...parsed.data, position } });
+  await prisma.homeGalleryImage.create({
+    data: { imageUrl: parsed.data.imageUrl, link: normalizeLink(parsed.data.link), position },
+  });
 
   revalidateHomeGalleryPaths();
   return { status: "success", message: "Image ajoutée." };
@@ -50,7 +53,7 @@ export async function addHomeGalleryImage(
 
 export async function updateHomeGalleryImageLink(id: string, link: string) {
   if (!(await requireAdmin())) return;
-  const trimmed = link.trim();
+  const trimmed = normalizeLink(link);
   if (!trimmed) return;
 
   await prisma.homeGalleryImage.update({ where: { id }, data: { link: trimmed } });
