@@ -74,6 +74,19 @@ export function Footer() {
               </li>
             </ul>
           </div>
+          <div className="col-span-2 lg:justify-self-end">
+            <a
+              href="https://www.facebook.com/p/Jersey-run-cr%C3%A9ation-100082974560526/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent"
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5" aria-hidden="true">
+                <path d="M13.5 21v-7.5h2.5l.5-3h-3V8.6c0-.9.3-1.6 1.6-1.6H16.6V4.3c-.3 0-1.2-.1-2.3-.1-2.3 0-3.8 1.4-3.8 3.9v2.4H8v3h2.5V21h3Z" />
+              </svg>
+              Suivez-nous sur Facebook
+            </a>
+          </div>
         </div>
       </div>
       <div className="border-t border-white/10 py-6 text-center text-xs text-neutral-400">
