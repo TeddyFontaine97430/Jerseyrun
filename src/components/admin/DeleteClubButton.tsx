@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { deleteClub } from "@/lib/actions/admin";
+import { cleanLabel, sameText } from "@/lib/text";
 
 export function DeleteClubButton({ clubId, clubName }: { clubId: string; clubName: string }) {
   const [open, setOpen] = useState(false);
@@ -9,7 +10,8 @@ export function DeleteClubButton({ clubId, clubName }: { clubId: string; clubNam
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const canConfirm = confirmText.trim() === clubName;
+  const shownName = cleanLabel(clubName);
+  const canConfirm = sameText(confirmText, clubName);
 
   function handleDelete() {
     setError(null);
@@ -39,12 +41,12 @@ export function DeleteClubButton({ clubId, clubName }: { clubId: string; clubNam
         Action irréversible : le club, ses articles et son compte seront définitivement supprimés.
       </p>
       <p className="mt-2 text-left text-xs text-neutral-400">
-        Pour confirmer, tapez le nom du club : <span className="font-semibold text-white">{clubName}</span>
+        Pour confirmer, tapez le nom du club : <span className="font-semibold text-white">{shownName}</span>
       </p>
       <input
         value={confirmText}
         onChange={(e) => setConfirmText(e.target.value)}
-        placeholder={clubName}
+        placeholder={shownName}
         className="mt-2 w-full rounded-lg border border-white/10 bg-neutral-800 px-3 py-2 text-sm text-white placeholder:text-neutral-600 focus:border-red-400 focus:outline-none"
       />
       <div className="mt-3 flex justify-end gap-2">

@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { deleteCustomer } from "@/lib/actions/admin";
+import { cleanLabel, sameText } from "@/lib/text";
 
 export function DeleteCustomerButton({ customerId, customerLabel }: { customerId: string; customerLabel: string }) {
   const [open, setOpen] = useState(false);
@@ -9,7 +10,8 @@ export function DeleteCustomerButton({ customerId, customerLabel }: { customerId
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const canConfirm = confirmText.trim() === customerLabel;
+  const shownLabel = cleanLabel(customerLabel);
+  const canConfirm = sameText(confirmText, customerLabel);
 
   function handleDelete() {
     setError(null);
@@ -40,12 +42,12 @@ export function DeleteCustomerButton({ customerId, customerLabel }: { customerId
         passées restent visibles dans les ventes des clubs, mais ne seront plus rattachées à un compte.
       </p>
       <p className="mt-2 text-left text-xs text-neutral-400">
-        Pour confirmer, tapez : <span className="font-semibold text-white">{customerLabel}</span>
+        Pour confirmer, tapez : <span className="font-semibold text-white">{shownLabel}</span>
       </p>
       <input
         value={confirmText}
         onChange={(e) => setConfirmText(e.target.value)}
-        placeholder={customerLabel}
+        placeholder={shownLabel}
         className="mt-2 w-full rounded-lg border border-white/10 bg-neutral-800 px-3 py-2 text-sm text-white placeholder:text-neutral-600 focus:border-red-400 focus:outline-none"
       />
       <div className="mt-3 flex justify-end gap-2">
