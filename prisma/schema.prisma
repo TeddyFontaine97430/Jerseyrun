@@ -357,3 +357,13 @@ model PushNotification {
   sentByName String?
   createdAt  DateTime @default(now())
 }
+
+// Grandes bannières cliquables en pleine largeur, affichées dans l'ordre (position)
+// sur la page d'accueil, juste avant la bande "Nos articles".
+model HomeBanner {
+  id        String   @id @default(cuid())
+  imageUrl  String
+  link      String
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+}

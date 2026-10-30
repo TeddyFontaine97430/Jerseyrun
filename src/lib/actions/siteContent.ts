@@ -37,11 +37,6 @@ export async function updateSiteContent(
     updates.push({ key: "home.heroImage", value: heroImageUrl });
   }
 
-  const bannerImageUrl = formData.get("home.bannerImageUrl");
-  if (typeof bannerImageUrl === "string" && bannerImageUrl) {
-    updates.push({ key: "home.bannerImage", value: bannerImageUrl });
-  }
-
   await prisma.$transaction(
     updates.map((update) =>
       prisma.siteContent.upsert({

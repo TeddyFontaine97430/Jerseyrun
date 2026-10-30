@@ -26,7 +26,7 @@ function pickDailyRotation<T>(items: T[], count: number): T[] {
 }
 
 export default async function Home() {
-  const [clubs, pinnedProducts, otherProducts, lastProducts, content, galleryImages] = await Promise.all([
+  const [clubs, pinnedProducts, otherProducts, lastProducts, content, galleryImages, banners] = await Promise.all([
     prisma.club.findMany({
       where: { status: "APPROVED", active: true },
       orderBy: { name: "asc" },
@@ -60,6 +60,7 @@ export default async function Home() {
     }),
     getSiteContentMap(),
     prisma.homeGalleryImage.findMany({ orderBy: { position: "asc" } }),
+    prisma.homeBanner.findMany({ orderBy: { position: "asc" } }),
   ]);
 
   const marqueeProducts = [
@@ -123,22 +124,26 @@ export default async function Home() {
 
       <HomeGallery images={galleryImages} />
 
-      <a
-        href={normalizeLink(content["home.bannerLink"])}
-        {...(isExternalLink(normalizeLink(content["home.bannerLink"]))
-          ? { target: "_blank", rel: "noopener noreferrer" }
-          : {})}
-        className="block w-full overflow-hidden border-b border-white/10"
-      >
-        <Image
-          src={content["home.bannerImage"]}
-          alt=""
-          width={1536}
-          height={862}
-          sizes="100vw"
-          className="h-auto w-full object-cover transition hover:opacity-90"
-        />
-      </a>
+      {banners.map((banner) => {
+        const href = normalizeLink(banner.link);
+        return (
+          <a
+            key={banner.id}
+            href={href}
+            {...(isExternalLink(href) ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+            className="block w-full overflow-hidden border-b border-white/10"
+          >
+            <Image
+              src={banner.imageUrl}
+              alt=""
+              width={1536}
+              height={862}
+              sizes="100vw"
+              className="h-auto w-full object-cover transition hover:opacity-90"
+            />
+          </a>
+        );
+      })}
 
       <ProductMarquee
         products={marqueeProducts.map((product) => ({

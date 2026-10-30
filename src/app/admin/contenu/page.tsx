@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getSiteContentMap } from "@/lib/siteContent";
 import { SiteContentForm } from "@/components/admin/SiteContentForm";
 import { HomeGalleryForm } from "@/components/admin/HomeGalleryForm";
+import { HomeBannersForm } from "@/components/admin/HomeBannersForm";
 
 export const metadata: Metadata = { title: { absolute: "Contenu du site — Administration Jersey Run" } };
 
@@ -13,9 +14,10 @@ export default async function AdminContentPage() {
     return <p className="text-neutral-400">Accès non autorisé.</p>;
   }
 
-  const [content, galleryImages] = await Promise.all([
+  const [content, galleryImages, banners] = await Promise.all([
     getSiteContentMap(),
     prisma.homeGalleryImage.findMany({ orderBy: { position: "asc" } }),
+    prisma.homeBanner.findMany({ orderBy: { position: "asc" } }),
   ]);
 
   return (
@@ -35,6 +37,15 @@ export default async function AdminContentPage() {
           image a son propre lien au clic (page du site ou adresse web complète).
         </p>
         <HomeGalleryForm images={galleryImages} />
+      </div>
+
+      <div className="mb-8 rounded-2xl border border-white/10 bg-neutral-900 p-6 shadow-sm">
+        <h3 className="mb-1 font-semibold text-white">Grandes bannières avant &quot;Nos articles&quot;</h3>
+        <p className="mb-4 text-xs text-neutral-500">
+          Images cliquables en pleine largeur, affichées dans cet ordre entre les images cliquables et la bande
+          &quot;Nos articles&quot;. Utilisez les flèches pour changer l&apos;ordre.
+        </p>
+        <HomeBannersForm banners={banners} />
       </div>
 
       <SiteContentForm content={content} />
