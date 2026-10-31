@@ -27,8 +27,10 @@ function pickDailyRotation<T>(items: T[], count: number): T[] {
 
 export default async function Home() {
   const [clubs, pinnedProducts, otherProducts, lastProducts, content, galleryImages, banners] = await Promise.all([
+    // Un club n'apparaît dans la grille qu'à partir de son premier article actif : il
+    // réapparaît tout seul dès qu'il en ajoute un.
     prisma.club.findMany({
-      where: { status: "APPROVED", active: true },
+      where: { status: "APPROVED", active: true, products: { some: { active: true } } },
       orderBy: { name: "asc" },
     }),
     prisma.product.findMany({

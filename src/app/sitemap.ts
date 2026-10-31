@@ -5,7 +5,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "https://jerseyrun.re";
 
   const clubs = await prisma.club.findMany({
-    where: { status: "APPROVED", active: true },
+    where: { status: "APPROVED", active: true, products: { some: { active: true } } },
     select: { slug: true, createdAt: true },
   });
 
