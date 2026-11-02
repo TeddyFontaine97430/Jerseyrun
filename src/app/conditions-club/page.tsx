@@ -18,7 +18,7 @@ export default function ConditionsClubPage() {
               des frais de traitement sur chaque paiement encaissé (généralement autour de 1,5 % + 0,25 € pour une
               carte bancaire européenne). Ce taux s&apos;adapte automatiquement selon le moyen de paiement utilisé
               par le client (carte européenne, carte étrangère, portefeuille électronique, etc.). Ces frais sont
-              directement déduits par Stripe avant le versement.
+              retenus automatiquement sur chaque vente en ligne : le montant versé sur votre compte est donc le prix payé par le client, moins ces frais de traitement.
             </p>
           </section>
 
@@ -34,10 +34,10 @@ export default function ConditionsClubPage() {
           <section>
             <h2 className="text-lg font-semibold text-white">Versement direct, sans commission</h2>
             <p className="mt-2">
-              Une fois votre compte Stripe connecté à Jersey Run, l&apos;intégralité des paiements de vos ventes
-              est versée directement sur votre compte bancaire. Jersey Run ne prélève actuellement{" "}
+              Une fois votre compte Stripe connecté à Jersey Run, le montant de vos ventes (déduction faite des
+              frais de traitement Stripe) est versé directement sur votre compte bancaire. Jersey Run ne prélève actuellement{" "}
               <strong className="text-white">aucune commission</strong>{" "}
-              sur vos ventes. Cette politique pourra évoluer à l&apos;avenir ; vous en seriez informés à
+              sur vos ventes, en dehors du remboursement des frais de traitement Stripe décrits ci-dessus. Cette politique pourra évoluer à l&apos;avenir ; vous en seriez informés à
               l&apos;avance.
             </p>
           </section>

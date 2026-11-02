@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { stripe, stripeConfigured } from "@/lib/stripe";
 import { notifyAdmin, sendEmail } from "@/lib/email";
 import { formatPrice } from "@/lib/money";
+import { computeStripeFeeCents } from "@/lib/stripeFees";
 import { formatSelectedOptions, decodeSelectedOptions } from "@/lib/productOptions";
 import {
   computeClubDeliveryFeeCents,
@@ -271,6 +272,9 @@ export async function POST(request: Request) {
     phone_number_collection: { enabled: true },
     payment_intent_data: {
       transfer_data: { destination: club.stripeAccountId! },
+      // Les frais Stripe sont supportés par le club (déduits de son versement) et non par
+      // Jersey Run.
+      application_fee_amount: computeStripeFeeCents(totalCents),
     },
     metadata: { orderId: order.id, deliveryMethod },
     success_url: `${baseUrl}/commande/succes?session_id={CHECKOUT_SESSION_ID}`,
