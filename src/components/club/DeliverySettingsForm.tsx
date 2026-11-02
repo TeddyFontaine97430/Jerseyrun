@@ -15,9 +15,11 @@ type ZoneSettings = {
 export function DeliverySettingsForm({
   metropole,
   reunion,
+  clubId,
 }: {
   metropole: ZoneSettings;
   reunion: ZoneSettings;
+  clubId?: string;
 }) {
   const [state, formAction, pending] = useActionState(updateDeliverySettings, initialState);
   const [metropoleEnabled, setMetropoleEnabled] = useState(metropole.enabled);
@@ -28,6 +30,7 @@ export function DeliverySettingsForm({
       action={formAction}
       className="grid gap-6 rounded-2xl border border-white/10 bg-neutral-900 p-6 shadow-sm sm:grid-cols-2"
     >
+      {clubId && <input type="hidden" name="clubId" value={clubId} />}
       <div className="rounded-lg border border-white/10 bg-black/30 p-4">
         <label className="flex items-center gap-2 text-sm font-semibold text-white">
           <input

@@ -6,6 +6,33 @@ import { auth } from "@/auth";
 import { getClubForUser } from "@/lib/clubStats";
 import { prisma } from "@/lib/prisma";
 
+// Un club modifie ses propres réglages ; l'admin peut modifier ceux de n'importe quel club
+// (en précisant son id).
+async function resolveSettingsClub(clubId?: string | null) {
+  const session = await auth();
+  if (!session?.user) return null;
+
+  if (session.user.role === "ADMIN") {
+    if (!clubId) return null;
+    return prisma.club.findUnique({ where: { id: clubId } });
+  }
+
+  if (session.user.role === "CLUB") {
+    const club = await getClubForUser(session.user.id);
+    if (!club || club.status !== "APPROVED") return null;
+    return club;
+  }
+
+  return null;
+}
+
+function revalidateSettingsPaths(club: { id: string; slug: string }) {
+  revalidatePath("/club/dashboard/parametres");
+  revalidatePath(`/admin/clubs/${club.id}`);
+  revalidatePath(`/clubs/${club.slug}`);
+  revalidatePath("/panier");
+}
+
 export type ClubLogoState = {
   status: "idle" | "success" | "error";
   message?: string;
@@ -56,16 +83,13 @@ export async function updateClubLogo(
   return { status: "success", message: "Logo mis à jour." };
 }
 
-export async function updatePayOnSiteSetting(enabled: boolean) {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "CLUB") return;
-
-  const club = await getClubForUser(session.user.id);
-  if (!club || club.status !== "APPROVED") return;
+export async function updatePayOnSiteSetting(enabled: boolean, clubId?: string) {
+  const club = await resolveSettingsClub(clubId);
+  if (!club) return;
 
   await prisma.club.update({ where: { id: club.id }, data: { allowPayOnSite: enabled } });
 
-  revalidatePath("/club/dashboard/parametres");
+  revalidateSettingsPaths(club);
 }
 
 export type DeliverySettingsState = {
@@ -86,13 +110,9 @@ export async function updateDeliverySettings(
   _prevState: DeliverySettingsState,
   formData: FormData,
 ): Promise<DeliverySettingsState> {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "CLUB") {
-    return { status: "error", message: "Accès non autorisé." };
-  }
-
-  const club = await getClubForUser(session.user.id);
-  if (!club || club.status !== "APPROVED") {
+  const clubIdField = formData.get("clubId");
+  const club = await resolveSettingsClub(typeof clubIdField === "string" ? clubIdField : null);
+  if (!club) {
     return { status: "error", message: "Accès non autorisé." };
   }
 
@@ -123,8 +143,7 @@ export async function updateDeliverySettings(
     },
   });
 
-  revalidatePath("/club/dashboard/parametres");
-  revalidatePath("/panier");
+  revalidateSettingsPaths(club);
 
   return { status: "success", message: "Options de livraison mises à jour." };
 }

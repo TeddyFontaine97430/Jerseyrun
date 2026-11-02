@@ -3,7 +3,7 @@
 import { useTransition } from "react";
 import { updatePayOnSiteSetting } from "@/lib/actions/club-settings";
 
-export function PayOnSiteToggle({ enabled }: { enabled: boolean }) {
+export function PayOnSiteToggle({ enabled, clubId }: { enabled: boolean; clubId?: string }) {
   const [isPending, startTransition] = useTransition();
 
   return (
@@ -12,7 +12,7 @@ export function PayOnSiteToggle({ enabled }: { enabled: boolean }) {
         type="checkbox"
         checked={enabled}
         disabled={isPending}
-        onChange={(e) => startTransition(() => updatePayOnSiteSetting(e.target.checked))}
+        onChange={(e) => startTransition(() => updatePayOnSiteSetting(e.target.checked, clubId))}
         className="h-5 w-5 rounded border-white/20 bg-neutral-800 text-accent focus:ring-accent disabled:opacity-50"
       />
       <span className="text-sm text-white">

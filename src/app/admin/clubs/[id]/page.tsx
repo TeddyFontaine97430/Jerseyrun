@@ -15,6 +15,8 @@ import { DeliveryStatusToggle } from "@/components/DeliveryStatusToggle";
 import { ReadyForPickupToggle } from "@/components/ReadyForPickupToggle";
 import { MarkPaidOnSiteButton } from "@/components/MarkPaidOnSiteButton";
 import { ClubLogoForm } from "@/components/club/ClubLogoForm";
+import { PayOnSiteToggle } from "@/components/club/PayOnSiteToggle";
+import { DeliverySettingsForm } from "@/components/club/DeliverySettingsForm";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -94,6 +96,34 @@ export default async function AdminClubDetailPage({ params }: Props) {
 
       <h3 className="mt-10 mb-4 text-lg font-semibold text-white">Logo du club</h3>
       <ClubLogoForm logoUrl={club.logoUrl} clubId={club.id} />
+
+      <h3 className="mt-10 mb-2 text-lg font-semibold text-white">Moyens de paiement</h3>
+      <p className="mb-4 text-sm text-neutral-400">
+        Paiement par carte :{" "}
+        {club.stripePayoutsEnabled
+          ? "le compte Stripe du club est connecté."
+          : "le club n'a pas encore connecté son compte Stripe (il doit le faire lui-même depuis ses paramètres) : seul le paiement sur place est possible."}
+      </p>
+      <PayOnSiteToggle enabled={club.allowPayOnSite} clubId={club.id} />
+
+      <h3 className="mt-10 mb-2 text-lg font-semibold text-white">Lieux de réception</h3>
+      <p className="mb-4 text-sm text-neutral-400">
+        Le retrait au club est toujours proposé. Vous pouvez activer la livraison à domicile et fixer les tarifs de ce
+        club (proposée aux clients uniquement si son compte Stripe est connecté).
+      </p>
+      <DeliverySettingsForm
+        clubId={club.id}
+        metropole={{
+          enabled: club.deliveryMetropoleEnabled,
+          feeCents: club.deliveryMetropoleFeeCents,
+          extraItemCents: club.deliveryMetropoleExtraItemCents,
+        }}
+        reunion={{
+          enabled: club.deliveryReunionEnabled,
+          feeCents: club.deliveryReunionFeeCents,
+          extraItemCents: club.deliveryReunionExtraItemCents,
+        }}
+      />
 
       <div className="mt-8 grid gap-4 sm:grid-cols-3">
         <div className="rounded-2xl border border-white/10 bg-neutral-900 p-6 shadow-sm">
