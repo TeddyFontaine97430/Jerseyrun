@@ -15,7 +15,7 @@ async function getClub(slug: string) {
       products: {
         where: { active: true },
         orderBy: { createdAt: "asc" },
-        include: { options: { include: { values: true } }, images: { orderBy: { position: "asc" } } },
+        include: { options: { include: { values: { orderBy: { position: "asc" } } } }, images: { orderBy: { position: "asc" } } },
       },
     },
   });

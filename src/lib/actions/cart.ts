@@ -25,7 +25,7 @@ export async function addToCart(
   const productId = formData.get("productId") as string;
   const product = await prisma.product.findUnique({
     where: { id: productId },
-    include: { options: { include: { values: true } }, club: true },
+    include: { options: { include: { values: { orderBy: { position: "asc" } } } }, club: true },
   });
   if (!product || !product.active) {
     return { status: "error", message: "Cet article n'est plus disponible." };

@@ -19,6 +19,14 @@ export function OptionValuesEditor({
     onChange(rows.filter((_, i) => i !== index));
   }
 
+  function moveRow(index: number, direction: -1 | 1) {
+    const target = index + direction;
+    if (target < 0 || target >= rows.length) return;
+    const next = [...rows];
+    [next[index], next[target]] = [next[target], next[index]];
+    onChange(next);
+  }
+
   function addRow() {
     onChange([...rows, { value: "", stock: 0 }]);
   }
@@ -27,6 +35,26 @@ export function OptionValuesEditor({
     <div className="space-y-2">
       {rows.map((row, i) => (
         <div key={i} className="flex items-center gap-2">
+          <div className="flex shrink-0 flex-col gap-0.5">
+            <button
+              type="button"
+              disabled={i === 0}
+              onClick={() => moveRow(i, -1)}
+              aria-label="Monter"
+              className="flex h-4 w-5 items-center justify-center rounded border border-white/10 text-[10px] leading-none text-neutral-300 hover:border-accent hover:text-accent disabled:opacity-30"
+            >
+              ↑
+            </button>
+            <button
+              type="button"
+              disabled={i === rows.length - 1}
+              onClick={() => moveRow(i, 1)}
+              aria-label="Descendre"
+              className="flex h-4 w-5 items-center justify-center rounded border border-white/10 text-[10px] leading-none text-neutral-300 hover:border-accent hover:text-accent disabled:opacity-30"
+            >
+              ↓
+            </button>
+          </div>
           <input
             value={row.value}
             onChange={(e) => updateRow(i, { value: e.target.value })}

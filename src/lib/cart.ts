@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 export async function getCartForUser(userId: string) {
   const items = await prisma.cartItem.findMany({
     where: { userId },
-    include: { product: { include: { club: true, options: { include: { values: true } } } } },
+    include: { product: { include: { club: true, options: { include: { values: { orderBy: { position: "asc" } } } } } } },
     orderBy: { createdAt: "asc" },
   });
   const total = items.reduce((sum, item) => {

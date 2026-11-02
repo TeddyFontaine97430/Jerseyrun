@@ -8,6 +8,9 @@ import { uploadImageClient } from "@/lib/uploadClient";
 
 const initialState: ProductFormState = { status: "idle" };
 const MAX_IMAGES = 3;
+// Les tailles femme sont enregistrées dans l'option "Taille" avec ce préfixe (ex : "Femme M"),
+// ce qui permet au client de choisir une seule valeur parmi les deux séries.
+const FEMME_PREFIX = "Femme ";
 
 type ProductOptionInitial = {
   name: string;
@@ -42,7 +45,16 @@ export function ProductForm({
   const shoeSizeGroup = product?.options?.find((o) => o.name === "Pointure");
   const customGroup = product?.options?.find((o) => o.name !== "Taille" && o.name !== "Pointure");
 
-  const [sizeRows, setSizeRows] = useState<OptionValueRow[]>(sizeGroup?.values ?? []);
+  const initialFemmeRows = (sizeGroup?.values ?? [])
+    .filter((v) => v.value.startsWith(FEMME_PREFIX))
+    .map((v) => ({ ...v, value: v.value.slice(FEMME_PREFIX.length) }));
+  const initialNormalRows = (sizeGroup?.values ?? []).filter((v) => !v.value.startsWith(FEMME_PREFIX));
+  const [sizeRows, setSizeRows] = useState<OptionValueRow[]>(initialNormalRows);
+  const [femmeSizeRows, setFemmeSizeRows] = useState<OptionValueRow[]>(initialFemmeRows);
+  const [normalSizesEnabled, setNormalSizesEnabled] = useState(
+    initialNormalRows.length > 0 || initialFemmeRows.length === 0,
+  );
+  const [femmeSizesEnabled, setFemmeSizesEnabled] = useState(initialFemmeRows.length > 0);
   const [shoeSizeRows, setShoeSizeRows] = useState<OptionValueRow[]>(shoeSizeGroup?.values ?? []);
   const [customOptionName, setCustomOptionName] = useState(customGroup?.name ?? "");
   const [customRows, setCustomRows] = useState<OptionValueRow[]>(customGroup?.values ?? []);
@@ -83,7 +95,18 @@ export function ProductForm({
     <form action={formAction} className="grid gap-4 sm:grid-cols-2">
       {product && <input type="hidden" name="productId" value={product.id} />}
       {clubId && <input type="hidden" name="clubId" value={clubId} />}
-      <input type="hidden" name="sizeValuesJson" value={JSON.stringify(sizeRows)} />
+      <input
+        type="hidden"
+        name="sizeValuesJson"
+        value={JSON.stringify([
+          ...(normalSizesEnabled ? sizeRows : []),
+          ...(femmeSizesEnabled
+            ? femmeSizeRows
+                .filter((row) => row.value.trim())
+                .map((row) => ({ ...row, value: `${FEMME_PREFIX}${row.value.trim()}` }))
+            : []),
+        ])}
+      />
       <input type="hidden" name="shoeSizeValuesJson" value={JSON.stringify(shoeSizeRows)} />
       <input type="hidden" name="customOptionValuesJson" value={JSON.stringify(customRows)} />
       <input type="hidden" name="imagesJson" value={JSON.stringify(images)} />
@@ -172,7 +195,43 @@ export function ProductForm({
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
             <label className="mb-1 block text-sm font-medium text-neutral-200">Tailles disponibles</label>
-            <OptionValuesEditor rows={sizeRows} onChange={setSizeRows} valuePlaceholder="ex: M" />
+            <div className="mb-3 flex flex-wrap gap-4">
+              <label className="flex items-center gap-2 text-sm text-neutral-200">
+                <input
+                  type="checkbox"
+                  checked={normalSizesEnabled}
+                  onChange={(e) => setNormalSizesEnabled(e.target.checked)}
+                  className="h-4 w-4 rounded border-white/20 bg-neutral-800 text-accent focus:ring-accent"
+                />
+                Taille normale
+              </label>
+              <label className="flex items-center gap-2 text-sm text-neutral-200">
+                <input
+                  type="checkbox"
+                  checked={femmeSizesEnabled}
+                  onChange={(e) => setFemmeSizesEnabled(e.target.checked)}
+                  className="h-4 w-4 rounded border-white/20 bg-neutral-800 text-accent focus:ring-accent"
+                />
+                Taille femme
+              </label>
+            </div>
+            {normalSizesEnabled && (
+              <div className="mb-4">
+                {femmeSizesEnabled && <p className="mb-1 text-xs font-semibold text-neutral-400">Tailles normales</p>}
+                <OptionValuesEditor rows={sizeRows} onChange={setSizeRows} valuePlaceholder="ex: M" />
+              </div>
+            )}
+            {femmeSizesEnabled && (
+              <div>
+                <p className="mb-1 text-xs font-semibold text-neutral-400">
+                  Tailles femme <span className="font-normal">(proposées au client sous la forme « Femme M »)</span>
+                </p>
+                <OptionValuesEditor rows={femmeSizeRows} onChange={setFemmeSizeRows} valuePlaceholder="ex: M" />
+              </div>
+            )}
+            <p className="mt-2 text-xs text-neutral-500">
+              Utilisez les flèches ↑ ↓ pour choisir l&apos;ordre dans lequel les tailles sont proposées au client.
+            </p>
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-neutral-200">Pointures disponibles</label>

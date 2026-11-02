@@ -178,6 +178,8 @@ model ProductOptionValue {
   optionId  String
   value     String
   stock     Int           @default(0)
+  // Ordre d'affichage choisi par le club (0 = premier).
+  position  Int           @default(0)
   createdAt DateTime      @default(now())
 
   @@unique([optionId, value])

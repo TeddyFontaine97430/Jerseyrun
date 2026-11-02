@@ -154,7 +154,7 @@ export async function addOrderItem(
 
   const product = await prisma.product.findUnique({
     where: { id: productId },
-    include: { options: { include: { values: true } } },
+    include: { options: { include: { values: { orderBy: { position: "asc" } } } } },
   });
   if (!product || product.clubId !== clubId) {
     return { status: "error", message: "Article introuvable." };
@@ -477,7 +477,7 @@ export async function createManualOrder(
 
   const product = await prisma.product.findUnique({
     where: { id: productId },
-    include: { options: { include: { values: true } } },
+    include: { options: { include: { values: { orderBy: { position: "asc" } } } } },
   });
   if (!product || product.clubId !== club.id) {
     return { status: "error", message: "Article introuvable." };

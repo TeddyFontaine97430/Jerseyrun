@@ -25,7 +25,7 @@ export default async function ClubOrderDetailPage({ params }: Props) {
 
   const products = await prisma.product.findMany({
     where: { clubId: club.id, active: true },
-    include: { options: { include: { values: true } } },
+    include: { options: { include: { values: { orderBy: { position: "asc" } } } } },
     orderBy: { name: "asc" },
   });
 

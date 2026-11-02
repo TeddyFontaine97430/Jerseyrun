@@ -153,7 +153,7 @@ export async function createProduct(
       options: {
         create: optionGroups.map((group) => ({
           name: group.name,
-          values: { create: group.values },
+          values: { create: group.values.map((v, position) => ({ ...v, position })) },
         })),
       },
       images: {
@@ -226,7 +226,7 @@ export async function updateProduct(
         options: {
           create: optionGroups.map((group) => ({
             name: group.name,
-            values: { create: group.values },
+            values: { create: group.values.map((v, position) => ({ ...v, position })) },
           })),
         },
         images: {

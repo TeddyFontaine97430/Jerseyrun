@@ -29,7 +29,7 @@ export async function POST(request: Request) {
 
   const cartItems = await prisma.cartItem.findMany({
     where: { userId: session.user.id },
-    include: { product: { include: { club: true, options: { include: { values: true } } } } },
+    include: { product: { include: { club: true, options: { include: { values: { orderBy: { position: "asc" } } } } } } },
   });
 
   if (cartItems.length === 0) {
