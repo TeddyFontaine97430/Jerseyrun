@@ -88,6 +88,16 @@ export function ProductForm({
     setImages((prev) => prev.filter((_, i) => i !== slot));
   }
 
+  function moveImage(slot: number, direction: -1 | 1) {
+    setImages((prev) => {
+      const target = slot + direction;
+      if (target < 0 || target >= prev.length) return prev;
+      const next = [...prev];
+      [next[slot], next[target]] = [next[target], next[slot]];
+      return next;
+    });
+  }
+
   const uploading = uploadingSlot !== null;
   const slots = Array.from({ length: Math.min(images.length + 1, MAX_IMAGES) }, (_, i) => i);
 
@@ -159,22 +169,46 @@ export function ProductForm({
                   )}
                 </div>
                 {url && (
-                  <button
-                    type="button"
-                    onClick={() => removeImage(slot)}
-                    className="text-xs font-medium text-neutral-500 hover:text-red-400"
-                  >
-                    Retirer
-                  </button>
+                  <>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => moveImage(slot, -1)}
+                        disabled={slot === 0}
+                        aria-label="Déplacer vers la gauche"
+                        title="Déplacer vers la gauche"
+                        className="rounded border border-white/10 px-2 py-0.5 text-xs text-neutral-300 hover:border-accent hover:text-accent disabled:opacity-30 disabled:hover:border-white/10 disabled:hover:text-neutral-300"
+                      >
+                        ←
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => moveImage(slot, 1)}
+                        disabled={slot >= images.length - 1}
+                        aria-label="Déplacer vers la droite"
+                        title="Déplacer vers la droite"
+                        className="rounded border border-white/10 px-2 py-0.5 text-xs text-neutral-300 hover:border-accent hover:text-accent disabled:opacity-30 disabled:hover:border-white/10 disabled:hover:text-neutral-300"
+                      >
+                        →
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeImage(slot)}
+                      className="text-xs font-medium text-neutral-500 hover:text-red-400"
+                    >
+                      Retirer
+                    </button>
+                  </>
                 )}
               </div>
             );
           })}
         </div>
         {uploadError && <p className="mt-1 text-xs text-red-400">{uploadError}</p>}
-        {product && (
-          <p className="mt-1 text-xs text-neutral-500">La première photo sert de vignette dans la boutique.</p>
-        )}
+        <p className="mt-1 text-xs text-neutral-500">
+          La première photo sert de vignette dans la boutique. Utilisez les flèches ← → pour changer l&apos;ordre.
+        </p>
       </div>
       <div className="sm:col-span-2">
         <label className="mb-1 block text-sm font-medium text-white">Description</label>
