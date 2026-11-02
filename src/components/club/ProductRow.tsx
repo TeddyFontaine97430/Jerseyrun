@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import Image from "next/image";
 import { formatPrice } from "@/lib/money";
-import { deleteProduct, toggleProductActive } from "@/lib/actions/products";
+import { deleteProduct, duplicateProduct, toggleProductActive } from "@/lib/actions/products";
 import { ProductForm } from "@/components/club/ProductForm";
 
 export function ProductRow({
@@ -89,6 +89,14 @@ export function ProductRow({
         className="rounded-full border border-white/10 px-4 py-1.5 text-xs font-semibold text-neutral-300 hover:border-accent hover:text-accent"
       >
         Modifier
+      </button>
+      <button
+        type="button"
+        disabled={isPending}
+        onClick={() => startTransition(() => duplicateProduct(product.id))}
+        className="rounded-full border border-white/10 px-4 py-1.5 text-xs font-semibold text-neutral-300 hover:border-accent hover:text-accent disabled:opacity-50"
+      >
+        Dupliquer
       </button>
       <button
         type="button"

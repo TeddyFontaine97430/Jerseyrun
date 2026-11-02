@@ -249,6 +249,48 @@ export async function toggleProductActive(productId: string) {
   revalidateClubPaths(product.club);
 }
 
+export async function duplicateProduct(productId: string) {
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+    include: {
+      club: true,
+      options: { include: { values: { orderBy: { position: "asc" } } } },
+      images: { orderBy: { position: "asc" } },
+    },
+  });
+  if (!product) return;
+  if (!(await canManageClub(product.clubId))) return;
+
+  // La copie est créée masquée : le club la renomme / l'ajuste puis la réactive, sans
+  // jamais afficher un doublon « (copie) » aux clients.
+  await prisma.product.create({
+    data: {
+      clubId: product.clubId,
+      name: `${product.name} (copie)`,
+      description: product.description,
+      priceCents: product.priceCents,
+      imageUrl: product.imageUrl,
+      availability: "IN_STOCK",
+      active: false,
+      personalizationEnabled: product.personalizationEnabled,
+      personalizationFeeCents: product.personalizationFeeCents,
+      options: {
+        create: product.options.map((option) => ({
+          name: option.name,
+          values: {
+            create: option.values.map((v, position) => ({ value: v.value, stock: v.stock, position })),
+          },
+        })),
+      },
+      images: {
+        create: product.images.map((img, position) => ({ url: img.url, position })),
+      },
+    },
+  });
+
+  revalidateClubPaths(product.club);
+}
+
 export async function deleteProduct(productId: string) {
   const product = await prisma.product.findUnique({ where: { id: productId }, include: { club: true } });
   if (!product) return;
