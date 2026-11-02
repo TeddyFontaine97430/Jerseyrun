@@ -60,6 +60,32 @@ export async function updateHomeBannerLink(id: string, link: string) {
   revalidateHomeBannerPaths();
 }
 
+// Affiche (ou retire, si clubSlug est vide) un carrousel des articles d'un club sous la
+// bannière, centré par défaut sur l'article centerProductId.
+export async function updateHomeBannerCarousel(id: string, clubSlug: string, centerProductId: string) {
+  if (!(await requireAdmin())) return;
+
+  const slug = clubSlug.trim();
+  if (!slug) {
+    await prisma.homeBanner.update({
+      where: { id },
+      data: { carouselClubSlug: null, carouselCenterProductId: null },
+    });
+    revalidateHomeBannerPaths();
+    return;
+  }
+
+  const center = centerProductId
+    ? await prisma.product.findFirst({ where: { id: centerProductId, club: { slug } }, select: { id: true } })
+    : null;
+
+  await prisma.homeBanner.update({
+    where: { id },
+    data: { carouselClubSlug: slug, carouselCenterProductId: center?.id ?? null },
+  });
+  revalidateHomeBannerPaths();
+}
+
 export async function deleteHomeBanner(id: string) {
   if (!(await requireAdmin())) return;
   await prisma.homeBanner.delete({ where: { id } });

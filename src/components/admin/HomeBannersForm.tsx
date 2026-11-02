@@ -6,6 +6,7 @@ import {
   addHomeBanner,
   deleteHomeBanner,
   moveHomeBanner,
+  updateHomeBannerCarousel,
   updateHomeBannerLink,
   type HomeBannerFormState,
 } from "@/lib/actions/homeBanners";
@@ -13,19 +14,43 @@ import { uploadImageClient } from "@/lib/uploadClient";
 
 const initialState: HomeBannerFormState = { status: "idle" };
 
-type Banner = { id: string; imageUrl: string; link: string };
+type Banner = {
+  id: string;
+  imageUrl: string;
+  link: string;
+  carouselClubSlug: string | null;
+  carouselCenterProductId: string | null;
+};
+type CarouselClub = { slug: string; name: string; products: { id: string; name: string }[] };
 
 function BannerRow({
   banner,
   number,
   isFirst,
   isLast,
+  clubs,
 }: {
   banner: Banner;
   number: number;
   isFirst: boolean;
   isLast: boolean;
+  clubs: CarouselClub[];
 }) {
+  const [carouselClub, setCarouselClub] = useState(banner.carouselClubSlug ?? "");
+  const [centerProduct, setCenterProduct] = useState(banner.carouselCenterProductId ?? "");
+  const [carouselSaved, setCarouselSaved] = useState(false);
+  const carouselProducts = clubs.find((club) => club.slug === carouselClub)?.products ?? [];
+  const carouselDirty =
+    carouselClub !== (banner.carouselClubSlug ?? "") || centerProduct !== (banner.carouselCenterProductId ?? "");
+
+  function handleSaveCarousel() {
+    startTransition(async () => {
+      await updateHomeBannerCarousel(banner.id, carouselClub, centerProduct);
+      setCarouselSaved(true);
+      setTimeout(() => setCarouselSaved(false), 2000);
+    });
+  }
+
   const [link, setLink] = useState(banner.link);
   const [isPending, startTransition] = useTransition();
   const [saved, setSaved] = useState(false);
@@ -90,11 +115,59 @@ function BannerRow({
           Supprimer
         </button>
       </div>
+      <div className="grid w-full gap-3 border-t border-white/10 pt-3 sm:grid-cols-[1fr_1fr_auto]">
+        <div>
+          <label className="mb-1 block text-xs font-medium text-neutral-400">
+            Carrousel d&apos;articles sous cette bande
+          </label>
+          <select
+            value={carouselClub}
+            onChange={(e) => {
+              setCarouselClub(e.target.value);
+              setCenterProduct("");
+            }}
+            className="w-full rounded-lg border border-white/10 bg-neutral-900 px-3 py-1.5 text-sm text-white focus:border-accent focus:outline-none"
+          >
+            <option value="">Aucun</option>
+            {clubs.map((club) => (
+              <option key={club.slug} value={club.slug}>
+                {club.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-medium text-neutral-400">Article au milieu au départ</label>
+          <select
+            value={centerProduct}
+            disabled={!carouselClub}
+            onChange={(e) => setCenterProduct(e.target.value)}
+            className="w-full rounded-lg border border-white/10 bg-neutral-900 px-3 py-1.5 text-sm text-white focus:border-accent focus:outline-none disabled:opacity-50"
+          >
+            <option value="">Le premier article du club</option>
+            {carouselProducts.map((product) => (
+              <option key={product.id} value={product.id}>
+                {product.name.trim()}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex items-end">
+          <button
+            type="button"
+            disabled={isPending || !carouselDirty}
+            onClick={handleSaveCarousel}
+            className="rounded-full border border-white/10 px-3 py-1.5 text-xs font-semibold text-neutral-300 hover:border-accent hover:text-accent disabled:opacity-50"
+          >
+            {carouselSaved ? "Enregistré ✓" : "Enregistrer"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
 
-export function HomeBannersForm({ banners }: { banners: Banner[] }) {
+export function HomeBannersForm({ banners, clubs }: { banners: Banner[]; clubs: CarouselClub[] }) {
   const [state, formAction, pending] = useActionState(addHomeBanner, initialState);
   const [newImageUrl, setNewImageUrl] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -136,6 +209,7 @@ export function HomeBannersForm({ banners }: { banners: Banner[] }) {
               number={index + 1}
               isFirst={index === 0}
               isLast={index === banners.length - 1}
+              clubs={clubs}
             />
           ))}
         </div>

@@ -14,10 +14,23 @@ export default async function AdminContentPage() {
     return <p className="text-neutral-400">Accès non autorisé.</p>;
   }
 
-  const [content, galleryImages, banners] = await Promise.all([
+  const [content, galleryImages, banners, carouselClubs] = await Promise.all([
     getSiteContentMap(),
     prisma.homeGalleryImage.findMany({ orderBy: { position: "asc" } }),
     prisma.homeBanner.findMany({ orderBy: { position: "asc" } }),
+    prisma.club.findMany({
+      where: { status: "APPROVED" },
+      orderBy: { name: "asc" },
+      select: {
+        slug: true,
+        name: true,
+        products: {
+          where: { active: true },
+          orderBy: { createdAt: "asc" },
+          select: { id: true, name: true },
+        },
+      },
+    }),
   ]);
 
   return (
@@ -45,7 +58,7 @@ export default async function AdminContentPage() {
           Images cliquables en pleine largeur, affichées dans cet ordre entre les images cliquables et la bande
           &quot;Nos articles&quot;. Utilisez les flèches pour changer l&apos;ordre.
         </p>
-        <HomeBannersForm banners={banners} />
+        <HomeBannersForm banners={banners} clubs={carouselClubs} />
       </div>
 
       <SiteContentForm content={content} />

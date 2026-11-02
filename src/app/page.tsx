@@ -3,6 +3,8 @@ import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { ClubLogoCard } from "@/components/ClubLogoCard";
 import { ProductMarquee } from "@/components/ProductMarquee";
+import { BannerProductCarousel } from "@/components/BannerProductCarousel";
+import { formatPrice } from "@/lib/money";
 import { HomeGallery } from "@/components/HomeGallery";
 import { getSiteContentMap } from "@/lib/siteContent";
 import { isExternalLink, normalizeLink } from "@/lib/links";
@@ -64,6 +66,23 @@ export default async function Home() {
     prisma.homeGalleryImage.findMany({ orderBy: { position: "asc" } }),
     prisma.homeBanner.findMany({ orderBy: { position: "asc" } }),
   ]);
+
+  // Articles actifs des clubs dont une bande affiche un carrousel.
+  const carouselSlugs = Array.from(
+    new Set(banners.map((banner) => banner.carouselClubSlug).filter((slug): slug is string => Boolean(slug))),
+  );
+  const carouselProducts =
+    carouselSlugs.length > 0
+      ? await prisma.product.findMany({
+          where: {
+            active: true,
+            imageUrl: { not: null },
+            club: { slug: { in: carouselSlugs }, status: "APPROVED", active: true },
+          },
+          select: { id: true, name: true, imageUrl: true, priceCents: true, club: { select: { slug: true } } },
+          orderBy: { createdAt: "asc" },
+        })
+      : [];
 
   const marqueeProducts = [
     ...pinnedProducts,
@@ -128,22 +147,38 @@ export default async function Home() {
 
       {banners.map((banner) => {
         const href = normalizeLink(banner.link);
+        const slidesForBanner = banner.carouselClubSlug
+          ? carouselProducts.filter((product) => product.club.slug === banner.carouselClubSlug)
+          : [];
         return (
-          <a
-            key={banner.id}
-            href={href}
-            {...(isExternalLink(href) ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-            className="block w-full overflow-hidden border-b border-white/10"
-          >
-            <Image
-              src={banner.imageUrl}
-              alt=""
-              width={1536}
-              height={862}
-              sizes="100vw"
-              className="h-auto w-full object-cover transition hover:opacity-90"
-            />
-          </a>
+          <div key={banner.id} className="relative border-b border-white/10">
+            <a
+              href={href}
+              {...(isExternalLink(href) ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+              className="block w-full overflow-hidden"
+            >
+              <Image
+                src={banner.imageUrl}
+                alt=""
+                width={1536}
+                height={862}
+                sizes="100vw"
+                className="h-auto w-full object-cover transition hover:opacity-90"
+              />
+            </a>
+            {banner.carouselClubSlug && slidesForBanner.length > 0 && (
+              <BannerProductCarousel
+                clubSlug={banner.carouselClubSlug}
+                initialId={banner.carouselCenterProductId}
+                products={slidesForBanner.map((product) => ({
+                  id: product.id,
+                  name: product.name,
+                  imageUrl: product.imageUrl as string,
+                  priceLabel: formatPrice(product.priceCents),
+                }))}
+              />
+            )}
+          </div>
         );
       })}
 
