@@ -96,7 +96,7 @@ export function ProductCard({
             </span>
           )}
         </div>
-        {description && <p className="mt-1 line-clamp-2 text-sm text-neutral-400">{description}</p>}
+        {description && <p className="mt-1 whitespace-pre-line break-words text-sm text-neutral-400">{description}</p>}
         <div className="mt-3">
           <span className="text-lg font-bold text-white">{formatPrice(priceCents)}</span>
         </div>
